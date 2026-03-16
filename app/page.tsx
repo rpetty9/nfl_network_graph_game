@@ -833,7 +833,7 @@ export default function HomePage() {
     x: 700,
     y: 445,
     mobileOffsetX: 0,
-    mobileOffsetY: 88,
+    mobileOffsetY: 118,
   };
 
   function getNodeById(nodeId: number) {
