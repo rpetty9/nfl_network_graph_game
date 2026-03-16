@@ -300,6 +300,7 @@ export default function HomePage() {
   const todayIso = new Date().toISOString().slice(0, 10);
   const loadRequestRef = useRef(0);
   const relationshipRequestRef = useRef(0);
+  const [isMobileBoard, setIsMobileBoard] = useState(false);
   const [puzzleData, setPuzzleData] = useState<PuzzleResponse | null>(null);
   const [playersData, setPlayersData] = useState<PlayersResponse | null>(null);
   const [pairRelationships, setPairRelationships] = useState<PairRelationship[]>(
@@ -328,6 +329,18 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateIsMobileBoard = () => {
+      setIsMobileBoard(window.innerWidth < 640);
+    };
+
+    updateIsMobileBoard();
+    window.addEventListener("resize", updateIsMobileBoard);
+    return () => window.removeEventListener("resize", updateIsMobileBoard);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -770,35 +783,36 @@ export default function HomePage() {
       nodeId: 1,
       x: 700,
       y: 108,
-      mobileNudgeClass: "translate-y-14 sm:translate-y-0",
+      mobileOffsetX: 0,
+      mobileOffsetY: 72,
     },
     {
       nodeId: 2,
       x: 255,
       y: 325,
-      mobileNudgeClass:
-        "translate-x-[9.75rem] translate-y-16 sm:translate-x-0 sm:translate-y-0",
+      mobileOffsetX: 156,
+      mobileOffsetY: 88,
     },
     {
       nodeId: 3,
       x: 335,
       y: 700,
-      mobileNudgeClass:
-        "translate-x-[7.5rem] translate-y-14 sm:translate-x-0 sm:translate-y-0",
+      mobileOffsetX: 120,
+      mobileOffsetY: 58,
     },
     {
       nodeId: 4,
       x: 1065,
       y: 700,
-      mobileNudgeClass:
-        "-translate-x-[7.5rem] translate-y-14 sm:translate-x-0 sm:translate-y-0",
+      mobileOffsetX: -120,
+      mobileOffsetY: 58,
     },
     {
       nodeId: 5,
       x: 1145,
       y: 325,
-      mobileNudgeClass:
-        "-translate-x-[9.75rem] translate-y-16 sm:translate-x-0 sm:translate-y-0",
+      mobileOffsetX: -156,
+      mobileOffsetY: 88,
     },
   ];
 
@@ -815,15 +829,48 @@ export default function HomePage() {
     [4, 5],
   ] as const;
 
-  const center = { x: 700, y: 445 };
+  const center = {
+    x: 700,
+    y: 445,
+    mobileOffsetX: 0,
+    mobileOffsetY: 34,
+  };
 
   function getNodeById(nodeId: number) {
     return nodes.find((node) => node.node_id === nodeId);
   }
 
   function getPositionById(nodeId: number) {
-    return nodePositions.find((node) => node.nodeId === nodeId)!;
+    const position = nodePositions.find((node) => node.nodeId === nodeId)!;
+    if (!isMobileBoard) return position;
+
+    return {
+      ...position,
+      x: position.x + position.mobileOffsetX,
+      y: position.y + position.mobileOffsetY,
+    };
   }
+
+  const renderedNodePositions = useMemo(() => {
+    return nodePositions.map((position) =>
+      isMobileBoard
+        ? {
+            ...position,
+            x: position.x + position.mobileOffsetX,
+            y: position.y + position.mobileOffsetY,
+          }
+        : position
+    );
+  }, [isMobileBoard]);
+
+  const renderedCenter = useMemo(() => {
+    if (!isMobileBoard) return center;
+    return {
+      ...center,
+      x: center.x + center.mobileOffsetX,
+      y: center.y + center.mobileOffsetY,
+    };
+  }, [isMobileBoard]);
 
   function getLinkTone(nodeA: number, nodeB: number): LinkTone {
     const a = getNodeById(nodeA);
@@ -1687,7 +1734,7 @@ export default function HomePage() {
                 </select>
               </div>
 
-              <div className="absolute left-3 right-3 top-18 z-40 flex flex-col items-stretch gap-2 sm:left-auto sm:right-3 sm:top-4 sm:max-w-[58%] sm:items-end md:right-4">
+              <div className="absolute right-3 top-3 z-40 sm:left-auto sm:right-3 sm:top-4 md:right-4">
                 <div className="hidden items-center justify-between gap-2 rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-4 py-2 shadow-[0_10px_24px_rgba(56,189,248,0.18)] sm:inline-flex sm:justify-start sm:px-5 sm:py-2.5">
                   <span className="rounded-full bg-sky-100 px-2 py-1 text-[8px] font-black uppercase tracking-[0.1em] text-sky-700">
                     Time Period
@@ -1712,7 +1759,7 @@ export default function HomePage() {
                 </div>
               )}
 
-                <div className="absolute left-1/2 top-[52%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
+                <div className="absolute left-1/2 top-[49%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
                   <div className="absolute inset-0 overflow-hidden rounded-[30px]">
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0.00)_100%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.14)_0%,transparent_44%)]" />
@@ -1746,8 +1793,8 @@ export default function HomePage() {
                   <div
                     className="absolute z-20"
                     style={{
-                      left: center.x,
-                      top: center.y,
+                      left: renderedCenter.x,
+                      top: renderedCenter.y,
                       transform: "translate(-50%, -50%)",
                     }}
                   >
@@ -1887,10 +1934,10 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {nodePositions.map((position) => (
+                  {renderedNodePositions.map((position) => (
                     <div
                       key={position.nodeId}
-                      className={`absolute z-30 ${position.mobileNudgeClass}`}
+                      className="absolute z-30"
                       style={{
                         left: position.x,
                         top: position.y,
