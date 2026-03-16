@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { getLinkMultiplier } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -501,8 +502,10 @@ export async function GET(request: NextRequest) {
 
     function search(index: number, currentBase: number) {
       const optimisticBase = currentBase + (remainingMaxBase[index] ?? 0);
-      const optimisticScore =
-        optimisticBase * (1 + 10 * (Number(relationshipRule.bonus_pct ?? 5) / 100));
+      const optimisticScore = optimisticBase * getLinkMultiplier(
+        10,
+        Number(relationshipRule.bonus_pct ?? 5)
+      );
 
       if (best && optimisticScore <= best.final_score) {
         return;
@@ -528,7 +531,8 @@ export async function GET(request: NextRequest) {
         }
 
         const finalScore =
-          currentBase * (1 + activeLinks * (Number(relationshipRule.bonus_pct ?? 5) / 100));
+          currentBase *
+          getLinkMultiplier(activeLinks, Number(relationshipRule.bonus_pct ?? 5));
 
         if (!best || finalScore > best.final_score) {
           best = {
@@ -580,9 +584,10 @@ export async function GET(request: NextRequest) {
       })),
       optimal_base_score: bestResult.base_score,
       optimal_active_links: bestResult.active_links,
-      optimal_multiplier:
-        1 +
-        bestResult.active_links * (Number(relationshipRule.bonus_pct ?? 5) / 100),
+      optimal_multiplier: getLinkMultiplier(
+        bestResult.active_links,
+        Number(relationshipRule.bonus_pct ?? 5)
+      ),
       optimal_final_score: bestResult.final_score,
     });
   } catch (error) {

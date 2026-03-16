@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { getLinkMultiplier } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -525,8 +526,10 @@ export async function POST(request: NextRequest) {
         sum + Number(entry.player.fantasy_points),
       0
     );
-    const multiplier =
-      1 + activeLinks * (Number(relationshipRule.bonus_pct ?? 5) / 100);
+    const multiplier = getLinkMultiplier(
+      activeLinks,
+      Number(relationshipRule.bonus_pct ?? 5)
+    );
     const finalScore = baseScore * multiplier;
     const percentOfOptimal =
       optimalFinalScore && optimalFinalScore > 0

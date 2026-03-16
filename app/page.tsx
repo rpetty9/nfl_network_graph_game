@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getLinkBonusPct, getLinkMultiplier } from "@/lib/scoring";
 
 type PuzzleResponse = {
   puzzle: {
@@ -968,7 +969,8 @@ export default function HomePage() {
     0
   );
 
-  const multiplier = 1 + activeLinkCount * (bonusPct / 100);
+  const linkBonusPct = getLinkBonusPct(activeLinkCount, bonusPct);
+  const multiplier = getLinkMultiplier(activeLinkCount, bonusPct);
   const finalScore = baseFantasyPoints * multiplier;
   const formattedFinalScore = finalScore.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -1919,8 +1921,8 @@ export default function HomePage() {
                             }`}
                           >
                             {isFullyConnected
-                              ? "Every route is active"
-                              : `+${bonusPct}% per active link`}
+                              ? `${multiplier.toFixed(2)}x multiplier`
+                              : `+${linkBonusPct.toFixed(1)}% total bonus`}
                           </p>
 
                           <div
@@ -2027,21 +2029,23 @@ export default function HomePage() {
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Link:</span>{" "}
-                  {relationshipLabel} is the connection rule between two selected players. Whenever a pair of players satisfies that rule, that line becomes active and adds +{bonusPct}% to your score.
+                  {relationshipLabel} is the connection rule between two selected players. Each active link increases your bonus, and every additional link is worth more than the last.
                 </p>
                 <p>
                   Link bonuses stack. More active connections means a bigger multiplier on top of your lineup&apos;s base fantasy points.
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Formula:</span>{" "}
-                  Final Score = Total Fantasy Points x (1 + Active Links x {bonusPct}%).
+                  Final Score = Total Fantasy Points x Link Multiplier.
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Available Players:</span>{" "}
                   {players.length}
                 </p>
                 <p>
-                  Example: if your 5 players combine for 1,000 fantasy points and you activate 4 links at +{bonusPct}% each, your multiplier becomes 1.20 and your final score becomes 1,200.
+                  Example: with the current curve, {activeLinkCount} active links gives you a{" "}
+                  <span className="font-semibold text-sky-900">{multiplier.toFixed(2)}x</span> multiplier and a{" "}
+                  <span className="font-semibold text-sky-900">+{linkBonusPct.toFixed(1)}%</span> total bonus.
                 </p>
                 <p>
                   Select five players, activate as many valid links as possible, and submit once every slot is filled.
