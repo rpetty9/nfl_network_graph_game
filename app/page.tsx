@@ -1033,39 +1033,39 @@ export default function HomePage() {
     }
   }
 
-  const nodePositions = [
-    {
-      nodeId: 1,
-      x: 700,
-      y: 108,
-      mobileOffsetX: 0,
-      mobileOffsetY: 164,
-    },
+    const nodePositions = [
+      {
+        nodeId: 1,
+        x: 700,
+        y: 130,
+        mobileOffsetX: 0,
+        mobileOffsetY: 164,
+      },
       {
         nodeId: 2,
         x: 300,
-        y: 325,
+        y: 347,
         mobileOffsetX: 156,
         mobileOffsetY: 180,
       },
       {
         nodeId: 3,
         x: 335,
-        y: 735,
+        y: 757,
         mobileOffsetX: 120,
         mobileOffsetY: 150,
       },
       {
         nodeId: 4,
         x: 1065,
-        y: 735,
+        y: 757,
         mobileOffsetX: -120,
         mobileOffsetY: 150,
       },
       {
         nodeId: 5,
         x: 1100,
-        y: 325,
+        y: 347,
         mobileOffsetX: -156,
         mobileOffsetY: 180,
       },
@@ -1960,7 +1960,7 @@ export default function HomePage() {
           <>
           <div className="relative mt-4 mx-auto h-[500px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
               <div className="absolute inset-x-3 top-3 z-40 grid grid-cols-[3fr_4fr_3fr] gap-2 sm:inset-x-4 sm:top-4 sm:gap-3">
-                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)] sm:justify-start sm:px-4 sm:py-1.5">
+                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)] sm:px-4 sm:py-1.5">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                   <select
                     value={selectedDate}
@@ -1971,7 +1971,7 @@ export default function HomePage() {
                         window.history.replaceState({}, "", buildPuzzleUrl(nextDate));
                       }
                     }}
-                    className="min-w-0 bg-transparent text-center text-[8px] font-black uppercase tracking-[0.05em] text-sky-700 outline-none sm:text-left sm:text-[10px] sm:tracking-[0.08em]"
+                    className="min-w-0 bg-transparent text-center text-[8px] font-black uppercase tracking-[0.05em] text-sky-700 outline-none sm:text-[10px] sm:tracking-[0.08em]"
                     aria-label={`Puzzle date, currently ${formattedPuzzleDate}`}
                   >
                     {renderedDateOptions.map((dateValue) => (
