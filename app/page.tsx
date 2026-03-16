@@ -1556,6 +1556,7 @@ export default function HomePage() {
     const node = getNodeById(nodeId);
     const player = node ? playerMap.get(node.player_id) : undefined;
     const slotRule = getSlotRule(nodeId);
+    const isActiveNode = !submitted && activeNodeId === nodeId;
     const availablePlayers = players.filter((candidate) => {
       if (String(candidate.player_id) === String(node?.player_id ?? "")) {
         return true;
@@ -1574,8 +1575,20 @@ export default function HomePage() {
 
     return (
       <div className="w-[235px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]">
-        <div className="overflow-hidden rounded-[28px] border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#eefbff_74%,#f0f9ff_100%)] shadow-[0_18px_0_rgba(14,165,233,0.12),0_24px_42px_rgba(14,165,233,0.14)] backdrop-blur-sm">
-          <div className="border-b-[3px] border-sky-200 bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_48%,#7dd3fc_100%)] px-5 py-3 text-center">
+        <div
+          className={`overflow-hidden rounded-[28px] border-[3px] bg-[linear-gradient(180deg,#ffffff_0%,#eefbff_74%,#f0f9ff_100%)] backdrop-blur-sm ${
+            isActiveNode
+              ? "border-amber-300 shadow-[0_18px_0_rgba(250,204,21,0.14),0_0_28px_rgba(250,204,21,0.22)]"
+              : "border-sky-300 shadow-[0_18px_0_rgba(14,165,233,0.12),0_24px_42px_rgba(14,165,233,0.14)]"
+          }`}
+        >
+          <div
+            className={`border-b-[3px] px-5 py-3 text-center ${
+              isActiveNode
+                ? "border-amber-200 bg-[linear-gradient(90deg,#facc15_0%,#f59e0b_52%,#fde68a_100%)]"
+                : "border-sky-200 bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_48%,#7dd3fc_100%)]"
+            }`}
+          >
             {renderSlotRuleTitle(slotRule)}
           </div>
 
@@ -2476,13 +2489,13 @@ export default function HomePage() {
         )}
 
         {!submitted && !rulesOpen && (
-          <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[90] w-[min(92vw,22rem)] -translate-x-1/2 sm:hidden">
-            <div className="pointer-events-auto flex w-full items-center gap-3 rounded-[26px] border-[3px] border-sky-200 bg-white/95 px-3 py-2 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
+          <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[90] w-[min(78vw,16rem)] -translate-x-1/2 sm:hidden">
+            <div className="pointer-events-auto flex w-full items-center gap-2 rounded-[20px] border-[2px] border-sky-200 bg-white/95 px-2 py-1.5 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => focusRelativeNode(-1)}
                 disabled={submitted}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-2xl font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-lg font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Go to previous slot"
               >
                 ←
@@ -2491,12 +2504,12 @@ export default function HomePage() {
                 type="button"
                 onClick={() => focusNode(activeNodeId)}
                 disabled={submitted}
-                className="min-w-0 flex-1 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-4 py-2 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-w-0 flex-1 rounded-[14px] border-[2px] border-amber-200 bg-[linear-gradient(180deg,#fffdf2_0%,#fef3c7_100%)] px-2 py-1.5 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-600">
-                  Active Node
+                <p className="text-[8px] font-black uppercase tracking-[0.06em] text-amber-700">
+                  Type Here
                 </p>
-                <p className="mt-1 truncate font-[family-name:var(--font-display)] text-[15px] text-sky-900">
+                <p className="mt-0.5 truncate font-[family-name:var(--font-display)] text-[12px] text-amber-900">
                   {activeSlotRule.display_text}
                 </p>
               </button>
@@ -2504,7 +2517,7 @@ export default function HomePage() {
                 type="button"
                 onClick={() => focusRelativeNode(1)}
                 disabled={submitted}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-2xl font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-lg font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Go to next slot"
               >
                 →
