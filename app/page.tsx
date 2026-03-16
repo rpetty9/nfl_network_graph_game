@@ -837,6 +837,21 @@ export default function HomePage() {
     return badgeMap[normalized] ?? "";
   }
 
+  function parseDivisionLabel(label: string) {
+    const parts = label.trim().split(/\s+/);
+    if (parts.length < 2) {
+      return {
+        conference: label.toUpperCase(),
+        direction: "",
+      };
+    }
+
+    return {
+      conference: parts[0].toUpperCase(),
+      direction: parts.slice(1).join(" ").toUpperCase(),
+    };
+  }
+
   function renderSlotRuleTitle(rule: SlotRule) {
     if (!rule.parameter_value) {
       return (
@@ -927,6 +942,27 @@ export default function HomePage() {
           <p className="font-[family-name:var(--font-display)] text-[15px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
             {collegeLabel}
           </p>
+        </div>
+      );
+    }
+
+    if (rule.parameter_type === "division") {
+      const divisionLabel = String(rule.display_text);
+      const { conference, direction } = parseDivisionLabel(divisionLabel);
+      const logoUrl = conference === "AFC" ? "/afc-badge.svg" : "/nfc-badge.svg";
+
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <img
+            src={logoUrl}
+            alt={conference}
+            className="h-10 w-10 object-contain drop-shadow-[0_2px_4px_rgba(15,23,42,0.3)] sm:h-8 sm:w-8"
+          />
+          <div className="inline-flex items-center rounded-full border-2 border-white/70 bg-white/20 px-2.5 py-1 shadow-[0_2px_4px_rgba(15,23,42,0.18)]">
+            <p className="font-[family-name:var(--font-display)] text-[13px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
+              {direction || divisionLabel.toUpperCase()}
+            </p>
+          </div>
         </div>
       );
     }
