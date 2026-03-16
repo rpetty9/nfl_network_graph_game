@@ -2443,7 +2443,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                     Rules
                   </p>
-                  <h2 className="mt-2 text-2xl font-black text-sky-900">
+                  <h2 className="mt-2 text-2xl font-black tracking-normal text-sky-900">
                     How This Puzzle Works
                   </h2>
                 </div>
