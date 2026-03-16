@@ -151,6 +151,9 @@ type SearchablePlayerSelectProps = {
   placeholder: string;
   onChange: (playerId: string) => void;
   getPlayerLabel: (player: PlayerOption) => string;
+  onActivate?: () => void;
+  registerFocus?: ((focusFn: (() => void) | null) => void) | null;
+  onPlayerSelected?: () => void;
 };
 
 function SearchablePlayerSelect({
@@ -160,6 +163,9 @@ function SearchablePlayerSelect({
   placeholder,
   onChange,
   getPlayerLabel,
+  onActivate,
+  registerFocus,
+  onPlayerSelected,
 }: SearchablePlayerSelectProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -191,6 +197,18 @@ function SearchablePlayerSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!registerFocus) return;
+
+    registerFocus(() => {
+      if (disabled) return;
+      inputRef.current?.focus();
+      setOpen(true);
+    });
+
+    return () => registerFocus(null);
+  }, [disabled, registerFocus]);
+
   const filteredPlayers = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
 
@@ -216,11 +234,15 @@ function SearchablePlayerSelect({
           disabled={disabled}
           placeholder={placeholder}
           onFocus={() => {
-            if (!disabled) setOpen(true);
+            if (!disabled) {
+              onActivate?.();
+              setOpen(true);
+            }
           }}
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
+            onActivate?.();
             if (value) onChange("");
           }}
           className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-12 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
@@ -254,6 +276,7 @@ function SearchablePlayerSelect({
                   onChange(String(player.player_id));
                   setQuery(getPlayerLabel(player));
                   setOpen(false);
+                  onPlayerSelected?.();
                 }}
                 className="block w-full border-b border-sky-100 px-4 py-2 text-left text-[11px] text-slate-800 transition hover:bg-sky-50 last:border-b-0"
               >
@@ -306,6 +329,7 @@ export default function HomePage() {
   const todayIso = new Date().toISOString().slice(0, 10);
   const loadRequestRef = useRef(0);
   const relationshipRequestRef = useRef(0);
+  const nodeFocusMapRef = useRef(new Map<number, () => void>());
   const [isMobileBoard, setIsMobileBoard] = useState(false);
   const [puzzleData, setPuzzleData] = useState<PuzzleResponse | null>(null);
   const [playersData, setPlayersData] = useState<PlayersResponse | null>(null);
@@ -319,6 +343,7 @@ export default function HomePage() {
   });
   const [nodes, setNodes] = useState<NodeState[]>([]);
   const [initialNodes, setInitialNodes] = useState<NodeState[]>([]);
+  const [activeNodeId, setActiveNodeId] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -421,6 +446,7 @@ export default function HomePage() {
 
         setNodes(initial);
         setInitialNodes(initial);
+        setActiveNodeId(1);
         setSubmitted(false);
       } catch (error) {
         if (
@@ -1023,6 +1049,49 @@ export default function HomePage() {
     );
   }
 
+  function registerNodeFocus(nodeId: number, focusFn: (() => void) | null) {
+    if (focusFn) {
+      nodeFocusMapRef.current.set(nodeId, focusFn);
+      return;
+    }
+
+    nodeFocusMapRef.current.delete(nodeId);
+  }
+
+  function focusNode(nodeId: number) {
+    setActiveNodeId(nodeId);
+
+    if (!isMobileBoard || submitted) return;
+
+    window.setTimeout(() => {
+      nodeFocusMapRef.current.get(nodeId)?.();
+    }, 60);
+  }
+
+  function focusRelativeNode(direction: -1 | 1) {
+    const nodeIds = slotRules.map((rule) => Number(rule.slot_number));
+    const currentIndex = nodeIds.indexOf(activeNodeId);
+    const fallbackIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex =
+      (fallbackIndex + direction + nodeIds.length) % nodeIds.length;
+
+    focusNode(nodeIds[nextIndex] ?? 1);
+  }
+
+  function handleMobileNodeAdvance(nodeId: number) {
+    setActiveNodeId(nodeId);
+
+    if (!isMobileBoard || submitted) return;
+
+    const nodeIds = slotRules.map((rule) => Number(rule.slot_number));
+    const currentIndex = nodeIds.indexOf(nodeId);
+    const nextNodeId = nodeIds[currentIndex + 1];
+
+    if (nextNodeId) {
+      focusNode(nextNodeId);
+    }
+  }
+
   function relationshipPasses(
     ruleType: string,
     playerIdA: string,
@@ -1206,6 +1275,7 @@ export default function HomePage() {
   const activeLinkCount = nodePairs.filter(
     ([a, b]) => getLinkTone(a, b) === "active"
   ).length;
+  const activeSlotRule = getSlotRule(activeNodeId);
 
   const totalPossibleLinks = nodePairs.length;
   const linkProgressPct = activeLinkCount / totalPossibleLinks;
@@ -1392,6 +1462,7 @@ export default function HomePage() {
 
   function handleReset() {
     setNodes(initialNodes.map((node) => ({ ...node })));
+    setActiveNodeId(1);
     setSubmitted(false);
     setOptimalLineup(null);
     setOptimalError(null);
@@ -1516,6 +1587,9 @@ export default function HomePage() {
               placeholder={slotPlaceholder}
               onChange={(playerId) => updateNode(nodeId, playerId)}
               getPlayerLabel={getPlayerLabel}
+              onActivate={() => setActiveNodeId(nodeId)}
+              registerFocus={(focusFn) => registerNodeFocus(nodeId, focusFn)}
+              onPlayerSelected={() => handleMobileNodeAdvance(nodeId)}
             />
 
             <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-2.5 sm:p-3">
@@ -2303,6 +2377,42 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+            </div>
+
+            <div className="mx-auto mt-4 flex max-w-[1080px] items-center justify-center sm:hidden">
+              <div className="flex w-full items-center gap-3 rounded-[24px] border-[3px] border-sky-200 bg-white/92 px-3 py-2 shadow-[0_10px_22px_rgba(125,211,252,0.14)]">
+                <button
+                  type="button"
+                  onClick={() => focusRelativeNode(-1)}
+                  disabled={submitted}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-sky-50 text-xl font-black text-sky-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Go to previous slot"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  onClick={() => focusNode(activeNodeId)}
+                  disabled={submitted}
+                  className="min-w-0 flex-1 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-4 py-2 text-center disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-600">
+                    Ready To Type
+                  </p>
+                  <p className="mt-1 truncate font-[family-name:var(--font-display)] text-[15px] text-sky-900">
+                    {activeSlotRule.display_text}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => focusRelativeNode(1)}
+                  disabled={submitted}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-sky-50 text-xl font-black text-sky-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Go to next slot"
+                >
+                  →
+                </button>
+              </div>
             </div>
 
               <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_14px_0_rgba(125,211,252,0.1),0_18px_40px_rgba(125,211,252,0.12)] backdrop-blur-sm">
