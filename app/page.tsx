@@ -2502,10 +2502,21 @@ export default function HomePage() {
                 type="button"
                 onClick={() => focusRelativeNode(-1)}
                 disabled={submitted}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-lg font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Go to previous slot"
               >
-                ←
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M15 5l-7 7 7 7" />
+                </svg>
               </button>
               <button
                 type="button"
@@ -2524,10 +2535,21 @@ export default function HomePage() {
                 type="button"
                 onClick={() => focusRelativeNode(1)}
                 disabled={submitted}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-lg font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Go to next slot"
               >
-                →
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </div>
           </div>
