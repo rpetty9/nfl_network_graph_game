@@ -2059,7 +2059,7 @@ export default function HomePage() {
                 </div>
               )}
 
-                <div className="absolute left-1/2 top-[40%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
+                <div className="absolute left-1/2 top-[40%] h-[980px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] sm:top-1/2 sm:h-[850px] sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
                   <div className="absolute inset-0 overflow-hidden rounded-[30px]">
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0.00)_100%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.14)_0%,transparent_44%)]" />
