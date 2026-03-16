@@ -1584,7 +1584,13 @@ export default function HomePage() {
     const slotPlaceholder = getSlotPlaceholder(slotRule);
 
     return (
-      <div className="w-[235px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]">
+      <div
+        className="w-[235px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]"
+        onClick={() => {
+          if (submitted) return;
+          setActiveNodeId(nodeId);
+        }}
+      >
         <div
           className={`overflow-hidden rounded-[28px] border-[3px] bg-[linear-gradient(180deg,#ffffff_0%,#eefbff_74%,#f0f9ff_100%)] backdrop-blur-sm ${
             isActiveNode
@@ -2558,7 +2564,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setMobileNavigatorOpen(false)}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-100 bg-white text-sky-600 transition active:scale-95"
+                  className="flex h-8 shrink-0 items-center justify-center px-1 text-sky-600 transition active:scale-95"
                   aria-label="Collapse navigator"
                 >
                   <svg
