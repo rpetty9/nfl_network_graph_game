@@ -1058,14 +1058,21 @@ export default function HomePage() {
     nodeFocusMapRef.current.delete(nodeId);
   }
 
-  function focusNode(nodeId: number) {
+  function focusNode(nodeId: number, immediate = false) {
     setActiveNodeId(nodeId);
 
     if (!isMobileBoard || submitted) return;
 
-    window.setTimeout(() => {
+    const runFocus = () => {
       nodeFocusMapRef.current.get(nodeId)?.();
-    }, 60);
+    };
+
+    if (immediate) {
+      runFocus();
+      return;
+    }
+
+    window.setTimeout(runFocus, 60);
   }
 
   function focusRelativeNode(direction: -1 | 1) {
@@ -1075,7 +1082,7 @@ export default function HomePage() {
     const nextIndex =
       (fallbackIndex + direction + nodeIds.length) % nodeIds.length;
 
-    focusNode(nodeIds[nextIndex] ?? 1);
+      focusNode(nodeIds[nextIndex] ?? 1);
   }
 
   function handleMobileNodeAdvance(nodeId: number) {
@@ -2502,7 +2509,7 @@ export default function HomePage() {
               </button>
               <button
                 type="button"
-                onClick={() => focusNode(activeNodeId)}
+                onClick={() => focusNode(activeNodeId, true)}
                 disabled={submitted}
                 className="min-w-0 flex-1 rounded-[14px] border-[2px] border-amber-200 bg-[linear-gradient(180deg,#fffdf2_0%,#fef3c7_100%)] px-2 py-1.5 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
               >
