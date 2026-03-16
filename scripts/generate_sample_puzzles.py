@@ -11,18 +11,20 @@ ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = ROOT / ".env.local"
 
 THEMES = [
-    ("season_range:2000-2005", "2000-2005 Breakouts"),
-    ("season_range:2005-2010", "2005-2010 Standouts"),
-    ("season_range:2006-2015", "2006-2015 Prime Years"),
-    ("seasons_2000s", "2000s Icons"),
     ("seasons_2020_2025", "2020-2025 Stars"),
-    ("seasons_2010s", "2010s Stars"),
-    ("seasons_2010_2015", "2010-2015 Peak Years"),
-    ("season_range:2011-2020", "2011-2020 Stars"),
     ("season_range:2015-2020", "2015-2020 Playmakers"),
-    ("season_2012", "2012 Snapshot"),
-    ("season:2016", "2016 Snapshot"),
+    ("season_range:2011-2020", "2011-2020 Stars"),
+    ("seasons_2010s", "2010s Stars"),
     ("season:2021", "2021 Snapshot"),
+    ("season:2016", "2016 Snapshot"),
+    ("season_range:2010-2019", "2010-2019 Greats"),
+    ("season_range:2015-2025", "2015-2025 Modern Era"),
+    ("seasons_2020_2025", "2020-2025 Stars"),
+    ("seasons_2010_2015", "2010-2015 Peak Years"),
+    ("season_range:2006-2015", "2006-2015 Prime Years"),
+    ("season_2012", "2012 Snapshot"),
+    ("season_range:2005-2010", "2005-2010 Standouts"),
+    ("season_range:2000-2005", "2000-2005 Breakouts"),
 ]
 
 ELIGIBILITIES = [

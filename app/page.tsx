@@ -275,6 +275,21 @@ function isSupportedPuzzleDate(dateValue: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(dateValue) && dateValue >= "2026-03-15";
 }
 
+function getDateFromLocation(location: Location): string | null {
+  const pathMatch = location.pathname.match(/^\/p\/(\d{4}-\d{2}-\d{2})\/?$/);
+  const pathDate = normalizeUrlDateParam(pathMatch?.[1] ?? "");
+  if (pathDate) {
+    return pathDate;
+  }
+
+  const params = new URLSearchParams(location.search);
+  return normalizeUrlDateParam(params.get("date") ?? "");
+}
+
+function buildPuzzleUrl(dateValue: string) {
+  return `/p/${dateValue}`;
+}
+
 export default function HomePage() {
   const todayIso = new Date().toISOString().slice(0, 10);
   const loadRequestRef = useRef(0);
@@ -286,9 +301,7 @@ export default function HomePage() {
   );
   const [selectedDate, setSelectedDate] = useState(() => {
     if (typeof window === "undefined") return todayIso;
-    const params = new URLSearchParams(window.location.search);
-    const urlDate = params.get("date") ?? "";
-    const normalized = normalizeUrlDateParam(urlDate);
+    const normalized = getDateFromLocation(window.location);
     return normalized && isSupportedPuzzleDate(normalized) ? normalized : todayIso;
   });
   const [nodes, setNodes] = useState<NodeState[]>([]);
@@ -313,14 +326,10 @@ export default function HomePage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const params = new URLSearchParams(window.location.search);
-    const urlDate = normalizeUrlDateParam(params.get("date") ?? "");
+    const urlDate = getDateFromLocation(window.location);
 
-    if ((!urlDate || !isSupportedPuzzleDate(urlDate)) && params.has("date")) {
-      params.delete("date");
-      const nextQuery = params.toString();
-      const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
-      window.history.replaceState({}, "", nextUrl);
+    if ((!urlDate || !isSupportedPuzzleDate(urlDate)) && window.location.pathname !== "/") {
+      window.history.replaceState({}, "", "/");
     }
   }, []);
 
@@ -329,9 +338,7 @@ export default function HomePage() {
     setSelectedDate(todayIso);
 
     if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("date", todayIso);
-      window.history.replaceState({}, "", url.toString());
+      window.history.replaceState({}, "", buildPuzzleUrl(todayIso));
     }
   }, [selectedDate, todayIso]);
 
@@ -416,16 +423,14 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window === "undefined" || !selectedDate) return;
-    const url = new URL(window.location.href);
-    if (url.searchParams.get("date") === selectedDate) return;
-    url.searchParams.set("date", selectedDate);
-    window.history.replaceState({}, "", url.toString());
+    const nextPath = buildPuzzleUrl(selectedDate);
+    if (window.location.pathname === nextPath) return;
+    window.history.replaceState({}, "", nextPath);
   }, [selectedDate]);
 
   useEffect(() => {
     const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const urlDate = normalizeUrlDateParam(params.get("date") ?? "");
+      const urlDate = getDateFromLocation(window.location);
       if (urlDate && urlDate !== selectedDate) {
         setSelectedDate(urlDate);
       }
@@ -1623,9 +1628,7 @@ export default function HomePage() {
                     const nextDate = e.target.value;
                     setSelectedDate(nextDate);
                     if (typeof window !== "undefined") {
-                      const url = new URL(window.location.href);
-                      url.searchParams.set("date", nextDate);
-                      window.history.replaceState({}, "", url.toString());
+                      window.history.replaceState({}, "", buildPuzzleUrl(nextDate));
                     }
                   }}
                   className="bg-transparent text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 outline-none"

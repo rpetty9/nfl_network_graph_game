@@ -35,6 +35,12 @@ FILTERS = [
         "rule_logic_key": "season_range:2015-2020",
     },
     {
+        "filter_name": "seasons_2015_2025",
+        "display_name": "2015-2025 Seasons",
+        "filter_category": "theme",
+        "rule_logic_key": "season_range:2015-2025",
+    },
+    {
         "filter_name": "seasons_2020_2025",
         "display_name": "2020-2025 Seasons",
         "filter_category": "theme",
