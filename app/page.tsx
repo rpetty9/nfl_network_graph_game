@@ -344,6 +344,7 @@ export default function HomePage() {
   const [nodes, setNodes] = useState<NodeState[]>([]);
   const [initialNodes, setInitialNodes] = useState<NodeState[]>([]);
   const [activeNodeId, setActiveNodeId] = useState(1);
+  const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -447,6 +448,7 @@ export default function HomePage() {
         setNodes(initial);
         setInitialNodes(initial);
         setActiveNodeId(1);
+        setMobileNavigatorOpen(true);
         setSubmitted(false);
       } catch (error) {
         if (
@@ -1470,6 +1472,7 @@ export default function HomePage() {
   function handleReset() {
     setNodes(initialNodes.map((node) => ({ ...node })));
     setActiveNodeId(1);
+    setMobileNavigatorOpen(true);
     setSubmitted(false);
     setOptimalLineup(null);
     setOptimalError(null);
@@ -2497,61 +2500,110 @@ export default function HomePage() {
 
         {!submitted && !rulesOpen && (
           <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[90] w-[min(78vw,16rem)] -translate-x-1/2 sm:hidden">
-            <div className="pointer-events-auto flex w-full items-center gap-2 rounded-[20px] border-[2px] border-sky-200 bg-white/95 px-2 py-1.5 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
-              <button
-                type="button"
-                onClick={() => focusRelativeNode(-1)}
-                disabled={submitted}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Go to previous slot"
-              >
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            {mobileNavigatorOpen ? (
+              <div className="pointer-events-auto flex w-full items-center gap-2 rounded-[20px] border-[2px] border-sky-200 bg-white/95 px-2 py-1.5 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
+                <button
+                  type="button"
+                  onClick={() => focusRelativeNode(-1)}
+                  disabled={submitted}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Go to previous slot"
                 >
-                  <path d="M15 5l-7 7 7 7" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => focusNode(activeNodeId, true)}
-                disabled={submitted}
-                className="min-w-0 flex-1 rounded-[14px] border-[2px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-2 py-1.5 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-600">
-                  Type Here
-                </p>
-                <p className="mt-0.5 truncate font-[family-name:var(--font-display)] text-[12px] text-sky-900">
-                  {activeSlotRule.display_text}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => focusRelativeNode(1)}
-                disabled={submitted}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Go to next slot"
-              >
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M15 5l-7 7 7 7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => focusNode(activeNodeId, true)}
+                  disabled={submitted}
+                  className="min-w-0 flex-1 rounded-[14px] border-[2px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-2 py-1.5 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <path d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-600">
+                    Type Here
+                  </p>
+                  <p className="mt-0.5 truncate font-[family-name:var(--font-display)] text-[12px] text-sky-900">
+                    {activeSlotRule.display_text}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => focusRelativeNode(1)}
+                  disabled={submitted}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Go to next slot"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileNavigatorOpen(false)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-100 bg-white text-sky-600 transition active:scale-95"
+                  aria-label="Collapse navigator"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div className="pointer-events-auto flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setMobileNavigatorOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/95 px-3 py-2 text-sky-700 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md transition active:scale-95"
+                  aria-label="Expand navigator"
+                >
+                  <span className="text-[8px] font-black uppercase tracking-[0.08em] text-sky-600">
+                    Navigate
+                  </span>
+                  <span className="truncate font-[family-name:var(--font-display)] text-[11px] text-sky-900">
+                    {activeSlotRule.display_text}
+                  </span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M6 15l6-6 6 6" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
