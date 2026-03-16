@@ -1635,7 +1635,7 @@ export default function HomePage() {
                   </div>
                   </div>
               ) : (
-                <div className="flex min-h-[120px] items-center justify-center rounded-[16px] border border-dashed border-slate-300 bg-slate-50/90 text-center">
+                <div className="flex min-h-[84px] items-center justify-center rounded-[16px] border border-dashed border-slate-300 bg-slate-50/90 text-center sm:min-h-[120px]">
                   <div className="px-4">
                     <p className="font-[family-name:var(--font-display)] text-[12px] leading-[1.5] text-sky-800">
                       {slotRule.display_text}
