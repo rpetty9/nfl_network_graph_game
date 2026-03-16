@@ -862,6 +862,26 @@ export default function HomePage() {
       .replace(/\s+/g, "-");
   }
 
+  function getCollegeLogoUrl(collegeName: string) {
+    const normalized = collegeName.trim().toLowerCase();
+    const explicitLogoMap: Record<string, string> = {
+      usc: "https://commons.wikimedia.org/wiki/Special:FilePath/USC%20Trojans%20logo.svg",
+      "southern california":
+        "https://commons.wikimedia.org/wiki/Special:FilePath/USC%20Trojans%20logo.svg",
+      "penn state":
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Penn%20State%20Athletics%20wordmark.svg",
+      "penn state university":
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Penn%20State%20Athletics%20wordmark.svg",
+    };
+
+    if (explicitLogoMap[normalized]) {
+      return explicitLogoMap[normalized];
+    }
+
+    const logoSlug = getCollegeLogoSlug(collegeName);
+    return `https://ncaa-api.henrygd.me/logo/${logoSlug}.svg`;
+  }
+
   function getPositionBadge(ruleValue: string) {
     const normalized = ruleValue.toUpperCase();
     const badgeMap: Record<string, string> = {
@@ -958,8 +978,7 @@ export default function HomePage() {
 
     if (rule.parameter_type === "college") {
       const collegeLabel = String(rule.display_text);
-      const logoSlug = getCollegeLogoSlug(collegeLabel);
-      const logoUrl = `https://ncaa-api.henrygd.me/logo/${logoSlug}.svg`;
+      const logoUrl = getCollegeLogoUrl(collegeLabel);
       const initials = collegeLabel
         .split(/\s+/)
         .filter(Boolean)
