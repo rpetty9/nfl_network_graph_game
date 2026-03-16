@@ -158,6 +158,7 @@ function SearchablePlayerSelect({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const selectedPlayer = useMemo(
     () => players.find((p) => String(p.player_id) === String(value)) ?? null,
@@ -203,6 +204,7 @@ function SearchablePlayerSelect({
     <div ref={wrapperRef} className="relative">
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           value={query}
           disabled={disabled}
@@ -238,6 +240,10 @@ function SearchablePlayerSelect({
               <button
                 key={player.player_id}
                 type="button"
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  inputRef.current?.blur();
+                }}
                 onClick={() => {
                   onChange(String(player.player_id));
                   setQuery(getPlayerLabel(player));
@@ -760,11 +766,11 @@ export default function HomePage() {
   }
 
   const nodePositions = [
-    { nodeId: 1, x: 700, y: 108 },
-    { nodeId: 2, x: 255, y: 325 },
-    { nodeId: 3, x: 335, y: 700 },
-    { nodeId: 4, x: 1065, y: 700 },
-    { nodeId: 5, x: 1145, y: 325 },
+    { nodeId: 1, x: 700, y: 108, mobileNudgeClass: "" },
+    { nodeId: 2, x: 255, y: 325, mobileNudgeClass: "translate-x-26 sm:translate-x-0" },
+    { nodeId: 3, x: 335, y: 700, mobileNudgeClass: "translate-x-18 sm:translate-x-0" },
+    { nodeId: 4, x: 1065, y: 700, mobileNudgeClass: "-translate-x-18 sm:translate-x-0" },
+    { nodeId: 5, x: 1145, y: 325, mobileNudgeClass: "-translate-x-26 sm:translate-x-0" },
   ];
 
   const nodePairs = [
@@ -1036,13 +1042,16 @@ export default function HomePage() {
     setLeaderboardError(null);
   }
 
-  function renderHeadshot(player?: PlayerOption) {
+  function renderHeadshot(
+    player?: PlayerOption,
+    sizeClass = "h-20 w-20 rounded-[22px]"
+  ) {
     if (player?.headshot_url) {
       return (
         <img
           src={player.headshot_url}
           alt={player.player_name}
-          className="h-20 w-20 rounded-[22px] object-cover ring-2 ring-white/70"
+          className={`${sizeClass} object-cover ring-2 ring-white/70`}
         />
       );
     }
@@ -1057,7 +1066,9 @@ export default function HomePage() {
       : "—";
 
     return (
-      <div className="flex h-20 w-20 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#dbeafe_0%,#bfdbfe_45%,#93c5fd_100%)] text-lg font-bold text-slate-800 ring-2 ring-white/70">
+      <div
+        className={`flex ${sizeClass} items-center justify-center bg-[linear-gradient(135deg,#dbeafe_0%,#bfdbfe_45%,#93c5fd_100%)] text-lg font-bold text-slate-800 ring-2 ring-white/70`}
+      >
         {initials}
       </div>
     );
@@ -1131,7 +1142,7 @@ export default function HomePage() {
     const slotPlaceholder = getSlotPlaceholder(slotRule);
 
     return (
-      <div className="w-[195px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]">
+      <div className="w-[235px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]">
         <div className="overflow-hidden rounded-[28px] border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#eefbff_74%,#f0f9ff_100%)] shadow-[0_18px_0_rgba(14,165,233,0.12),0_24px_42px_rgba(14,165,233,0.14)] backdrop-blur-sm">
           <div className="border-b-[3px] border-sky-200 bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_48%,#7dd3fc_100%)] px-5 py-3 text-center">
             {renderSlotRuleTitle(slotRule)}
@@ -1147,22 +1158,27 @@ export default function HomePage() {
               getPlayerLabel={getPlayerLabel}
             />
 
-            <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-2.5">
+            <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-2.5 sm:p-3">
               {player ? (
-                <div className="grid grid-cols-[1fr_80px] items-center gap-3">
+                <div className="grid grid-cols-[1fr_56px] items-center gap-2 sm:grid-cols-[1fr_80px] sm:gap-3">
                   <div className="min-w-0">
-                    <p className="font-[family-name:var(--font-display)] line-clamp-2 text-[13px] leading-[1.45] text-slate-900">
+                    <p className="font-[family-name:var(--font-display)] line-clamp-2 text-[12px] leading-[1.35] text-slate-900 sm:text-[13px] sm:leading-[1.45]">
                       {player.player_name}
                     </p>
 
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-sky-700/80">
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.06em] text-sky-700/80 sm:mt-2 sm:text-[11px] sm:tracking-[0.08em]">
                       {player.primary_position ?? "N/A"} •{" "}
                       {player.career_start_season ?? "N/A"}–
                       {player.career_end_season ?? "N/A"}
                     </p>
                   </div>
 
-                  <div className="flex justify-end">{renderHeadshot(player)}</div>
+                  <div className="flex justify-end">
+                    {renderHeadshot(
+                      player,
+                      "h-14 w-14 rounded-[16px] sm:h-20 sm:w-20 sm:rounded-[22px]"
+                    )}
+                  </div>
                   </div>
               ) : (
                 <div className="flex min-h-[120px] items-center justify-center rounded-[16px] border border-dashed border-slate-300 bg-slate-50/90 text-center">
@@ -1619,7 +1635,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-          <div className="relative mt-4 mx-auto h-[760px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
+          <div className="relative mt-4 mx-auto h-[720px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
               <div className="absolute left-3 top-3 z-40 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border-[3px] border-sky-200 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(125,211,252,0.16)] sm:left-4 sm:top-4 sm:max-w-none sm:gap-3 sm:px-4">
                 <span className="h-3 w-3 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                 <select
@@ -1667,7 +1683,7 @@ export default function HomePage() {
                 </div>
               )}
 
-                <div className="absolute left-1/2 top-[54%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.37] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
+                <div className="absolute left-1/2 top-[49%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.47] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
                   <div className="absolute inset-0 overflow-hidden rounded-[30px]">
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0.00)_100%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.14)_0%,transparent_44%)]" />
@@ -1845,7 +1861,7 @@ export default function HomePage() {
                   {nodePositions.map((position) => (
                     <div
                       key={position.nodeId}
-                      className="absolute z-30"
+                      className={`absolute z-30 ${position.mobileNudgeClass}`}
                       style={{
                         left: position.x,
                         top: position.y,
