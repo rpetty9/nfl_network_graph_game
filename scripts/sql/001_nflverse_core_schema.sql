@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS player_dim (
   career_start_season INTEGER,
   career_end_season INTEGER,
   undrafted_flag BOOLEAN NOT NULL DEFAULT false,
+  super_bowl_win_count INTEGER NOT NULL DEFAULT 0,
   headshot_url TEXT
 );
 
@@ -86,6 +87,9 @@ ALTER TABLE player_dim
 
 ALTER TABLE player_dim
   ADD COLUMN IF NOT EXISTS undrafted_flag BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE player_dim
+  ADD COLUMN IF NOT EXISTS super_bowl_win_count INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE player_dim
   ADD COLUMN IF NOT EXISTS headshot_url TEXT;

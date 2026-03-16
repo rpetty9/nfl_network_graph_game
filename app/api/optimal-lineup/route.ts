@@ -20,6 +20,7 @@ type CandidatePlayer = {
   primary_position: string | null;
   career_start_season: number | null;
   career_end_season: number | null;
+  super_bowl_win_count?: number | null;
   theme_start_season: number | null;
   theme_end_season: number | null;
   fantasy_points: number;
@@ -311,6 +312,7 @@ export async function GET(request: NextRequest) {
         p.primary_position,
         p.career_start_season,
         p.career_end_season,
+        p.super_bowl_win_count,
         pts.theme_start_season,
         pts.theme_end_season,
         pts.fantasy_points::float8 AS fantasy_points,

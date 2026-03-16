@@ -62,6 +62,36 @@ TEAM_METADATA: dict[str, dict[str, str | None]] = {
     "STL": {"team_name": "St. Louis Rams", "nickname": "Rams", "city": "St. Louis", "conference": "NFC", "division": "West"},
 }
 
+# Super Bowl winners keyed by NFL season, not calendar year of the game.
+SUPER_BOWL_WINNERS_BY_SEASON: dict[int, str] = {
+    2000: "BAL",
+    2001: "NE",
+    2002: "TB",
+    2003: "NE",
+    2004: "NE",
+    2005: "PIT",
+    2006: "IND",
+    2007: "NYG",
+    2008: "PIT",
+    2009: "NO",
+    2010: "GB",
+    2011: "NYG",
+    2012: "BAL",
+    2013: "SEA",
+    2014: "NE",
+    2015: "DEN",
+    2016: "NE",
+    2017: "PHI",
+    2018: "NE",
+    2019: "KC",
+    2020: "TB",
+    2021: "LAR",
+    2022: "KC",
+    2023: "KC",
+    2024: "PHI",
+    2025: "SEA",
+}
+
 FRANCHISE_ALIASES = {
     "ARI": "ARI",
     "ARZ": "ARI",
@@ -1005,6 +1035,38 @@ def refresh_career_bounds(conn: psycopg.Connection[Any]) -> None:
     )
 
 
+def refresh_super_bowl_wins(conn: psycopg.Connection[Any]) -> None:
+    winner_values = ", ".join(
+        f"({season}, '{team_abbr}')"
+        for season, team_abbr in sorted(SUPER_BOWL_WINNERS_BY_SEASON.items())
+    )
+
+    conn.execute("UPDATE player_dim SET super_bowl_win_count = 0")
+    conn.execute(
+        f"""
+        WITH winners(season, team_abbr) AS (
+          VALUES {winner_values}
+        ),
+        counts AS (
+          SELECT
+            pth.player_id,
+            COUNT(DISTINCT pth.season)::integer AS win_count
+          FROM player_team_history pth
+          JOIN team_dim td
+            ON pth.team_id = td.team_id
+          JOIN winners w
+            ON pth.season = w.season
+           AND td.team_abbr = w.team_abbr
+          GROUP BY pth.player_id
+        )
+        UPDATE player_dim p
+        SET super_bowl_win_count = counts.win_count
+        FROM counts
+        WHERE p.player_id = counts.player_id
+        """
+    )
+
+
 def chunked(values: list[tuple[int, int, bool, int, bool, int, bool, bool]], size: int) -> list[list[tuple[int, int, bool, int, bool, int, bool, bool]]]:
     return [values[index : index + size] for index in range(0, len(values), size)]
 
@@ -1213,6 +1275,7 @@ def main() -> None:
             replace_history_rows(conn, args.start_season, args.end_season, history_rows)
             replace_stat_rows(conn, args.start_season, args.end_season, stat_rows)
             refresh_career_bounds(conn)
+            refresh_super_bowl_wins(conn)
 
         if not args.skip_pairs:
             rebuild_pair_relationships(conn)

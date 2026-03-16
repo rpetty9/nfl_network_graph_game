@@ -55,6 +55,7 @@ type PlayerOption = {
   player_name: string;
   primary_position: string | null;
   draft_round: number | null;
+  super_bowl_win_count?: number | null;
   career_start_season: number | null;
   career_end_season: number | null;
   theme_start_season: number | null;
