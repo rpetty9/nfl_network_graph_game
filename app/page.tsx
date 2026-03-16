@@ -1937,8 +1937,8 @@ export default function HomePage() {
         ) : (
           <>
           <div className="relative mt-4 mx-auto h-[500px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
-              <div className="absolute inset-x-3 top-3 z-40 grid grid-cols-[1fr_2fr_1fr] gap-2 sm:inset-x-4 sm:top-4 sm:gap-3">
-                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1.5 shadow-[0_6px_16px_rgba(125,211,252,0.14)] sm:justify-start sm:px-4 sm:py-2">
+              <div className="absolute inset-x-3 top-3 z-40 grid grid-cols-[3fr_4fr_3fr] gap-2 sm:inset-x-4 sm:top-4 sm:gap-3">
+                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)] sm:justify-start sm:px-4 sm:py-1.5">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                   <select
                     value={selectedDate}
@@ -1960,7 +1960,7 @@ export default function HomePage() {
                   </select>
                 </div>
 
-                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2.5 py-1.5 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-2">
+                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-1.5">
                   <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
                     Time Period
                   </span>
@@ -1969,7 +1969,7 @@ export default function HomePage() {
                   </span>
                 </div>
 
-                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-slate-200 bg-white/92 px-2 py-1.5 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)] sm:gap-2 sm:px-4 sm:py-2">
+                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-slate-200 bg-white/92 px-2 py-1 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)] sm:gap-2 sm:px-4 sm:py-1.5">
                   <span className="rounded-full bg-slate-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-slate-600 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
                     Players
                   </span>
