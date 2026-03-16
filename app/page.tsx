@@ -1990,12 +1990,12 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="absolute right-3 top-3 z-40 flex w-[168px] flex-col gap-2 sm:hidden">
-                <div className="group relative inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)]">
+              <div className="absolute right-3 top-3 z-40 flex w-[150px] flex-col gap-2 sm:hidden">
+                <div className="group relative inline-flex min-w-0 flex-col items-center justify-center gap-1 rounded-[18px] border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1.5 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)]">
                   <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700">
                     Time Period
                   </span>
-                  <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.03em] text-sky-800">
+                  <span className="min-w-0 text-[8px] font-black uppercase leading-[1.2] tracking-[0.03em] text-sky-800">
                     {puzzleData.theme?.display_name ?? "Daily Time Period"}
                   </span>
                 </div>
