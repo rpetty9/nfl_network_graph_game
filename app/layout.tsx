@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Option Routes",
+  title: "Gridiron Links",
   description: "Daily NFL lineup puzzle game",
 };
 

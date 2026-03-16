@@ -1699,7 +1699,7 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
             <div className="relative z-10">
               <h1 className="mt-2 text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:mt-6 md:text-5xl md:tracking-[0.08em]">
-                Route Tree
+                Gridiron Links
               </h1>
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
                 Pick 5 players, total their fantasy points for the time period, then boost the score with active links.
