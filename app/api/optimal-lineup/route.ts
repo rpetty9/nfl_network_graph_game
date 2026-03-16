@@ -269,19 +269,18 @@ export async function GET(request: NextRequest) {
           p.player_id,
           ARRAY_REMOVE(
             ARRAY_AGG(DISTINCT t.team_abbr)
-              FILTER (WHERE ts.season IS NOT NULL AND t.team_abbr IS NOT NULL),
+              FILTER (WHERE t.team_abbr IS NOT NULL),
             NULL
           ) AS theme_team_abbrs,
           ARRAY_REMOVE(
             ARRAY_AGG(DISTINCT t.conference)
-              FILTER (WHERE ts.season IS NOT NULL AND t.conference IS NOT NULL),
+              FILTER (WHERE t.conference IS NOT NULL),
             NULL
           ) AS theme_conferences,
           ARRAY_REMOVE(
             ARRAY_AGG(DISTINCT CONCAT_WS(' ', t.conference, t.division))
               FILTER (
-                WHERE ts.season IS NOT NULL
-                  AND t.conference IS NOT NULL
+                WHERE t.conference IS NOT NULL
                   AND t.division IS NOT NULL
               ),
             NULL
@@ -291,11 +290,8 @@ export async function GET(request: NextRequest) {
           ON p.player_id = ep.player_id
         LEFT JOIN player_team_history pth
           ON p.player_id = pth.player_id
-        LEFT JOIN themed_seasons ts
-          ON pth.season = ts.season
         LEFT JOIN team_dim t
           ON pth.team_id = t.team_id
-        WHERE ts.season IS NOT NULL
         GROUP BY p.player_id
       ),
       player_college_traits AS (
