@@ -1182,6 +1182,10 @@ export default function HomePage() {
   const linkBonusPct = getLinkBonusPct(activeLinkCount, bonusPct);
   const multiplier = getLinkMultiplier(activeLinkCount, bonusPct);
   const finalScore = baseFantasyPoints * multiplier;
+  const liveEnergy = isFullyConnected ? 1 : linkProgressPct;
+  const ringGlowStrength = 0.22 + liveEnergy * 0.5;
+  const shellGlowStrength = 0.12 + liveEnergy * 0.34;
+  const pulseDuration = Math.max(1.15, 2.4 - liveEnergy * 1.1);
   const formattedFinalScore = finalScore.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -2020,6 +2024,16 @@ export default function HomePage() {
                     }}
                   >
                     <div className="relative h-[294px] w-[294px] sm:h-[320px] sm:w-[320px]">
+                      {activeLinkCount > 0 && !isFullyConnected && (
+                        <div
+                          className="pointer-events-none absolute inset-[18px] rounded-full animate-pulse"
+                          style={{
+                            background: `radial-gradient(circle, rgba(74,222,128,${0.12 + liveEnergy * 0.16}) 0%, rgba(56,189,248,${0.1 + liveEnergy * 0.08}) 42%, transparent 72%)`,
+                            filter: `blur(${16 + liveEnergy * 10}px)`,
+                            animationDuration: `${pulseDuration}s`,
+                          }}
+                        />
+                      )}
                       {isFullyConnected && showFullLinkConfetti && (
                         <div className="pointer-events-none absolute inset-[-34px] z-10">
                           {confettiPieces.map((piece) => (
@@ -2072,7 +2086,10 @@ export default function HomePage() {
                             strokeLinecap="round"
                             strokeDasharray={meterCircumference}
                             strokeDashoffset={meterOffset}
-                            className="transition-all duration-500 ease-out drop-shadow-[0_0_12px_rgba(34,197,94,0.35)]"
+                            className="transition-all duration-500 ease-out"
+                            style={{
+                              filter: `drop-shadow(0 0 ${14 + liveEnergy * 14}px rgba(34,197,94,${ringGlowStrength}))`,
+                            }}
                           />
                         )}
                         <defs>
@@ -2096,6 +2113,13 @@ export default function HomePage() {
                             ? "border-emerald-200 bg-[radial-gradient(circle_at_top,#f7fee7_0%,#dcfce7_40%,#bbf7d0_100%)]"
                             : "border-sky-100 bg-[radial-gradient(circle_at_top,#ffffff_0%,#e0f2fe_54%,#dbeafe_100%)]"
                         }`}
+                        style={
+                          isFullyConnected
+                            ? undefined
+                            : {
+                                boxShadow: `0 12px 0 rgba(14,165,233,0.08), 0 22px 50px rgba(125,211,252,${0.24 + liveEnergy * 0.16}), 0 0 ${18 + liveEnergy * 20}px rgba(34,197,94,${shellGlowStrength})`,
+                              }
+                        }
                       >
                         <div
                           className={`absolute inset-[12px] rounded-full border ${
@@ -2103,6 +2127,13 @@ export default function HomePage() {
                               ? "border-emerald-300/80"
                               : "border-sky-200/70"
                           }`}
+                          style={
+                            isFullyConnected
+                              ? undefined
+                              : {
+                                  boxShadow: `inset 0 0 ${10 + liveEnergy * 10}px rgba(255,255,255,0.6), 0 0 ${8 + liveEnergy * 14}px rgba(34,197,94,${0.12 + liveEnergy * 0.18})`,
+                                }
+                          }
                         />
                         {isFullyConnected && (
                           <div className="absolute inset-[4px] rounded-full border-2 border-emerald-300/70 shadow-[0_0_32px_rgba(34,197,94,0.45)]" />
