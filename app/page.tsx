@@ -724,8 +724,8 @@ export default function HomePage() {
     const normalized = collegeName.trim().toLowerCase();
     const aliasMap: Record<string, string> = {
       alabama: "alabama",
-      "ohio state": "ohio-state",
-      "ohio st.": "ohio-state",
+      "ohio state": "ohio-st",
+      "ohio st.": "ohio-st",
       oklahoma: "oklahoma",
       lsu: "lsu",
       "louisiana state": "lsu",
