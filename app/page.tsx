@@ -2511,12 +2511,12 @@ export default function HomePage() {
                 type="button"
                 onClick={() => focusNode(activeNodeId, true)}
                 disabled={submitted}
-                className="min-w-0 flex-1 rounded-[14px] border-[2px] border-amber-200 bg-[linear-gradient(180deg,#fffdf2_0%,#fef3c7_100%)] px-2 py-1.5 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-w-0 flex-1 rounded-[14px] border-[2px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-2 py-1.5 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <p className="text-[8px] font-black uppercase tracking-[0.06em] text-amber-700">
+                <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-600">
                   Type Here
                 </p>
-                <p className="mt-0.5 truncate font-[family-name:var(--font-display)] text-[12px] text-amber-900">
+                <p className="mt-0.5 truncate font-[family-name:var(--font-display)] text-[12px] text-sky-900">
                   {activeSlotRule.display_text}
                 </p>
               </button>
