@@ -81,6 +81,7 @@ type PairRelationship = {
   same_draft_class_flag: boolean;
   same_draft_round_flag?: boolean;
   both_undrafted_flag?: boolean;
+  both_super_bowl_winner_flag?: boolean;
   same_position_flag?: boolean;
 };
 
@@ -1027,6 +1028,8 @@ export default function HomePage() {
         return pair.same_draft_round_flag === true;
       case "both_undrafted":
         return pair.both_undrafted_flag === true;
+      case "super_bowl_winner":
+        return pair.both_super_bowl_winner_flag === true;
       case "same_position":
         return pair.same_position_flag === true;
       default:

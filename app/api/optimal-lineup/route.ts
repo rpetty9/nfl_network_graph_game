@@ -40,6 +40,7 @@ type PairRelationship = {
   same_draft_class_flag: boolean;
   same_draft_round_flag?: boolean;
   both_undrafted_flag?: boolean;
+  both_super_bowl_winner_flag?: boolean;
   same_position_flag?: boolean;
 };
 
@@ -122,6 +123,8 @@ function relationshipPasses(
       return pair.same_draft_round_flag === true;
     case "both_undrafted":
       return pair.both_undrafted_flag === true;
+    case "super_bowl_winner":
+      return pair.both_super_bowl_winner_flag === true;
     case "same_position":
       return pair.same_position_flag === true;
     default:
@@ -460,10 +463,16 @@ export async function GET(request: NextRequest) {
                    AND COALESCE(p2.undrafted_flag, false) = true
                   THEN true
                   ELSE false
-                END AS both_undrafted_flag,
-                CASE
-                  WHEN p1.primary_position IS NOT NULL
-                   AND p1.primary_position = p2.primary_position
+                 END AS both_undrafted_flag,
+                 CASE
+                   WHEN COALESCE(p1.super_bowl_win_count, 0) > 0
+                    AND COALESCE(p2.super_bowl_win_count, 0) > 0
+                   THEN true
+                   ELSE false
+                 END AS both_super_bowl_winner_flag,
+                 CASE
+                   WHEN p1.primary_position IS NOT NULL
+                    AND p1.primary_position = p2.primary_position
                   THEN true
                   ELSE false
                 END AS same_position_flag

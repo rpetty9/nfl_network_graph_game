@@ -237,6 +237,12 @@ RELATIONSHIP_RULES = [
         "bonus_pct": 5,
     },
     {
+        "relationship_name": "super_bowl_winner_bonus_5",
+        "relationship_type": "super_bowl_winner",
+        "display_text": "Super Bowl Winner",
+        "bonus_pct": 5,
+    },
+    {
         "relationship_name": "same_position_bonus_5",
         "relationship_type": "same_position",
         "display_text": "Same Position",
