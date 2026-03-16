@@ -1049,7 +1049,7 @@ export default function HomePage() {
         nodeId: 2,
         x: 300,
         y: 347,
-        mobileOffsetX: 156,
+        mobileOffsetX: 124,
         mobileOffsetY: 180,
       },
       {
@@ -1070,7 +1070,7 @@ export default function HomePage() {
         nodeId: 5,
         x: 1100,
         y: 347,
-        mobileOffsetX: -156,
+        mobileOffsetX: -124,
         mobileOffsetY: 180,
       },
   ];
@@ -1963,8 +1963,8 @@ export default function HomePage() {
         ) : (
           <>
           <div className="relative mt-4 mx-auto h-[500px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
-              <div className="absolute inset-x-3 top-3 z-40 grid grid-cols-[3fr_4fr_3fr] gap-2 sm:inset-x-4 sm:top-4 sm:gap-3">
-                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)] sm:px-4 sm:py-1.5">
+              <div className="absolute left-3 top-3 z-40 sm:hidden">
+                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                   <select
                     value={selectedDate}
@@ -1975,7 +1975,51 @@ export default function HomePage() {
                         window.history.replaceState({}, "", buildPuzzleUrl(nextDate));
                       }
                     }}
-                    className="min-w-0 bg-transparent text-center text-[8px] font-black uppercase tracking-[0.05em] text-sky-700 outline-none sm:text-[10px] sm:tracking-[0.08em]"
+                    className="min-w-0 bg-transparent text-center text-[8px] font-black uppercase tracking-[0.05em] text-sky-700 outline-none"
+                    aria-label={`Puzzle date, currently ${formattedPuzzleDate}`}
+                  >
+                    {renderedDateOptions.map((dateValue) => (
+                      <option key={dateValue} value={dateValue}>
+                        {formatPuzzleDateLabel(dateValue)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="absolute right-3 top-3 z-40 flex w-[168px] flex-col gap-2 sm:hidden">
+                <div className="group relative inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)]">
+                  <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700">
+                    Time Period
+                  </span>
+                  <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.03em] text-sky-800">
+                    {puzzleData.theme?.display_name ?? "Daily Time Period"}
+                  </span>
+                </div>
+
+                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-slate-200 bg-white/92 px-2 py-1 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)]">
+                  <span className="rounded-full bg-slate-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-slate-600">
+                    Players
+                  </span>
+                  <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-slate-700">
+                    {players.length} Available
+                  </span>
+                </div>
+              </div>
+
+              <div className="absolute inset-x-4 top-4 z-40 hidden grid-cols-[3fr_4fr_3fr] gap-3 sm:grid">
+                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-4 py-1.5 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
+                  <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
+                  <select
+                    value={selectedDate}
+                    onChange={(e) => {
+                      const nextDate = e.target.value;
+                      setSelectedDate(nextDate);
+                      if (typeof window !== "undefined") {
+                        window.history.replaceState({}, "", buildPuzzleUrl(nextDate));
+                      }
+                    }}
+                    className="min-w-0 bg-transparent text-center text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 outline-none"
                     aria-label={`Puzzle date, currently ${formattedPuzzleDate}`}
                   >
                     {renderedDateOptions.map((dateValue) => (
