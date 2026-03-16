@@ -467,12 +467,19 @@ def build_player_rows(
         current["college_name"] = clean_str(
             pick(record, "college_name", "college")
         ) or current["college_name"]
-        current["draft_round"] = safe_int(
-            pick(record, "draft_round", "round")
-        ) or current["draft_round"]
-        current["draft_year"] = safe_int(
-            pick(record, "draft_year", "season", "year")
-        ) or current["draft_year"]
+        draft_round = safe_int(pick(record, "draft_round", "round"))
+        current["draft_round"] = draft_round or current["draft_round"]
+        explicit_draft_year = safe_int(pick(record, "draft_year"))
+        fallback_draft_year = (
+            safe_int(pick(record, "season", "year"))
+            if draft_round is not None
+            else None
+        )
+        current["draft_year"] = (
+            explicit_draft_year
+            or fallback_draft_year
+            or current["draft_year"]
+        )
         current["birth_date"] = clean_str(
             pick(record, "birth_date", "dob")
         ) or current["birth_date"]
@@ -990,7 +997,8 @@ def refresh_career_bounds(conn: psycopg.Connection[Any]) -> None:
         UPDATE player_dim p
         SET
           career_start_season = b.min_season,
-          career_end_season = b.max_season
+          career_end_season = b.max_season,
+          draft_year = b.min_season
         FROM bounds b
         WHERE p.player_id = b.player_id
         """
