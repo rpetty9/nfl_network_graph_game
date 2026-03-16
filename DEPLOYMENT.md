@@ -67,7 +67,11 @@ If you want to preserve any current production puzzle set instead of regeneratin
 
 1. Go to Vercel.
 2. Import the GitHub repo.
-3. Add these environment variables:
+3. Add this environment variable:
+
+- `DATABASE_URL`
+
+If you prefer split values instead, you can still use:
 
 - `DB_HOST`
 - `DB_PORT`

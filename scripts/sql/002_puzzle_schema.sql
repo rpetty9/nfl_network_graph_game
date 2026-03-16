@@ -11,8 +11,28 @@ CREATE TABLE IF NOT EXISTS multiplier_definition (
   multiplier_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   multiplier_name TEXT NOT NULL UNIQUE,
   display_name TEXT NOT NULL,
-  bonus_pct NUMERIC(6,2) NOT NULL DEFAULT 0
+  multiplier_type TEXT,
+  rule_logic_key TEXT,
+  base_value NUMERIC(10,4) NOT NULL DEFAULT 1.0,
+  increment_value NUMERIC(10,4) NOT NULL DEFAULT 0.0,
+  bonus_pct NUMERIC(6,2) GENERATED ALWAYS AS (increment_value * 100.0) STORED,
+  active_flag BOOLEAN NOT NULL DEFAULT true
 );
+
+ALTER TABLE multiplier_definition
+  ADD COLUMN IF NOT EXISTS multiplier_type TEXT;
+
+ALTER TABLE multiplier_definition
+  ADD COLUMN IF NOT EXISTS rule_logic_key TEXT;
+
+ALTER TABLE multiplier_definition
+  ADD COLUMN IF NOT EXISTS base_value NUMERIC(10,4) NOT NULL DEFAULT 1.0;
+
+ALTER TABLE multiplier_definition
+  ADD COLUMN IF NOT EXISTS increment_value NUMERIC(10,4) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE multiplier_definition
+  ADD COLUMN IF NOT EXISTS active_flag BOOLEAN NOT NULL DEFAULT true;
 
 CREATE TABLE IF NOT EXISTS relationship_rule_definition (
   relationship_rule_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -37,30 +57,60 @@ CREATE TABLE IF NOT EXISTS stat_definition (
   stat_name TEXT NOT NULL UNIQUE,
   display_name TEXT NOT NULL,
   stat_category TEXT,
-  source_column TEXT
+  source_column TEXT,
+  allowed_position_group TEXT,
+  higher_is_better_flag BOOLEAN NOT NULL DEFAULT true,
+  decimal_places INTEGER NOT NULL DEFAULT 0,
+  active_flag BOOLEAN NOT NULL DEFAULT true
 );
+
+ALTER TABLE stat_definition
+  ADD COLUMN IF NOT EXISTS allowed_position_group TEXT;
+
+ALTER TABLE stat_definition
+  ADD COLUMN IF NOT EXISTS higher_is_better_flag BOOLEAN NOT NULL DEFAULT true;
+
+ALTER TABLE stat_definition
+  ADD COLUMN IF NOT EXISTS decimal_places INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE stat_definition
+  ADD COLUMN IF NOT EXISTS active_flag BOOLEAN NOT NULL DEFAULT true;
 
 CREATE TABLE IF NOT EXISTS daily_puzzle (
   puzzle_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  puzzle_date DATE NOT NULL UNIQUE,
+  puzzle_date DATE NOT NULL,
+  sport TEXT NOT NULL DEFAULT 'nfl',
   title TEXT NOT NULL,
+  filter_id BIGINT REFERENCES filter_definition(filter_id),
   theme_filter_id BIGINT NOT NULL REFERENCES filter_definition(filter_id),
   eligibility_filter_id BIGINT NOT NULL REFERENCES filter_definition(filter_id),
   relationship_rule_id BIGINT REFERENCES relationship_rule_definition(relationship_rule_id),
   multiplier_id BIGINT NOT NULL REFERENCES multiplier_definition(multiplier_id),
+  stat_pool_size INTEGER NOT NULL DEFAULT 4,
+  selection_count INTEGER NOT NULL DEFAULT 5,
   published_flag BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (puzzle_date, sport)
 );
 
 ALTER TABLE daily_puzzle
-  ADD COLUMN IF NOT EXISTS relationship_rule_id BIGINT;
+  ADD COLUMN IF NOT EXISTS sport TEXT NOT NULL DEFAULT 'nfl';
+
+ALTER TABLE daily_puzzle
+  ADD COLUMN IF NOT EXISTS filter_id BIGINT;
+
+ALTER TABLE daily_puzzle
+  ADD COLUMN IF NOT EXISTS stat_pool_size INTEGER NOT NULL DEFAULT 4;
+
+ALTER TABLE daily_puzzle
+  ADD COLUMN IF NOT EXISTS selection_count INTEGER NOT NULL DEFAULT 5;
 
 DO $$
 BEGIN
   ALTER TABLE daily_puzzle
-    ADD CONSTRAINT fk_daily_puzzle_relationship_rule
-    FOREIGN KEY (relationship_rule_id)
-    REFERENCES relationship_rule_definition(relationship_rule_id);
+    ADD CONSTRAINT fk_daily_puzzle_filter
+    FOREIGN KEY (filter_id)
+    REFERENCES filter_definition(filter_id);
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
@@ -108,6 +158,9 @@ CREATE TABLE IF NOT EXISTS puzzle_submission_player (
 
 CREATE INDEX IF NOT EXISTS idx_filter_definition_category
   ON filter_definition (filter_category);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_puzzle_date_sport
+  ON daily_puzzle (puzzle_date, sport);
 
 CREATE INDEX IF NOT EXISTS idx_daily_puzzle_published_date
   ON daily_puzzle (published_flag, puzzle_date DESC);

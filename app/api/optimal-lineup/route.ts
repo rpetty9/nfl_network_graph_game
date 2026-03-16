@@ -397,9 +397,31 @@ export async function GET(request: NextRequest) {
                 pb.player_id_1::text,
                 pb.player_id_2::text,
                 tf.were_teammates_flag,
-                COALESCE(ppr.same_franchise_flag, false) AS same_franchise_flag,
-                COALESCE(ppr.same_college_flag, false) AS same_college_flag,
-                COALESCE(ppr.same_draft_class_flag, false) AS same_draft_class_flag,
+                CASE
+                  WHEN EXISTS (
+                    SELECT 1
+                    FROM player_team_history a
+                    JOIN player_team_history b
+                      ON COALESCE(a.franchise_id, -1) = COALESCE(b.franchise_id, -2)
+                    WHERE a.player_id = pb.player_id_1
+                      AND b.player_id = pb.player_id_2
+                      AND a.franchise_id IS NOT NULL
+                  )
+                  THEN true
+                  ELSE false
+                END AS same_franchise_flag,
+                CASE
+                  WHEN p1.college_name IS NOT NULL
+                   AND p1.college_name = p2.college_name
+                  THEN true
+                  ELSE false
+                END AS same_college_flag,
+                CASE
+                  WHEN p1.draft_year IS NOT NULL
+                   AND p1.draft_year = p2.draft_year
+                  THEN true
+                  ELSE false
+                END AS same_draft_class_flag,
                 CASE
                   WHEN p1.draft_round IS NOT NULL
                    AND p1.draft_round = p2.draft_round
@@ -422,15 +444,6 @@ export async function GET(request: NextRequest) {
               LEFT JOIN teammate_flags tf
                 ON pb.player_id_1 = tf.player_id_1
                AND pb.player_id_2 = tf.player_id_2
-              LEFT JOIN player_pair_relationships ppr
-                ON (
-                     ppr.player_id_1 = pb.player_id_1
-                     AND ppr.player_id_2 = pb.player_id_2
-                   )
-                   OR (
-                     ppr.player_id_1 = pb.player_id_2
-                     AND ppr.player_id_2 = pb.player_id_1
-                   )
               JOIN player_dim p1
                 ON p1.player_id = pb.player_id_1
               JOIN player_dim p2

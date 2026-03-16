@@ -165,16 +165,26 @@ def load_env_file(path: Path) -> None:
 
 def db_dsn() -> str:
     load_env_file(ENV_FILE)
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        return database_url
     host = os.environ.get("DB_HOST")
     port = os.environ.get("DB_PORT", "5432")
     user = os.environ.get("DB_USER")
     password = os.environ.get("DB_PASSWORD")
     dbname = os.environ.get("DB_NAME")
+    sslmode = os.environ.get("DB_SSL_MODE")
+    channel_binding = os.environ.get("DB_CHANNEL_BINDING")
     if not all([host, user, password, dbname]):
         raise SystemExit(
-            "Missing DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME environment variables."
+            "Missing DATABASE_URL or DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME environment variables."
         )
-    return f"host={host} port={port} user={user} password={password} dbname={dbname}"
+    dsn = f"host={host} port={port} user={user} password={password} dbname={dbname}"
+    if sslmode:
+        dsn += f" sslmode={sslmode}"
+    if channel_binding:
+        dsn += f" channel_binding={channel_binding}"
+    return dsn
 
 
 def to_records(data: Any) -> list[dict[str, Any]]:
@@ -276,11 +286,36 @@ def position_group(position: str | None) -> str | None:
     return POSITION_GROUPS.get(position.upper(), position.upper())
 
 
-def build_seasons(start_season: int, end_season: int) -> list[tuple[int, None, str]]:
+def build_seasons(start_season: int, end_season: int) -> list[tuple[int, None, str, str]]:
     return [
-        (season, None, f"{season}s" if season % 10 == 0 else f"{season} Season")
+        (
+            season,
+            None,
+            f"{season}s" if season % 10 == 0 else f"{season} Season",
+            f"{season} Season",
+        )
         for season in range(start_season, end_season + 1)
     ]
+
+
+def build_franchise_rows() -> list[tuple[str, str | None, str | None, str | None]]:
+    seen: set[str] = set()
+    rows: list[tuple[str, str | None, str | None, str | None]] = []
+    for team_abbr, meta in TEAM_METADATA.items():
+        canonical = canonical_franchise_abbr(team_abbr) or team_abbr
+        if canonical in seen:
+            continue
+        seen.add(canonical)
+        current_meta = TEAM_METADATA.get(canonical, meta)
+        rows.append(
+            (
+                str(current_meta.get("team_name") or canonical),
+                canonical,
+                current_meta.get("conference"),
+                current_meta.get("division"),
+            )
+        )
+    return sorted(rows, key=lambda row: row[0])
 
 
 def franchise_current_name_for_abbr(team_abbr: str) -> str:
@@ -302,6 +337,30 @@ def fetch_franchise_map(conn: psycopg.Connection[Any]) -> dict[str, int]:
             for franchise_id, current_team_name in cur.fetchall()
             if current_team_name
         }
+
+
+def upsert_franchises(
+    conn: psycopg.Connection[Any],
+    rows: list[tuple[str, str | None, str | None, str | None]],
+) -> None:
+    with conn.cursor() as cur:
+        cur.executemany(
+            """
+            INSERT INTO franchise_dim (
+              current_team_name,
+              current_team_abbr,
+              conference,
+              division
+            )
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (current_team_name)
+            DO UPDATE SET
+              current_team_abbr = EXCLUDED.current_team_abbr,
+              conference = EXCLUDED.conference,
+              division = EXCLUDED.division
+            """,
+            rows,
+        )
 
 
 def build_team_rows(
@@ -581,16 +640,17 @@ def execute_schema(conn: psycopg.Connection[Any]) -> None:
         conn.execute(sql_file.read_text(encoding="utf-8"))
 
 
-def upsert_seasons(conn: psycopg.Connection[Any], rows: list[tuple[int, None, str]]) -> None:
+def upsert_seasons(conn: psycopg.Connection[Any], rows: list[tuple[int, None, str, str]]) -> None:
     with conn.cursor() as cur:
         cur.executemany(
             """
-            INSERT INTO season_dim (season, season_start_date, era_label)
-            VALUES (%s, %s, %s)
+            INSERT INTO season_dim (season, season_start_date, era_label, season_label)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (season)
             DO UPDATE SET
               season_start_date = COALESCE(EXCLUDED.season_start_date, season_dim.season_start_date),
-              era_label = COALESCE(EXCLUDED.era_label, season_dim.era_label)
+              era_label = COALESCE(EXCLUDED.era_label, season_dim.era_label),
+              season_label = COALESCE(EXCLUDED.season_label, season_dim.season_label)
             """,
             rows,
         )
@@ -828,8 +888,9 @@ def replace_stat_rows(
               fantasy_points_ppr
             )
             VALUES (%s, %s, %s, 'REGULAR', %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (player_id, season, team_id, stat_scope)
+            ON CONFLICT (player_id, season, team_id)
             DO UPDATE SET
+              stat_scope = EXCLUDED.stat_scope,
               games_played = EXCLUDED.games_played,
               passing_yards = EXCLUDED.passing_yards,
               passing_td = EXCLUDED.passing_td,
@@ -853,6 +914,7 @@ def full_refresh_core_tables(conn: psycopg.Connection[Any]) -> None:
           player_team_history,
           player_dim,
           team_dim,
+          franchise_dim,
           season_dim
         RESTART IDENTITY CASCADE
         """
@@ -1071,9 +1133,10 @@ def main() -> None:
         if needs_source_data:
             assert stats is not None
             assert rosters is not None
-            franchise_id_map = fetch_franchise_map(conn)
 
             upsert_seasons(conn, build_seasons(args.start_season, args.end_season))
+            upsert_franchises(conn, build_franchise_rows())
+            franchise_id_map = fetch_franchise_map(conn)
             upsert_teams(conn, build_team_rows(rosters.records, stats.records, franchise_id_map))
             upsert_players(conn, build_player_rows(stats.records, rosters.records, draft_records))
 

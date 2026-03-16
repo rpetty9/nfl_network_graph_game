@@ -115,16 +115,26 @@ def load_env_file(path: Path) -> None:
 
 def db_dsn() -> str:
     load_env_file(ENV_FILE)
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        return database_url
     host = os.environ.get("DB_HOST")
     port = os.environ.get("DB_PORT", "5432")
     user = os.environ.get("DB_USER")
     password = os.environ.get("DB_PASSWORD")
     dbname = os.environ.get("DB_NAME")
+    sslmode = os.environ.get("DB_SSL_MODE")
+    channel_binding = os.environ.get("DB_CHANNEL_BINDING")
     if not all([host, user, password, dbname]):
         raise SystemExit(
-            "Missing DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME environment variables."
+            "Missing DATABASE_URL or DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME environment variables."
         )
-    return f"host={host} port={port} user={user} password={password} dbname={dbname}"
+    dsn = f"host={host} port={port} user={user} password={password} dbname={dbname}"
+    if sslmode:
+        dsn += f" sslmode={sslmode}"
+    if channel_binding:
+        dsn += f" channel_binding={channel_binding}"
+    return dsn
 
 
 def fetch_id(cur: psycopg.Cursor, table: str, key_column: str, value: str, id_column: str) -> int:

@@ -45,13 +45,24 @@ npm.cmd run dev
 
 ## Environment Variables
 
-The Next.js app and the ETL scripts both use these variables:
+The Next.js app and the ETL scripts support either a single `DATABASE_URL` or split variables:
+
+- `DATABASE_URL`
+
+Or:
 
 - `DB_HOST`
 - `DB_PORT`
 - `DB_USER`
 - `DB_PASSWORD`
 - `DB_NAME`
+
+Optional SSL-related values for hosted Postgres:
+
+- `DB_SSL`
+- `DB_SSL_REJECT_UNAUTHORIZED`
+- `DB_SSL_MODE`
+- `DB_CHANNEL_BINDING`
 
 Do not commit real secrets. `.env.local` is already ignored by `.gitignore`.
 
