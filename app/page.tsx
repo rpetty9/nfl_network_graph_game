@@ -784,35 +784,35 @@ export default function HomePage() {
       x: 700,
       y: 108,
       mobileOffsetX: 0,
-      mobileOffsetY: 72,
+      mobileOffsetY: 104,
     },
     {
       nodeId: 2,
       x: 255,
       y: 325,
       mobileOffsetX: 156,
-      mobileOffsetY: 88,
+      mobileOffsetY: 120,
     },
     {
       nodeId: 3,
       x: 335,
       y: 700,
       mobileOffsetX: 120,
-      mobileOffsetY: 58,
+      mobileOffsetY: 90,
     },
     {
       nodeId: 4,
       x: 1065,
       y: 700,
       mobileOffsetX: -120,
-      mobileOffsetY: 58,
+      mobileOffsetY: 90,
     },
     {
       nodeId: 5,
       x: 1145,
       y: 325,
       mobileOffsetX: -156,
-      mobileOffsetY: 88,
+      mobileOffsetY: 120,
     },
   ];
 
@@ -833,7 +833,7 @@ export default function HomePage() {
     x: 700,
     y: 445,
     mobileOffsetX: 0,
-    mobileOffsetY: 34,
+    mobileOffsetY: 56,
   };
 
   function getNodeById(nodeId: number) {
@@ -1897,7 +1897,7 @@ export default function HomePage() {
                           </p>
 
                           <p
-                            className={`mt-2 text-[1.5rem] font-black leading-[1.08] tracking-[0.01em] sm:font-[family-name:var(--font-display)] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
+                            className={`mt-2 text-[1.8rem] font-black leading-[1.06] tracking-[0.01em] sm:font-[family-name:var(--font-display)] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
                               isFullyConnected ? "text-emerald-900" : "text-sky-900"
                             }`}
                           >
@@ -1905,7 +1905,7 @@ export default function HomePage() {
                           </p>
 
                           <p
-                            className={`mt-2 text-[12px] font-bold uppercase tracking-[0.05em] sm:mt-3 sm:text-[12px] sm:tracking-[0.08em] ${
+                            className={`mt-2 text-[14px] font-bold uppercase tracking-[0.05em] sm:mt-3 sm:text-[12px] sm:tracking-[0.08em] ${
                               isFullyConnected ? "text-emerald-700" : "text-sky-700"
                             }`}
                           >
@@ -1922,7 +1922,7 @@ export default function HomePage() {
                             }`}
                           >
                             <span
-                              className={`text-[9px] font-black uppercase tracking-[0.05em] sm:font-[family-name:var(--font-display)] sm:text-[8px] sm:tracking-[0.04em] ${
+                              className={`text-[11px] font-black uppercase tracking-[0.05em] sm:font-[family-name:var(--font-display)] sm:text-[8px] sm:tracking-[0.04em] ${
                                 isFullyConnected ? "text-emerald-800" : "text-emerald-700"
                               }`}
                             >
