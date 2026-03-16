@@ -1,0 +1,1975 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type PuzzleResponse = {
+  puzzle: {
+    puzzle_id: string;
+    puzzle_date: string;
+    sport: string;
+    title: string;
+    selection_count: number;
+    stat_pool_size: number;
+    seed_value: string;
+    published_flag: boolean;
+  };
+  theme: {
+    filter_id: string | number;
+    filter_name: string;
+    display_name: string;
+    filter_category?: string | null;
+    rule_logic_key?: string | null;
+  } | null;
+  eligibility_filter: {
+    filter_id: string | number;
+    filter_name: string;
+    display_name: string;
+    filter_category?: string | null;
+    rule_logic_key?: string | null;
+  } | null;
+  multiplier: {
+    multiplier_name: string;
+    display_name: string;
+  } | null;
+  relationship_rule?: {
+    relationship_type: string;
+    display_text: string;
+    bonus_pct: number;
+  } | null;
+  slot_rules?: SlotRule[];
+  available_dates?: string[];
+};
+
+type SlotRule = {
+  slot_number: number;
+  slot_rule_id: string | number;
+  rule_name: string;
+  parameter_type: string;
+  parameter_value: string | null;
+  display_text: string;
+};
+
+type PlayerOption = {
+  player_id: string;
+  player_name: string;
+  primary_position: string | null;
+  draft_round: number | null;
+  career_start_season: number | null;
+  career_end_season: number | null;
+  theme_start_season: number | null;
+  theme_end_season: number | null;
+  eligible_season_count: number;
+  fantasy_points: number;
+  played_afc_west_flag: number | boolean;
+  played_titans_flag: number | boolean;
+  played_until_33_flag: number | boolean;
+  headshot_url?: string | null;
+  theme_team_abbrs?: string[];
+  theme_conferences?: string[];
+  theme_divisions?: string[];
+};
+
+type PairRelationship = {
+  player_id_1: string;
+  player_id_2: string;
+  were_teammates_flag: boolean;
+  same_franchise_flag: boolean;
+  same_college_flag: boolean;
+  same_draft_class_flag: boolean;
+  same_draft_round_flag?: boolean;
+  both_undrafted_flag?: boolean;
+  same_position_flag?: boolean;
+};
+
+type PlayersResponse = {
+  theme: {
+    filter_id: string | number;
+    filter_name: string;
+    display_name: string;
+    filter_category?: string | null;
+    rule_logic_key?: string | null;
+  } | null;
+  eligibility_filter: {
+    filter_id: string | number;
+    filter_name: string;
+    display_name: string;
+    filter_category?: string | null;
+    rule_logic_key?: string | null;
+  } | null;
+  players: PlayerOption[];
+};
+
+type OptimalLineupResponse = {
+  puzzle_date: string;
+  optimal_lineup: Array<{
+    slot_number: number;
+    slot_rule: SlotRule;
+    player: PlayerOption;
+  }>;
+  optimal_base_score: number;
+  optimal_active_links: number;
+  optimal_multiplier: number;
+  optimal_final_score: number;
+};
+
+type SubmissionResponse = {
+  submission_id: number;
+  display_name: string;
+  final_score: number;
+  percent_of_optimal: number | null;
+};
+
+type LeaderboardEntry = {
+  submission_id: number;
+  display_name: string;
+  base_score: number;
+  active_links: number;
+  multiplier: number;
+  final_score: number;
+  optimal_final_score: number | null;
+  percent_of_optimal: number | null;
+  submitted_at: string;
+};
+
+type NodeState = {
+  node_id: number;
+  player_id: string;
+};
+
+type LinkTone = "pending" | "active" | "failed";
+
+type SearchablePlayerSelectProps = {
+  value: string;
+  players: PlayerOption[];
+  disabled: boolean;
+  placeholder: string;
+  onChange: (playerId: string) => void;
+  getPlayerLabel: (player: PlayerOption) => string;
+};
+
+function SearchablePlayerSelect({
+  value,
+  players,
+  disabled,
+  placeholder,
+  onChange,
+  getPlayerLabel,
+}: SearchablePlayerSelectProps) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedPlayer = useMemo(
+    () => players.find((p) => String(p.player_id) === String(value)) ?? null,
+    [players, value]
+  );
+
+  useEffect(() => {
+    if (selectedPlayer) {
+      setQuery(getPlayerLabel(selectedPlayer));
+    } else {
+      setQuery("");
+    }
+  }, [selectedPlayer, getPlayerLabel]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!wrapperRef.current) return;
+      if (!wrapperRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredPlayers = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+
+    if (!trimmed) {
+      return [];
+    }
+
+    return players
+      .filter((player) => {
+        return player.player_name.toLowerCase().includes(trimmed);
+      })
+      .sort((a, b) => a.player_name.localeCompare(b.player_name))
+      .slice(0, 50);
+  }, [players, query]);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div className="relative">
+        <input
+          type="text"
+          value={query}
+          disabled={disabled}
+          placeholder={placeholder}
+          onFocus={() => {
+            if (!disabled) setOpen(true);
+          }}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+            if (value) onChange("");
+          }}
+          className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-12 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen((prev) => !prev)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-sky-600 disabled:cursor-not-allowed"
+        >
+          ▼
+        </button>
+      </div>
+
+      {open && !disabled && (
+        <div className="absolute z-40 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border-[3px] border-sky-300 bg-white shadow-[0_18px_50px_rgba(56,189,248,0.14)]">
+          {filteredPlayers.length === 0 ? (
+            <div className="px-4 py-3 text-[11px] text-slate-500">
+              {query.trim() ? "No players found." : "Start typing a player name."}
+            </div>
+          ) : (
+            filteredPlayers.map((player) => (
+              <button
+                key={player.player_id}
+                type="button"
+                onClick={() => {
+                  onChange(String(player.player_id));
+                  setQuery(getPlayerLabel(player));
+                  setOpen(false);
+                }}
+                className="block w-full border-b border-sky-100 px-4 py-2 text-left text-[11px] text-slate-800 transition hover:bg-sky-50 last:border-b-0"
+              >
+                <div className="font-semibold leading-tight">
+                  {player.player_name}
+                </div>
+                <div className="mt-0.5 text-[9px] uppercase tracking-[0.05em] text-slate-500">
+                  {player.primary_position ?? "N/A"} • Career{" "}
+                  {player.career_start_season ?? "N/A"}–
+                  {player.career_end_season ?? "N/A"}
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function normalizeUrlDateParam(rawDate: string): string | null {
+  if (!rawDate) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+    return rawDate;
+  }
+  return null;
+}
+
+function isSupportedPuzzleDate(dateValue: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateValue) && dateValue >= "2026-03-15";
+}
+
+export default function HomePage() {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const loadRequestRef = useRef(0);
+  const relationshipRequestRef = useRef(0);
+  const [puzzleData, setPuzzleData] = useState<PuzzleResponse | null>(null);
+  const [playersData, setPlayersData] = useState<PlayersResponse | null>(null);
+  const [pairRelationships, setPairRelationships] = useState<PairRelationship[]>(
+    []
+  );
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (typeof window === "undefined") return todayIso;
+    const params = new URLSearchParams(window.location.search);
+    const urlDate = params.get("date") ?? "";
+    const normalized = normalizeUrlDateParam(urlDate);
+    return normalized && isSupportedPuzzleDate(normalized) ? normalized : todayIso;
+  });
+  const [nodes, setNodes] = useState<NodeState[]>([]);
+  const [initialNodes, setInitialNodes] = useState<NodeState[]>([]);
+  const [submitted, setSubmitted] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [optimalLineup, setOptimalLineup] = useState<OptimalLineupResponse | null>(
+    null
+  );
+  const [optimalLoading, setOptimalLoading] = useState(false);
+  const [optimalError, setOptimalError] = useState<string | null>(null);
+  const [submissionResult, setSubmissionResult] = useState<SubmissionResponse | null>(
+    null
+  );
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const urlDate = normalizeUrlDateParam(params.get("date") ?? "");
+
+    if ((!urlDate || !isSupportedPuzzleDate(urlDate)) && params.has("date")) {
+      params.delete("date");
+      const nextQuery = params.toString();
+      const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
+      window.history.replaceState({}, "", nextUrl);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isSupportedPuzzleDate(selectedDate)) return;
+    setSelectedDate(todayIso);
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("date", todayIso);
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [selectedDate, todayIso]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const requestId = ++loadRequestRef.current;
+
+    async function loadData() {
+      try {
+        setLoading(true);
+        setLoadError(null);
+        setPairRelationships([]);
+        const params = selectedDate ? `?date=${encodeURIComponent(selectedDate)}` : "";
+        const [puzzleRes, playersRes] = await Promise.all([
+          fetch(`/api/puzzle${params}`, {
+            cache: "no-store",
+            signal: controller.signal,
+          }),
+          fetch(`/api/players${params}`, {
+            cache: "no-store",
+            signal: controller.signal,
+          }),
+        ]);
+
+        if (!puzzleRes.ok || !playersRes.ok) {
+          const [puzzleBody, playersBody] = await Promise.all([
+            puzzleRes.text(),
+            playersRes.text(),
+          ]);
+          throw new Error(
+            `puzzle ${puzzleRes.status}: ${puzzleBody || "no body"} | players ${playersRes.status}: ${playersBody || "no body"}`
+          );
+        }
+
+        const puzzleJson: PuzzleResponse = await puzzleRes.json();
+        const playersJson: PlayersResponse = await playersRes.json();
+
+        if (controller.signal.aborted || requestId !== loadRequestRef.current) {
+          return;
+        }
+
+        setPuzzleData(puzzleJson);
+        setPlayersData(playersJson);
+        setOptimalLineup(null);
+        setOptimalError(null);
+        setOptimalLoading(false);
+        setSubmissionResult(null);
+        setLeaderboard([]);
+        setLeaderboardLoading(false);
+        setLeaderboardError(null);
+        const initial = [1, 2, 3, 4, 5].map((nodeId) => ({
+          node_id: nodeId,
+          player_id: "",
+        }));
+
+        setNodes(initial);
+        setInitialNodes(initial);
+        setSubmitted(false);
+      } catch (error) {
+        if (
+          (error as Error).name === "AbortError" ||
+          requestId !== loadRequestRef.current
+        ) {
+          return;
+        }
+        console.error(error);
+        setLoadError((error as Error).message);
+      } finally {
+        if (
+          !controller.signal.aborted &&
+          requestId === loadRequestRef.current
+        ) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => controller.abort();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectedDate) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("date") === selectedDate) return;
+    url.searchParams.set("date", selectedDate);
+    window.history.replaceState({}, "", url.toString());
+  }, [selectedDate]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlDate = normalizeUrlDateParam(params.get("date") ?? "");
+      if (urlDate && urlDate !== selectedDate) {
+        setSelectedDate(urlDate);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (!selectedDate && puzzleData?.puzzle?.puzzle_date) {
+      setSelectedDate(String(puzzleData.puzzle.puzzle_date).slice(0, 10));
+    }
+  }, [puzzleData, selectedDate]);
+
+  useEffect(() => {
+    const selectedIds = Array.from(
+      new Set(nodes.map((node) => node.player_id).filter(Boolean))
+    );
+
+    if (selectedIds.length < 2) {
+      setPairRelationships([]);
+      return;
+    }
+
+    const params = new URLSearchParams();
+    selectedIds.forEach((playerId) => params.append("playerId", playerId));
+    if (selectedDate) {
+      params.set("date", selectedDate);
+    }
+    const controller = new AbortController();
+    const requestId = ++relationshipRequestRef.current;
+
+    async function loadRelationships() {
+      try {
+        const response = await fetch(`/api/relationships?${params.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) throw new Error("Failed to load relationships");
+
+        const json: { pair_relationships: PairRelationship[] } =
+          await response.json();
+        if (
+          controller.signal.aborted ||
+          requestId !== relationshipRequestRef.current
+        ) {
+          return;
+        }
+        setPairRelationships(json.pair_relationships ?? []);
+      } catch (error) {
+        if (
+          (error as Error).name === "AbortError" ||
+          requestId !== relationshipRequestRef.current
+        ) {
+          return;
+        }
+        console.error(error);
+        setPairRelationships([]);
+      }
+    }
+
+    loadRelationships();
+
+    return () => controller.abort();
+  }, [nodes, selectedDate]);
+
+  const players = playersData?.players ?? [];
+
+  const playerMap = useMemo(() => {
+    return new Map(players.map((player) => [String(player.player_id), player]));
+  }, [players]);
+
+  const pairMap = useMemo(() => {
+    const map = new Map<string, PairRelationship>();
+
+    pairRelationships.forEach((pair) => {
+      const a = String(pair.player_id_1);
+      const b = String(pair.player_id_2);
+      const key = [a, b].sort().join("|");
+      map.set(key, pair);
+    });
+
+    return map;
+  }, [pairRelationships]);
+
+  const relationshipType =
+    puzzleData?.relationship_rule?.relationship_type ?? "teammates";
+  const relationshipLabel =
+    puzzleData?.relationship_rule?.display_text ?? "Teammates";
+  const bonusPct = puzzleData?.relationship_rule?.bonus_pct ?? 5;
+  const formattedPuzzleDate = puzzleData?.puzzle?.puzzle_date
+    ? new Date(puzzleData.puzzle.puzzle_date).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Daily Puzzle";
+  function formatPuzzleDateLabel(dateValue: string) {
+    const [year, month, day] = dateValue.split("-").map(Number);
+    if (!year || !month || !day) return dateValue;
+
+    return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  const availableDates = puzzleData?.available_dates ?? [];
+  const sortedAvailableDates = [...availableDates].sort();
+  const minPuzzleDate = sortedAvailableDates[0] ?? "2026-03-15";
+  const dateOptions = availableDates
+    .filter(
+      (dateValue) =>
+        isSupportedPuzzleDate(dateValue) && dateValue >= minPuzzleDate
+    )
+    .sort();
+  const renderedDateOptions =
+    selectedDate &&
+    isSupportedPuzzleDate(selectedDate) &&
+    !dateOptions.includes(selectedDate)
+      ? [selectedDate, ...dateOptions]
+      : dateOptions;
+  const slotRules = useMemo(() => {
+    const defaultRules: SlotRule[] = [1, 2, 3, 4, 5].map((slotNumber) => ({
+      slot_number: slotNumber,
+      slot_rule_id: `default-${slotNumber}`,
+      rule_name: slotNumber === 5 ? "flex_player" : "any_player",
+      parameter_type: "any",
+      parameter_value: "ANY",
+      display_text: slotNumber === 5 ? "Flex" : "Any",
+    }));
+    const incomingRules = puzzleData?.slot_rules ?? [];
+
+    if (incomingRules.length === 0) {
+      return defaultRules;
+    }
+
+    return defaultRules.map((defaultRule) => {
+      return (
+        incomingRules.find(
+          (rule) => Number(rule.slot_number) === Number(defaultRule.slot_number)
+        ) ?? defaultRule
+      );
+    });
+  }, [puzzleData]);
+  const slotRuleMap = useMemo(() => {
+    return new Map(slotRules.map((rule) => [Number(rule.slot_number), rule]));
+  }, [slotRules]);
+  function getPairKey(playerId1: string, playerId2: string) {
+    return [String(playerId1), String(playerId2)].sort().join("|");
+  }
+
+  function getPlayerLabel(player: PlayerOption) {
+    return `${player.player_name} • ${player.primary_position ?? "N/A"}`;
+  }
+
+  function getSlotRule(nodeId: number) {
+    return (
+      slotRuleMap.get(nodeId) ?? {
+        slot_number: nodeId,
+        slot_rule_id: `fallback-${nodeId}`,
+        rule_name: "any_player",
+        parameter_type: "any",
+        parameter_value: "ANY",
+        display_text: "Any",
+      }
+    );
+  }
+
+  function getSlotPlaceholder(rule: SlotRule) {
+    switch (rule.parameter_type) {
+      case "position":
+        return `Choose a ${rule.display_text}...`;
+      case "team":
+      case "conference":
+      case "division":
+        return `Choose a ${rule.display_text} player...`;
+      default:
+        return "Choose a player...";
+    }
+  }
+
+  function playerMatchesSlotRule(player: PlayerOption, rule: SlotRule) {
+    const ruleValue = String(rule.parameter_value ?? "").toUpperCase();
+
+    switch (rule.parameter_type) {
+      case "position":
+        return (
+          !ruleValue ||
+          ruleValue === "ANY" ||
+          ruleValue === "FLEX" ||
+          String(player.primary_position ?? "").toUpperCase() === ruleValue
+        );
+      case "team":
+        return (player.theme_team_abbrs ?? []).some(
+          (teamAbbr) => String(teamAbbr).toUpperCase() === ruleValue
+        );
+      case "conference":
+        return (player.theme_conferences ?? []).some(
+          (conference) => String(conference).toUpperCase() === ruleValue
+        );
+      case "division":
+        return (player.theme_divisions ?? []).some(
+          (division) => String(division).toUpperCase() === ruleValue
+        );
+      case "any":
+      default:
+        return true;
+    }
+  }
+
+  function getTeamLogoCode(teamAbbr: string) {
+    const normalized = teamAbbr.toLowerCase();
+    const aliasMap: Record<string, string> = {
+      ari: "ari",
+      atl: "atl",
+      bal: "bal",
+      buf: "buf",
+      car: "car",
+      chi: "chi",
+      cin: "cin",
+      cle: "cle",
+      dal: "dal",
+      den: "den",
+      det: "det",
+      gb: "gb",
+      hou: "hou",
+      ind: "ind",
+      jax: "jax",
+      jac: "jax",
+      kc: "kc",
+      lv: "lv",
+      oak: "lv",
+      lac: "lac",
+      sd: "lac",
+      lar: "lar",
+      la: "lar",
+      stl: "lar",
+      mia: "mia",
+      min: "min",
+      ne: "ne",
+      no: "no",
+      nyg: "nyg",
+      nyj: "nyj",
+      phi: "phi",
+      pit: "pit",
+      sea: "sea",
+      sf: "sf",
+      tb: "tb",
+      ten: "ten",
+      houoilers: "ten",
+      wsh: "wsh",
+      was: "wsh",
+    };
+
+    return aliasMap[normalized] ?? normalized;
+  }
+
+  function renderSlotRuleTitle(rule: SlotRule) {
+    if (rule.parameter_type !== "team" || !rule.parameter_value) {
+      return (
+        <p className="font-[family-name:var(--font-display)] text-[10px] uppercase tracking-[0.12em] text-white">
+          {rule.display_text}
+        </p>
+      );
+    }
+
+    const teamAbbr = String(rule.parameter_value).toUpperCase();
+    const logoCode = getTeamLogoCode(teamAbbr);
+    const logoUrl = `https://a.espncdn.com/i/teamlogos/nfl/500/${logoCode}.png`;
+
+    return (
+      <div className="flex items-center justify-center gap-2">
+        <img
+          src={logoUrl}
+          alt={rule.display_text}
+          className="h-8 w-8 object-contain drop-shadow-[0_2px_4px_rgba(15,23,42,0.3)]"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+        <p className="font-[family-name:var(--font-display)] text-[10px] uppercase tracking-[0.12em] text-white">
+          {teamAbbr}
+        </p>
+      </div>
+    );
+  }
+
+  function updateNode(nodeId: number, playerId: string) {
+    if (submitted) return;
+
+    setNodes((prev) =>
+      prev.map((node) =>
+        node.node_id === nodeId ? { ...node, player_id: playerId } : node
+      )
+    );
+  }
+
+  function relationshipPasses(
+    ruleType: string,
+    playerIdA: string,
+    playerIdB: string
+  ): boolean {
+    const pair = pairMap.get(getPairKey(playerIdA, playerIdB));
+    if (!pair) return false;
+
+    switch (ruleType) {
+      case "teammates":
+        return pair.were_teammates_flag === true;
+      case "same_franchise":
+        return pair.same_franchise_flag === true;
+      case "same_college":
+        return pair.same_college_flag === true;
+      case "same_draft_class":
+        return pair.same_draft_class_flag === true;
+      case "same_draft_round":
+        return pair.same_draft_round_flag === true;
+      case "both_undrafted":
+        return pair.both_undrafted_flag === true;
+      case "same_position":
+        return pair.same_position_flag === true;
+      default:
+        return false;
+    }
+  }
+
+  const nodePositions = [
+    { nodeId: 1, x: 700, y: 108 },
+    { nodeId: 2, x: 255, y: 325 },
+    { nodeId: 3, x: 335, y: 700 },
+    { nodeId: 4, x: 1065, y: 700 },
+    { nodeId: 5, x: 1145, y: 325 },
+  ];
+
+  const nodePairs = [
+    [1, 2],
+    [1, 3],
+    [1, 4],
+    [1, 5],
+    [2, 3],
+    [2, 4],
+    [2, 5],
+    [3, 4],
+    [3, 5],
+    [4, 5],
+  ] as const;
+
+  const center = { x: 700, y: 445 };
+
+  function getNodeById(nodeId: number) {
+    return nodes.find((node) => node.node_id === nodeId);
+  }
+
+  function getPositionById(nodeId: number) {
+    return nodePositions.find((node) => node.nodeId === nodeId)!;
+  }
+
+  function getLinkTone(nodeA: number, nodeB: number): LinkTone {
+    const a = getNodeById(nodeA);
+    const b = getNodeById(nodeB);
+
+    if (!a?.player_id || !b?.player_id) {
+      return "pending";
+    }
+
+    if (a.player_id === b.player_id) {
+      return "failed";
+    }
+
+    return relationshipPasses(relationshipType, a.player_id, b.player_id)
+      ? "active"
+      : "failed";
+  }
+
+  function getLineColor(tone: LinkTone) {
+    switch (tone) {
+      case "active":
+        return "#4ade80";
+      case "failed":
+        return "#7f8ca6";
+      case "pending":
+        return "#7f8ca6";
+      default:
+        return "#7f8ca6";
+    }
+  }
+
+  function getLineDash(tone: LinkTone) {
+    return tone === "active" ? "0" : "8 8";
+  }
+
+  const selectedPlayers = useMemo(() => {
+    return nodes
+      .map((node) => playerMap.get(node.player_id))
+      .filter((player): player is PlayerOption => Boolean(player));
+  }, [nodes, playerMap]);
+
+  const selectedPlayersByFantasyPoints = useMemo(() => {
+    return [...selectedPlayers].sort(
+      (a, b) => Number(b.fantasy_points) - Number(a.fantasy_points)
+    );
+  }, [selectedPlayers]);
+
+  const duplicatePlayersExist = useMemo(() => {
+    const ids = nodes.map((n) => n.player_id).filter(Boolean);
+    return new Set(ids).size !== ids.length;
+  }, [nodes]);
+
+  const allFilled = nodes.every((node) => Boolean(node.player_id));
+  const activeLinkCount = nodePairs.filter(
+    ([a, b]) => getLinkTone(a, b) === "active"
+  ).length;
+
+  const totalPossibleLinks = nodePairs.length;
+  const linkProgressPct = activeLinkCount / totalPossibleLinks;
+  const isFullyConnected = activeLinkCount === totalPossibleLinks;
+  const confettiPieces = useMemo(
+    () =>
+      Array.from({ length: 20 }, (_, index) => ({
+        id: index,
+        left: 50 + Math.cos((index / 20) * Math.PI * 2) * (28 + (index % 4) * 7),
+        top: 50 + Math.sin((index / 20) * Math.PI * 2) * (28 + (index % 3) * 9),
+        x: Math.cos((index / 20) * Math.PI * 2) * (60 + (index % 5) * 14),
+        y: -55 - (index % 4) * 18,
+        rotate: (index % 2 === 0 ? 1 : -1) * (110 + index * 9),
+        delay: index * 0.04,
+        color: ["#22c55e", "#86efac", "#fde047", "#38bdf8"][index % 4],
+      })),
+    []
+  );
+
+  const centerRingSize = 320;
+  const centerRingMid = centerRingSize / 2;
+  const meterRadius = 136;
+  const meterCircumference = 2 * Math.PI * meterRadius;
+  const meterOffset = isFullyConnected
+    ? 0
+    : meterCircumference * (1 - linkProgressPct);
+
+  const baseFantasyPoints = selectedPlayers.reduce(
+    (sum, player) => sum + Number(player.fantasy_points),
+    0
+  );
+
+  const multiplier = 1 + activeLinkCount * (bonusPct / 100);
+  const finalScore = baseFantasyPoints * multiplier;
+  const formattedFinalScore = finalScore.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const optimalPercent = optimalLineup?.optimal_final_score
+    ? (finalScore / Number(optimalLineup.optimal_final_score)) * 100
+    : null;
+  const canSubmit = allFilled && !duplicatePlayersExist && !submitted;
+
+  useEffect(() => {
+    if (!isFullyConnected) {
+      setShowFullLinkConfetti(false);
+      return;
+    }
+
+    setShowFullLinkConfetti(true);
+    const timeout = window.setTimeout(() => {
+      setShowFullLinkConfetti(false);
+    }, 5000);
+
+    return () => window.clearTimeout(timeout);
+  }, [isFullyConnected]);
+
+  useEffect(() => {
+    if (!submitted) {
+      setOptimalLineup(null);
+      setOptimalError(null);
+      setOptimalLoading(false);
+      setSubmissionResult(null);
+      setLeaderboard([]);
+      setLeaderboardLoading(false);
+      setLeaderboardError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadOptimalLineup() {
+      try {
+        setOptimalLoading(true);
+        setOptimalError(null);
+        const params = selectedDate
+          ? `?date=${encodeURIComponent(selectedDate)}`
+          : "";
+        const response = await fetch(`/api/optimal-lineup${params}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(body || "Failed to load optimal lineup");
+        }
+
+        const json: OptimalLineupResponse = await response.json();
+        setOptimalLineup(json);
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+        console.error(error);
+        setOptimalLineup(null);
+        setOptimalError((error as Error).message);
+      } finally {
+        if (!controller.signal.aborted) {
+          setOptimalLoading(false);
+        }
+      }
+    }
+
+    loadOptimalLineup();
+    return () => controller.abort();
+  }, [submitted, selectedDate]);
+
+  useEffect(() => {
+    if (!submitted || !optimalLineup) return;
+
+    const controller = new AbortController();
+    const optimalResult = optimalLineup;
+
+    async function saveSubmissionAndLoadLeaderboard() {
+      try {
+        setLeaderboardLoading(true);
+        setLeaderboardError(null);
+
+        const saveResponse = await fetch("/api/submissions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            date: selectedDate,
+            lineup: nodes.map((node) => ({
+              slot_number: node.node_id,
+              player_id: Number(node.player_id),
+            })),
+            optimal_final_score: Number(optimalResult.optimal_final_score),
+          }),
+          signal: controller.signal,
+        });
+
+        if (!saveResponse.ok) {
+          const body = await saveResponse.text();
+          throw new Error(body || "Failed to save submission");
+        }
+
+        const saved: SubmissionResponse = await saveResponse.json();
+        if (controller.signal.aborted) return;
+        setSubmissionResult(saved);
+
+        const leaderboardResponse = await fetch(
+          `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
+
+        if (!leaderboardResponse.ok) {
+          const body = await leaderboardResponse.text();
+          throw new Error(body || "Failed to load leaderboard");
+        }
+
+        const leaderboardJson: { leaderboard: LeaderboardEntry[] } =
+          await leaderboardResponse.json();
+        if (controller.signal.aborted) return;
+        setLeaderboard(leaderboardJson.leaderboard ?? []);
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+        console.error(error);
+        setLeaderboardError((error as Error).message);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLeaderboardLoading(false);
+        }
+      }
+    }
+
+    saveSubmissionAndLoadLeaderboard();
+    return () => controller.abort();
+  }, [submitted, optimalLineup, selectedDate, nodes]);
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    setSubmitted(true);
+  }
+
+  function handleReset() {
+    setNodes(initialNodes.map((node) => ({ ...node })));
+    setSubmitted(false);
+    setOptimalLineup(null);
+    setOptimalError(null);
+    setOptimalLoading(false);
+    setSubmissionResult(null);
+    setLeaderboard([]);
+    setLeaderboardLoading(false);
+    setLeaderboardError(null);
+  }
+
+  function renderHeadshot(player?: PlayerOption) {
+    if (player?.headshot_url) {
+      return (
+        <img
+          src={player.headshot_url}
+          alt={player.player_name}
+          className="h-20 w-20 rounded-[22px] object-cover ring-2 ring-white/70"
+        />
+      );
+    }
+
+    const initials = player?.player_name
+      ? player.player_name
+          .split(" ")
+          .map((part) => part[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase()
+      : "—";
+
+    return (
+      <div className="flex h-20 w-20 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#dbeafe_0%,#bfdbfe_45%,#93c5fd_100%)] text-lg font-bold text-slate-800 ring-2 ring-white/70">
+        {initials}
+      </div>
+    );
+  }
+
+  function renderLineupEntry(
+    player: PlayerOption,
+    accentClasses: {
+      border: string;
+      label: string;
+      value: string;
+    },
+    slotLabel?: string
+  ) {
+    return (
+      <div
+        key={`${slotLabel ?? "player"}-${player.player_id}`}
+        className={`flex items-center justify-between gap-4 rounded-[18px] border-[3px] bg-white/90 px-4 py-3 ${accentClasses.border}`}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="shrink-0">{renderHeadshot(player)}</div>
+          <div className="min-w-0">
+            {slotLabel ? (
+              <p className={`text-[10px] font-black uppercase tracking-[0.08em] ${accentClasses.label}`}>
+                {slotLabel}
+              </p>
+            ) : null}
+            <p className="mt-1 truncate text-sm font-bold text-slate-900">
+              {player.player_name}
+            </p>
+            <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] ${accentClasses.label}`}>
+              {player.primary_position ?? "N/A"} •{" "}
+              {player.theme_start_season ?? player.career_start_season ?? "N/A"}–
+              {player.theme_end_season ?? player.career_end_season ?? "N/A"}
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+            Fantasy Pts
+          </p>
+          <p className={`mt-1 text-lg font-black ${accentClasses.value}`}>
+            {Number(player.fantasy_points).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  function renderNode(nodeId: number) {
+    const node = getNodeById(nodeId);
+    const player = node ? playerMap.get(node.player_id) : undefined;
+    const slotRule = getSlotRule(nodeId);
+    const availablePlayers = players.filter((candidate) => {
+      if (String(candidate.player_id) === String(node?.player_id ?? "")) {
+        return true;
+      }
+
+      return (
+        playerMatchesSlotRule(candidate, slotRule) &&
+        !nodes.some(
+          (selectedNode) =>
+            selectedNode.node_id !== nodeId &&
+            String(selectedNode.player_id) === String(candidate.player_id)
+        )
+      );
+    });
+    const slotPlaceholder = getSlotPlaceholder(slotRule);
+
+    return (
+      <div className="w-[230px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]">
+        <div className="overflow-hidden rounded-[28px] border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#eefbff_74%,#f0f9ff_100%)] shadow-[0_18px_0_rgba(14,165,233,0.12),0_24px_42px_rgba(14,165,233,0.14)] backdrop-blur-sm">
+          <div className="border-b-[3px] border-sky-200 bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_48%,#7dd3fc_100%)] px-5 py-3 text-center">
+            {renderSlotRuleTitle(slotRule)}
+          </div>
+
+          <div className="p-4">
+            <SearchablePlayerSelect
+              value={node?.player_id ?? ""}
+              players={availablePlayers}
+              disabled={submitted}
+              placeholder={slotPlaceholder}
+              onChange={(playerId) => updateNode(nodeId, playerId)}
+              getPlayerLabel={getPlayerLabel}
+            />
+
+            <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-2.5">
+              {player ? (
+                <div className="grid grid-cols-[1fr_80px] items-center gap-3">
+                  <div className="min-w-0">
+                    <p className="font-[family-name:var(--font-display)] line-clamp-2 text-[13px] leading-[1.45] text-slate-900">
+                      {player.player_name}
+                    </p>
+
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-sky-700/80">
+                      {player.primary_position ?? "N/A"} •{" "}
+                      {player.career_start_season ?? "N/A"}–
+                      {player.career_end_season ?? "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end">{renderHeadshot(player)}</div>
+                  </div>
+              ) : (
+                <div className="flex min-h-[120px] items-center justify-center rounded-[16px] border border-dashed border-slate-300 bg-slate-50/90 text-center">
+                  <div className="px-4">
+                    <p className="font-[family-name:var(--font-display)] text-[12px] leading-[1.5] text-sky-800">
+                      {slotRule.display_text}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[linear-gradient(180deg,#fffdf8_0%,#f8f4ea_100%)] px-8 py-12 text-slate-900">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-lg font-semibold">Loading puzzle...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!puzzleData || !playersData) {
+    return (
+      <main className="min-h-screen bg-[linear-gradient(180deg,#fffdf8_0%,#f8f4ea_100%)] px-8 py-12 text-slate-900">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-lg font-semibold">Failed to load puzzle.</p>
+          {loadError && (
+            <div className="mt-4 max-w-3xl rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+              <p className="font-bold">Load error</p>
+              <p className="mt-1 break-words">{loadError}</p>
+              <p className="mt-2 text-xs">
+                selected date: {selectedDate || "none"}
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fffdf8_0%,#f0f9ff_48%,#e0f2fe_100%)] px-4 py-6 text-slate-900 md:px-8">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(56,189,248,0.14)_0%,transparent_28%,rgba(125,211,252,0.1)_56%,rgba(14,165,233,0.12)_84%,transparent_100%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.3)_0%,rgba(191,219,254,0.16)_26%,transparent_68%)]" />
+      <div className="relative mx-auto max-w-[1380px]">
+        <div className="mx-auto max-w-[1080px] overflow-hidden rounded-[38px] border-[4px] border-sky-300 bg-white/84 shadow-[0_24px_0_rgba(56,189,248,0.14),0_26px_80px_rgba(125,211,252,0.16)] backdrop-blur-sm">
+          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-6 py-8 text-center md:px-10">
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
+            <div className="relative z-10">
+              <h1 className="mt-6 text-3xl font-black tracking-[0.08em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl">
+                Option Routes
+              </h1>
+              <p className="mx-auto mt-5 max-w-4xl text-sm font-semibold text-white/90 md:text-base">
+                Pick 5 players, total their fantasy points for the time period, then boost the score with active links.
+              </p>
+              <div className="mx-auto mt-7 max-w-xl">
+                <div className="rounded-[28px] border-[3px] border-white/35 bg-white/18 px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm">
+                  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-white/80">
+                    Today&apos;s Time Period
+                  </p>
+                  <p className="mt-3 font-[family-name:var(--font-display)] text-lg leading-[1.5] text-white md:text-xl">
+                    {puzzleData.theme?.display_name ?? "Time Period"}
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-white/80">
+                    Only stats from this season window count toward each player&apos;s score.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {submitted ? (
+          <div className="mx-auto mt-8 max-w-[1080px] rounded-[34px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-10 text-center shadow-[0_18px_0_rgba(52,211,153,0.12),0_24px_60px_rgba(52,211,153,0.12)] backdrop-blur-sm">
+            <p className="text-sm font-black uppercase tracking-[0.12em] text-emerald-700">
+              Lineup Submitted
+            </p>
+            <h2 className="mt-5 text-3xl font-black text-sky-700 md:text-5xl">
+              Final Score
+            </h2>
+            <p className="mt-6 text-6xl font-black text-sky-700 md:text-7xl">
+              {formattedFinalScore}
+            </p>
+
+            <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-3">
+              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                  Base Fantasy Points
+                </p>
+                <p className="mt-2 text-2xl font-extrabold text-slate-900">
+                  {baseFantasyPoints.toFixed(2)}
+                </p>
+              </div>
+
+              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                  Active Links
+                </p>
+                <p className="mt-2 text-2xl font-extrabold text-slate-900">
+                  {activeLinkCount}
+                </p>
+              </div>
+
+              <div className="rounded-[24px] border-[3px] border-emerald-200 bg-emerald-100/70 p-5 shadow-[0_10px_20px_rgba(52,211,153,0.12)]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">
+                  Multiplier
+                </p>
+                <p className="mt-2 text-2xl font-extrabold text-emerald-900">
+                  {multiplier.toFixed(2)}x
+                </p>
+              </div>
+            </div>
+
+            <div className="mx-auto mt-6 grid max-w-3xl gap-4 md:grid-cols-2">
+              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                  Optimal Score
+                </p>
+                <p className="mt-2 text-2xl font-extrabold text-slate-900">
+                  {optimalLineup
+                    ? Number(optimalLineup.optimal_final_score).toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )
+                    : optimalLoading
+                      ? "Calculating..."
+                      : "Unavailable"}
+                </p>
+              </div>
+
+              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                  Score vs Optimal
+                </p>
+                <p className="mt-2 text-2xl font-extrabold text-slate-900">
+                  {optimalPercent != null
+                    ? `${optimalPercent.toFixed(1)}%`
+                    : optimalLoading
+                      ? "Calculating..."
+                      : "Unavailable"}
+                </p>
+              </div>
+            </div>
+
+            {optimalError && (
+              <div className="mx-auto mt-6 max-w-3xl rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3 text-left text-sm text-rose-900">
+                <p className="font-bold">Optimal lineup error</p>
+                <p className="mt-1 break-words">{optimalError}</p>
+              </div>
+            )}
+
+            <div className="mx-auto mt-8 grid max-w-6xl gap-6 xl:grid-cols-2">
+              <div className="rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(125,211,252,0.14)]">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                  Your Lineup
+                </p>
+                <div className="mt-4 space-y-3">
+                  {selectedPlayersByFantasyPoints.map((player) =>
+                    renderLineupEntry(
+                      player,
+                      {
+                        border: "border-sky-100",
+                        label: "text-sky-700/80",
+                        value: "text-sky-700",
+                      }
+                    )
+                  )}
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+                      Base
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-900">
+                      {baseFantasyPoints.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+                      Active Links
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-900">
+                      {activeLinkCount}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+                      Multiplier
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-900">
+                      {multiplier.toFixed(2)}x
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(129,140,248,0.14)]">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
+                  Optimal Lineup
+                </p>
+                {optimalLineup ? (
+                  <>
+                    <div className="mt-4 space-y-3">
+                      {optimalLineup.optimal_lineup.map((entry) =>
+                        renderLineupEntry(
+                          entry.player,
+                          {
+                            border: "border-indigo-100",
+                            label: "text-indigo-700/80",
+                            value: "text-indigo-700",
+                          },
+                          entry.slot_rule.display_text
+                        )
+                      )}
+                    </div>
+                    <div className="mt-5 grid gap-3 md:grid-cols-3">
+                      <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                          Base
+                        </p>
+                        <p className="mt-1 text-lg font-black text-slate-900">
+                          {Number(optimalLineup.optimal_base_score).toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </p>
+                      </div>
+                      <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                          Active Links
+                        </p>
+                        <p className="mt-1 text-lg font-black text-slate-900">
+                          {optimalLineup.optimal_active_links}
+                        </p>
+                      </div>
+                      <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                          Multiplier
+                        </p>
+                        <p className="mt-1 text-lg font-black text-slate-900">
+                          {Number(optimalLineup.optimal_multiplier).toFixed(2)}x
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                    {optimalLoading
+                      ? "Calculating optimal lineup..."
+                      : "Optimal lineup unavailable"}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-6 text-left shadow-[0_14px_36px_rgba(251,191,36,0.12)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
+                {formatPuzzleDateLabel(selectedDate)} Leaderboard
+              </p>
+              {leaderboardError ? (
+                <div className="mt-4 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                  {leaderboardError}
+                </div>
+              ) : leaderboardLoading && leaderboard.length === 0 ? (
+                <div className="mt-4 rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                  Loading leaderboard...
+                </div>
+              ) : leaderboard.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {leaderboard.map((entry, index) => (
+                    <div
+                      key={entry.submission_id}
+                      className={`flex items-center justify-between gap-4 rounded-[18px] border-[3px] bg-white/90 px-4 py-3 ${
+                        submissionResult?.submission_id === entry.submission_id
+                          ? "border-emerald-200 shadow-[0_0_20px_rgba(52,211,153,0.12)]"
+                          : "border-amber-100"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
+                          #{index + 1}
+                        </p>
+                        <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                          {entry.display_name}
+                        </p>
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-amber-700/80">
+                          {Number(entry.percent_of_optimal ?? 0).toFixed(1)}% of optimal •{" "}
+                          {entry.active_links} links
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          Final Score
+                        </p>
+                        <p className="mt-1 text-lg font-black text-amber-700">
+                          {Number(entry.final_score).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                  No leaderboard entries yet for this puzzle.
+                </div>
+              )}
+            </div>
+
+            {optimalLineup && (
+              <div className="hidden mx-auto mt-8 max-w-3xl rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(129,140,248,0.14)]">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
+                  Optimal Lineup
+                </p>
+                <div className="mt-4 space-y-3">
+                  {optimalLineup.optimal_lineup.map((entry) => (
+                    <div
+                      key={`${entry.slot_number}-${entry.player.player_id}`}
+                      className="flex items-center justify-between gap-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/90 px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                          {entry.slot_rule.display_text}
+                        </p>
+                        <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                          {entry.player.player_name}
+                        </p>
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-indigo-700/80">
+                          {entry.player.primary_position ?? "N/A"} •{" "}
+                          {entry.player.theme_start_season ??
+                            entry.player.career_start_season ??
+                            "N/A"}
+                          –
+                          {entry.player.theme_end_season ??
+                            entry.player.career_end_season ??
+                            "N/A"}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          Fantasy Pts
+                        </p>
+                        <p className="mt-1 text-lg font-black text-indigo-700">
+                          {Number(entry.player.fantasy_points).toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                      Base
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-900">
+                      {Number(optimalLineup.optimal_base_score).toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                      Active Links
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-900">
+                      {optimalLineup.optimal_active_links}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                      Multiplier
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-900">
+                      {Number(optimalLineup.optimal_multiplier).toFixed(2)}x
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="hidden mx-auto mt-8 max-w-3xl rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(125,211,252,0.14)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                Player Breakdown
+              </p>
+              <div className="mt-4 space-y-3">
+                {selectedPlayersByFantasyPoints.map((player) => (
+                  <div
+                    key={player.player_id}
+                    className="flex items-center justify-between gap-4 rounded-[18px] border-[3px] border-sky-100 bg-white/90 px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-slate-900">
+                        {player.player_name}
+                      </p>
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-sky-700/80">
+                        {player.primary_position ?? "N/A"} â€¢{" "}
+                        {player.theme_start_season ?? player.career_start_season ?? "N/A"}â€“
+                        {player.theme_end_season ?? player.career_end_season ?? "N/A"}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                        Fantasy Pts
+                      </p>
+                      <p className="mt-1 text-lg font-black text-sky-700">
+                        {Number(player.fantasy_points).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-6 py-3 text-sm font-bold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50"
+              >
+                Reset Board
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="relative mt-4 mx-auto h-[640px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
+              <div className="absolute left-4 top-4 z-40 inline-flex items-center gap-3 rounded-full border-[3px] border-sky-200 bg-white/90 px-4 py-2 shadow-[0_8px_20px_rgba(125,211,252,0.16)]">
+                <span className="h-3 w-3 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
+                <select
+                  value={selectedDate}
+                  onChange={(e) => {
+                    const nextDate = e.target.value;
+                    setSelectedDate(nextDate);
+                    if (typeof window !== "undefined") {
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("date", nextDate);
+                      window.history.replaceState({}, "", url.toString());
+                    }
+                  }}
+                  className="bg-transparent text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 outline-none"
+                  aria-label={`Puzzle date, currently ${formattedPuzzleDate}`}
+                >
+                  {renderedDateOptions.map((dateValue) => (
+                      <option key={dateValue} value={dateValue}>
+                        {formatPuzzleDateLabel(dateValue)}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="absolute right-3 top-4 z-40 flex max-w-[58%] flex-col items-end gap-2 md:right-4">
+                <div className="inline-flex items-center gap-2 rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-5 py-2.5 shadow-[0_10px_24px_rgba(56,189,248,0.18)]">
+                  <span className="rounded-full bg-sky-100 px-2 py-1 text-[8px] font-black uppercase tracking-[0.1em] text-sky-700">
+                    Time Period
+                  </span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.07em] text-sky-800">
+                    {puzzleData.theme?.display_name ?? "Daily Time Period"}
+                  </span>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full border-[3px] border-slate-200 bg-white/92 px-4 py-2.5 shadow-[0_8px_20px_rgba(148,163,184,0.12)]">
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase tracking-[0.1em] text-slate-600">
+                    Players
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.06em] text-slate-700">
+                    {players.length} Available
+                  </span>
+                </div>
+              </div>
+
+              {loadError && (
+                <div className="absolute bottom-16 left-3 z-40 max-w-[420px] rounded-xl border border-rose-200 bg-white/95 px-3 py-2 text-[10px] font-semibold text-rose-900 shadow-[0_8px_18px_rgba(244,63,94,0.12)]">
+                  error: {loadError}
+                </div>
+              )}
+
+                <div className="absolute left-1/2 top-1/2 h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.5] sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
+                  <div className="absolute inset-0 overflow-hidden rounded-[30px]">
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0.00)_100%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.14)_0%,transparent_44%)]" />
+                  </div>
+
+                  <svg className="absolute inset-0 h-full w-full">
+                    {nodePairs.map(([a, b], idx) => {
+                      const posA = getPositionById(a);
+                      const posB = getPositionById(b);
+                      const tone = getLinkTone(a, b);
+                      const color = getLineColor(tone);
+                      const dash = getLineDash(tone);
+
+                      return (
+                        <line
+                          key={`${a}-${b}-${idx}`}
+                          x1={posA.x}
+                          y1={posA.y}
+                          x2={posB.x}
+                          y2={posB.y}
+                          stroke={color}
+                          strokeWidth={tone === "active" ? 5.5 : 2.5}
+                          strokeDasharray={dash}
+                          strokeLinecap="round"
+                          opacity={tone === "active" ? 1 : 0.45}
+                        />
+                      );
+                    })}
+                  </svg>
+
+                  <div
+                    className="absolute z-20"
+                    style={{
+                      left: center.x,
+                      top: center.y,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  >
+                    <div className="relative h-[320px] w-[320px]">
+                      {isFullyConnected && showFullLinkConfetti && (
+                        <div className="pointer-events-none absolute inset-[-34px] z-10">
+                          {confettiPieces.map((piece) => (
+                            <span
+                              key={piece.id}
+                              className="absolute h-3 w-2 rounded-[2px] opacity-0 full-link-confetti"
+                              style={{
+                                left: `${piece.left}%`,
+                                top: `${piece.top}%`,
+                                backgroundColor: piece.color,
+                                animationDelay: `${piece.delay}s`,
+                                ["--burst-x" as string]: `${piece.x}px`,
+                                ["--burst-y" as string]: `${piece.y}px`,
+                                ["--burst-rotate" as string]: `${piece.rotate}deg`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      <svg
+                        className="absolute inset-0 h-full w-full -rotate-90"
+                        viewBox={`0 0 ${centerRingSize} ${centerRingSize}`}
+                      >
+                        <circle
+                          cx={centerRingMid}
+                          cy={centerRingMid}
+                          r={meterRadius}
+                          fill="none"
+                          stroke="rgba(14,165,233,0.18)"
+                          strokeWidth="16"
+                        />
+                        {isFullyConnected ? (
+                          <circle
+                            cx={centerRingMid}
+                            cy={centerRingMid}
+                            r={meterRadius}
+                            fill="none"
+                            stroke="url(#fullConnectionGradient)"
+                            strokeWidth="18"
+                            className="drop-shadow-[0_0_16px_rgba(34,197,94,0.55)]"
+                          />
+                        ) : (
+                          <circle
+                            cx={centerRingMid}
+                            cy={centerRingMid}
+                            r={meterRadius}
+                            fill="none"
+                            stroke={activeLinkCount > 0 ? "#22c55e" : "#cbd5e1"}
+                            strokeWidth="18"
+                            strokeLinecap="round"
+                            strokeDasharray={meterCircumference}
+                            strokeDashoffset={meterOffset}
+                            className="transition-all duration-500 ease-out drop-shadow-[0_0_12px_rgba(34,197,94,0.35)]"
+                          />
+                        )}
+                        <defs>
+                          <linearGradient
+                            id="fullConnectionGradient"
+                            x1="0%"
+                            y1="0%"
+                            x2="100%"
+                            y2="100%"
+                          >
+                            <stop offset="0%" stopColor="#86efac" />
+                            <stop offset="45%" stopColor="#22c55e" />
+                            <stop offset="100%" stopColor="#16a34a" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+
+                      <div
+                        className={`absolute inset-[18px] flex items-center justify-center rounded-full border-[9px] px-9 text-center shadow-[0_12px_0_rgba(14,165,233,0.08),0_22px_50px_rgba(125,211,252,0.24)] ${
+                          isFullyConnected
+                            ? "border-emerald-200 bg-[radial-gradient(circle_at_top,#f7fee7_0%,#dcfce7_40%,#bbf7d0_100%)]"
+                            : "border-sky-100 bg-[radial-gradient(circle_at_top,#ffffff_0%,#e0f2fe_54%,#dbeafe_100%)]"
+                        }`}
+                      >
+                        <div
+                          className={`absolute inset-[12px] rounded-full border ${
+                            isFullyConnected
+                              ? "border-emerald-300/80"
+                              : "border-sky-200/70"
+                          }`}
+                        />
+                        {isFullyConnected && (
+                          <div className="absolute inset-[4px] rounded-full border-2 border-emerald-300/70 shadow-[0_0_32px_rgba(34,197,94,0.45)]" />
+                        )}
+
+                        <div className="relative z-10">
+                          <p
+                            className={`font-[family-name:var(--font-display)] text-[8px] uppercase tracking-[0.04em] ${
+                              isFullyConnected ? "text-emerald-700" : "text-sky-700"
+                            }`}
+                          >
+                            {isFullyConnected ? "Full Connection" : "Live Link Bonus"}
+                          </p>
+
+                          <p
+                            className={`font-[family-name:var(--font-display)] mt-3 text-[1.35rem] leading-[1.35] tracking-[0.01em] ${
+                              isFullyConnected ? "text-emerald-900" : "text-sky-900"
+                            }`}
+                          >
+                            {isFullyConnected ? "Fully Linked" : relationshipLabel}
+                          </p>
+
+                          <p
+                            className={`mt-3 text-[12px] font-semibold uppercase tracking-[0.08em] ${
+                              isFullyConnected ? "text-emerald-700" : "text-sky-700"
+                            }`}
+                          >
+                            {isFullyConnected
+                              ? "Every route is active"
+                              : `+${bonusPct}% per active link`}
+                          </p>
+
+                          <div
+                            className={`mt-5 inline-flex items-center rounded-full border-[3px] bg-white/90 px-4 py-1.5 ${
+                              isFullyConnected
+                                ? "border-emerald-300 shadow-[0_0_20px_rgba(34,197,94,0.18)]"
+                                : "border-emerald-200"
+                            }`}
+                          >
+                            <span
+                              className={`font-[family-name:var(--font-display)] text-[8px] uppercase tracking-[0.04em] ${
+                                isFullyConnected ? "text-emerald-800" : "text-emerald-700"
+                              }`}
+                            >
+                              {activeLinkCount} / {totalPossibleLinks} Links Active
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {nodePositions.map((position) => (
+                    <div
+                      key={position.nodeId}
+                      className="absolute z-30"
+                      style={{
+                        left: position.x,
+                        top: position.y,
+                      }}
+                    >
+                      {renderNode(position.nodeId)}
+                    </div>
+                  ))}
+                </div>
+            </div>
+
+            <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_14px_0_rgba(125,211,252,0.1),0_18px_40px_rgba(125,211,252,0.12)] backdrop-blur-sm">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setRulesOpen(true)}
+                  className="rounded-2xl border-[3px] border-sky-200 bg-white/90 px-6 py-4 text-sm font-bold text-sky-700 shadow-[0_8px_18px_rgba(125,211,252,0.14)] transition hover:-translate-y-0.5 hover:bg-sky-50"
+                >
+                  Rules
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={!canSubmit}
+                  className={`rounded-2xl px-6 py-4 text-sm font-bold transition ${
+                    canSubmit
+                      ? "border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] hover:-translate-y-0.5 hover:brightness-105"
+                      : "cursor-not-allowed border border-white/10 bg-white/10 text-slate-400 shadow-none"
+                  }`}
+                >
+                  Submit Score
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {rulesOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 px-4">
+            <div className="w-full max-w-xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                    Rules
+                  </p>
+                  <h2 className="mt-2 text-2xl font-black text-sky-900">
+                    How This Puzzle Works
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRulesOpen(false)}
+                  className="rounded-full border-[3px] border-sky-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-sky-700"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="mt-5 space-y-4 text-sm text-slate-700">
+                <p>
+                  <span className="font-bold text-sky-900">Sport:</span>{" "}
+                  {puzzleData.puzzle.sport.toUpperCase()}
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Objective:</span>{" "}
+                  Fill all 5 slots with unique players and finish with the highest final fantasy score possible.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Time Period:</span>{" "}
+                  {puzzleData.theme?.display_name ?? "N/A"} is the season window for the puzzle. Only stats from those seasons count toward each player&apos;s total score.
+                </p>
+                <p>
+                  Time periods are always a specific season or range of seasons, like <span className="font-semibold text-sky-900">2012</span>, <span className="font-semibold text-sky-900">2010s</span>, or <span className="font-semibold text-sky-900">2020-2025</span>. Only production from those years is used.
+                </p>
+                <p>
+                  Each slot can also have its own requirement, like <span className="font-semibold text-sky-900">QB</span>, <span className="font-semibold text-sky-900">WR</span>, a specific <span className="font-semibold text-sky-900">team</span>, or a <span className="font-semibold text-sky-900">conference/division</span>. A player only shows up in that slot if they match the slot rule.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Link:</span>{" "}
+                  {relationshipLabel} is the connection rule between two selected players. Whenever a pair of players satisfies that rule, that line becomes active and adds +{bonusPct}% to your score.
+                </p>
+                <p>
+                  Link bonuses stack. More active connections means a bigger multiplier on top of your lineup&apos;s base fantasy points.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Formula:</span>{" "}
+                  Final Score = Total Fantasy Points x (1 + Active Links x {bonusPct}%).
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Available Players:</span>{" "}
+                  {players.length}
+                </p>
+                <p>
+                  Example: if your 5 players combine for 1,000 fantasy points and you activate 4 links at +{bonusPct}% each, your multiplier becomes 1.20 and your final score becomes 1,200.
+                </p>
+                <p>
+                  Select five players, activate as many valid links as possible, and submit once every slot is filled.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <style jsx>{`
+        .full-link-confetti {
+          animation: full-link-burst 1.15s ease-out infinite;
+          transform: translate(-50%, -50%);
+        }
+
+        @keyframes full-link-burst {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.7) rotate(0deg);
+          }
+          12% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(
+                calc(-50% + var(--burst-x)),
+                calc(-50% + var(--burst-y))
+              )
+              scale(1.15) rotate(var(--burst-rotate));
+          }
+        }
+      `}</style>
+    </main>
+  );
+}
