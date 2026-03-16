@@ -2379,42 +2379,6 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <div className="mx-auto mt-4 flex max-w-[1080px] items-center justify-center sm:hidden">
-              <div className="flex w-full items-center gap-3 rounded-[24px] border-[3px] border-sky-200 bg-white/92 px-3 py-2 shadow-[0_10px_22px_rgba(125,211,252,0.14)]">
-                <button
-                  type="button"
-                  onClick={() => focusRelativeNode(-1)}
-                  disabled={submitted}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-sky-50 text-xl font-black text-sky-700 transition disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label="Go to previous slot"
-                >
-                  ←
-                </button>
-                <button
-                  type="button"
-                  onClick={() => focusNode(activeNodeId)}
-                  disabled={submitted}
-                  className="min-w-0 flex-1 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-4 py-2 text-center disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-600">
-                    Ready To Type
-                  </p>
-                  <p className="mt-1 truncate font-[family-name:var(--font-display)] text-[15px] text-sky-900">
-                    {activeSlotRule.display_text}
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => focusRelativeNode(1)}
-                  disabled={submitted}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-sky-50 text-xl font-black text-sky-700 transition disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label="Go to next slot"
-                >
-                  →
-                </button>
-              </div>
-            </div>
-
               <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_14px_0_rgba(125,211,252,0.1),0_18px_40px_rgba(125,211,252,0.12)] backdrop-blur-sm">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
@@ -2507,6 +2471,44 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
+            </div>
+          </div>
+        )}
+
+        {!submitted && !rulesOpen && (
+          <div className="pointer-events-none fixed inset-x-0 bottom-3 z-[90] flex justify-center px-4 sm:hidden">
+            <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-[26px] border-[3px] border-sky-200 bg-white/95 px-3 py-2 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
+              <button
+                type="button"
+                onClick={() => focusRelativeNode(-1)}
+                disabled={submitted}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-2xl font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Go to previous slot"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => focusNode(activeNodeId)}
+                disabled={submitted}
+                className="min-w-0 flex-1 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-4 py-2 text-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-600">
+                  Active Node
+                </p>
+                <p className="mt-1 truncate font-[family-name:var(--font-display)] text-[15px] text-sky-900">
+                  {activeSlotRule.display_text}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => focusRelativeNode(1)}
+                disabled={submitted}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-[3px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-2xl font-black text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Go to next slot"
+              >
+                →
+              </button>
             </div>
           </div>
         )}
