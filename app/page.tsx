@@ -1594,14 +1594,14 @@ export default function HomePage() {
         <div
           className={`overflow-hidden rounded-[28px] border-[3px] bg-[linear-gradient(180deg,#ffffff_0%,#eefbff_74%,#f0f9ff_100%)] backdrop-blur-sm ${
             isActiveNode
-              ? "border-amber-200 shadow-[0_18px_0_rgba(251,191,36,0.08),0_0_16px_rgba(251,191,36,0.12)]"
+              ? "border-amber-300 shadow-[0_18px_0_rgba(250,204,21,0.14),0_0_28px_rgba(250,204,21,0.22)]"
               : "border-sky-300 shadow-[0_18px_0_rgba(14,165,233,0.12),0_24px_42px_rgba(14,165,233,0.14)]"
           }`}
         >
           <div
             className={`border-b-[3px] px-5 py-3 text-center ${
               isActiveNode
-                ? "border-amber-100 bg-[linear-gradient(90deg,#fef3c7_0%,#fde68a_52%,#fef9c3_100%)]"
+                ? "border-amber-200 bg-[linear-gradient(90deg,#facc15_0%,#f59e0b_52%,#fde68a_100%)]"
                 : "border-sky-200 bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_48%,#7dd3fc_100%)]"
             }`}
           >
