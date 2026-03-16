@@ -233,7 +233,7 @@ RELATIONSHIP_RULES = [
     {
         "relationship_name": "both_undrafted_bonus_5",
         "relationship_type": "both_undrafted",
-        "display_text": "Both Undrafted",
+        "display_text": "Undrafted",
         "bonus_pct": 5,
     },
     {
