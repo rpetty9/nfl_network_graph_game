@@ -1711,7 +1711,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-          <div className="relative mt-4 mx-auto h-[650px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
+          <div className="relative mt-4 mx-auto h-[560px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
               <div className="absolute left-3 top-3 z-40 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border-[3px] border-sky-200 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(125,211,252,0.16)] sm:left-4 sm:top-4 sm:max-w-none sm:gap-3 sm:px-4">
                 <span className="h-3 w-3 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                 <select
@@ -1759,7 +1759,7 @@ export default function HomePage() {
                 </div>
               )}
 
-                <div className="absolute left-1/2 top-[49%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
+                <div className="absolute left-1/2 top-[43%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
                   <div className="absolute inset-0 overflow-hidden rounded-[30px]">
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0.00)_100%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.14)_0%,transparent_44%)]" />
@@ -1798,7 +1798,7 @@ export default function HomePage() {
                       transform: "translate(-50%, -50%)",
                     }}
                   >
-                    <div className="relative h-[215px] w-[215px] sm:h-[320px] sm:w-[320px]">
+                    <div className="relative h-[235px] w-[235px] sm:h-[320px] sm:w-[320px]">
                       {isFullyConnected && showFullLinkConfetti && (
                         <div className="pointer-events-none absolute inset-[-34px] z-10">
                           {confettiPieces.map((piece) => (
@@ -1870,7 +1870,7 @@ export default function HomePage() {
                       </svg>
 
                       <div
-                        className={`absolute inset-[12px] flex items-center justify-center rounded-full border-[7px] px-5 text-center shadow-[0_12px_0_rgba(14,165,233,0.08),0_22px_50px_rgba(125,211,252,0.24)] sm:inset-[18px] sm:border-[9px] sm:px-9 ${
+                        className={`absolute inset-[12px] flex items-center justify-center rounded-full border-[7px] px-6 text-center shadow-[0_12px_0_rgba(14,165,233,0.08),0_22px_50px_rgba(125,211,252,0.24)] sm:inset-[18px] sm:border-[9px] sm:px-9 ${
                           isFullyConnected
                             ? "border-emerald-200 bg-[radial-gradient(circle_at_top,#f7fee7_0%,#dcfce7_40%,#bbf7d0_100%)]"
                             : "border-sky-100 bg-[radial-gradient(circle_at_top,#ffffff_0%,#e0f2fe_54%,#dbeafe_100%)]"
@@ -1889,7 +1889,7 @@ export default function HomePage() {
 
                         <div className="relative z-10">
                           <p
-                            className={`font-[family-name:var(--font-display)] text-[6px] uppercase tracking-[0.03em] sm:text-[8px] sm:tracking-[0.04em] ${
+                            className={`font-[family-name:var(--font-display)] text-[7px] font-bold uppercase tracking-[0.03em] sm:text-[8px] sm:tracking-[0.04em] ${
                               isFullyConnected ? "text-emerald-700" : "text-sky-700"
                             }`}
                           >
@@ -1897,7 +1897,7 @@ export default function HomePage() {
                           </p>
 
                           <p
-                            className={`font-[family-name:var(--font-display)] mt-2 text-[0.95rem] leading-[1.2] tracking-[0.01em] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
+                            className={`font-[family-name:var(--font-display)] mt-2 text-[1.08rem] font-bold leading-[1.18] tracking-[0.01em] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
                               isFullyConnected ? "text-emerald-900" : "text-sky-900"
                             }`}
                           >
@@ -1905,7 +1905,7 @@ export default function HomePage() {
                           </p>
 
                           <p
-                            className={`mt-2 text-[9px] font-semibold uppercase tracking-[0.05em] sm:mt-3 sm:text-[12px] sm:tracking-[0.08em] ${
+                            className={`mt-2 text-[10px] font-bold uppercase tracking-[0.05em] sm:mt-3 sm:text-[12px] sm:tracking-[0.08em] ${
                               isFullyConnected ? "text-emerald-700" : "text-sky-700"
                             }`}
                           >
@@ -1915,14 +1915,14 @@ export default function HomePage() {
                           </p>
 
                           <div
-                            className={`mt-3 inline-flex items-center rounded-full border-[3px] bg-white/90 px-3 py-1 sm:mt-5 sm:px-4 sm:py-1.5 ${
+                            className={`mt-3 inline-flex items-center rounded-full border-[3px] bg-white/90 px-3.5 py-1.5 sm:mt-5 sm:px-4 sm:py-1.5 ${
                               isFullyConnected
                                 ? "border-emerald-300 shadow-[0_0_20px_rgba(34,197,94,0.18)]"
                                 : "border-emerald-200"
                             }`}
                           >
                             <span
-                              className={`font-[family-name:var(--font-display)] text-[6px] uppercase tracking-[0.02em] sm:text-[8px] sm:tracking-[0.04em] ${
+                              className={`font-[family-name:var(--font-display)] text-[7px] font-bold uppercase tracking-[0.02em] sm:text-[8px] sm:tracking-[0.04em] ${
                                 isFullyConnected ? "text-emerald-800" : "text-emerald-700"
                               }`}
                             >
