@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <circle cx="60" cy="60" r="54" fill="#fff" stroke="#c2410c" stroke-width="8"/>
+  <circle cx="60" cy="60" r="38" fill="#ffedd5" stroke="#fb923c" stroke-width="4"/>
+  <circle cx="44" cy="40" r="9" fill="#9a3412"/>
+  <path d="M40 51h10l7 9 11-10 7 6-14 13 8 14-8 4-9-15-11-1-6-9 5-11z" fill="#ea580c"/>
+  <path d="M70 44c5 0 10 4 11 9-7 1-13 2-18 4 0-8 3-13 7-13z" fill="#f97316"/>
+  <text x="60" y="97" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">WR</text>
+</svg>

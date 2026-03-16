@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <circle cx="60" cy="60" r="54" fill="#fff" stroke="#7c3aed" stroke-width="8"/>
+  <circle cx="60" cy="60" r="38" fill="#ede9fe" stroke="#a78bfa" stroke-width="4"/>
+  <circle cx="53" cy="40" r="9" fill="#5b21b6"/>
+  <path d="M45 52c7-3 15-2 22 2l9 4c3 1 4 5 2 8l-6 9-7-4 2-3-8-3-4 19h-9l4-18-10-2c-3-1-5-4-5-7 0-2 1-4 3-5l7-3z" fill="#7c3aed"/>
+  <text x="60" y="97" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">TE</text>
+</svg>

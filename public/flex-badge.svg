@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <circle cx="60" cy="60" r="54" fill="#fff" stroke="#0891b2" stroke-width="8"/>
+  <circle cx="60" cy="60" r="38" fill="#cffafe" stroke="#22d3ee" stroke-width="4"/>
+  <path d="M60 30l7 16 17 2-13 11 4 17-15-8-15 8 4-17-13-11 17-2 7-16z" fill="#0f766e"/>
+  <path d="M34 78c8-2 15-3 26-3s18 1 26 3c-4 7-14 12-26 12s-22-5-26-12z" fill="#06b6d4"/>
+  <text x="60" y="97" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#0f172a">FLEX</text>
+</svg>
