@@ -949,15 +949,14 @@ export default function HomePage() {
     if (rule.parameter_type === "division") {
       const divisionLabel = String(rule.display_text);
       const { conference, direction } = parseDivisionLabel(divisionLabel);
-      const logoUrl = conference === "AFC" ? "/afc-badge.svg" : "/nfc-badge.svg";
 
       return (
         <div className="flex items-center justify-center gap-2">
-          <img
-            src={logoUrl}
-            alt={conference}
-            className="h-10 w-10 object-contain drop-shadow-[0_2px_4px_rgba(15,23,42,0.3)] sm:h-8 sm:w-8"
-          />
+          <div className="inline-flex items-center rounded-full border-2 border-white/70 bg-white/28 px-2.5 py-1 shadow-[0_2px_4px_rgba(15,23,42,0.18)]">
+            <p className="font-[family-name:var(--font-display)] text-[13px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
+              {conference}
+            </p>
+          </div>
           <div className="inline-flex items-center rounded-full border-2 border-white/70 bg-white/20 px-2.5 py-1 shadow-[0_2px_4px_rgba(15,23,42,0.18)]">
             <p className="font-[family-name:var(--font-display)] text-[13px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
               {direction || divisionLabel.toUpperCase()}
@@ -1042,34 +1041,34 @@ export default function HomePage() {
       mobileOffsetX: 0,
       mobileOffsetY: 164,
     },
-    {
-      nodeId: 2,
-      x: 255,
-      y: 325,
-      mobileOffsetX: 156,
-      mobileOffsetY: 180,
-    },
-    {
-      nodeId: 3,
-      x: 335,
-      y: 700,
-      mobileOffsetX: 120,
-      mobileOffsetY: 150,
-    },
-    {
-      nodeId: 4,
-      x: 1065,
-      y: 700,
-      mobileOffsetX: -120,
-      mobileOffsetY: 150,
-    },
-    {
-      nodeId: 5,
-      x: 1145,
-      y: 325,
-      mobileOffsetX: -156,
-      mobileOffsetY: 180,
-    },
+      {
+        nodeId: 2,
+        x: 300,
+        y: 325,
+        mobileOffsetX: 156,
+        mobileOffsetY: 180,
+      },
+      {
+        nodeId: 3,
+        x: 335,
+        y: 735,
+        mobileOffsetX: 120,
+        mobileOffsetY: 150,
+      },
+      {
+        nodeId: 4,
+        x: 1065,
+        y: 735,
+        mobileOffsetX: -120,
+        mobileOffsetY: 150,
+      },
+      {
+        nodeId: 5,
+        x: 1100,
+        y: 325,
+        mobileOffsetX: -156,
+        mobileOffsetY: 180,
+      },
   ];
 
   const nodePairs = [
