@@ -57,6 +57,8 @@ type OptimalLineupResult = {
   final_score: number;
 };
 
+const OPTIMAL_CACHE_VERSION = "v1";
+
 const SLOT_LIMITS: Record<string, number> = {
   any: 18,
   position: 24,
@@ -68,6 +70,29 @@ const SLOT_LIMITS: Record<string, number> = {
 
 function getPairKey(playerId1: string, playerId2: string) {
   return [String(playerId1), String(playerId2)].sort().join("|");
+}
+
+function buildConfigSignature(
+  puzzleId: string | number,
+  themeRule: string,
+  relationshipRule: { relationship_type: string; bonus_pct?: number | null },
+  slotRules: SlotRule[]
+) {
+  const slotSignature = slotRules
+    .map(
+      (rule) =>
+        `${rule.slot_number}:${rule.slot_rule_id}:${rule.parameter_type}:${rule.parameter_value ?? ""}`
+    )
+    .join("|");
+
+  return [
+    OPTIMAL_CACHE_VERSION,
+    String(puzzleId),
+    themeRule,
+    relationshipRule.relationship_type,
+    String(relationshipRule.bonus_pct ?? 5),
+    slotSignature,
+  ].join("::");
 }
 
 function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
@@ -223,6 +248,27 @@ export async function GET(request: NextRequest) {
 
     const slotRules: SlotRule[] =
       slotRulesResult.rows.length > 0 ? slotRulesResult.rows : defaultSlotRules;
+    const configSignature = buildConfigSignature(
+      puzzle.puzzle_id,
+      themeRule,
+      relationshipRule,
+      slotRules
+    );
+
+    const cacheResult = await pool.query(
+      `
+      SELECT payload
+      FROM optimal_lineup_cache
+      WHERE puzzle_id = $1
+        AND config_signature = $2
+      LIMIT 1
+      `,
+      [puzzle.puzzle_id, configSignature]
+    );
+
+    if (cacheResult.rows[0]?.payload) {
+      return NextResponse.json(cacheResult.rows[0].payload);
+    }
 
     const playersResult = await pool.query(
       `
@@ -611,7 +657,7 @@ export async function GET(request: NextRequest) {
 
     const bestResult = best as OptimalLineupResult;
 
-    return NextResponse.json({
+    const responsePayload = {
       puzzle_date: String(puzzle.puzzle_date).slice(0, 10),
       relationship_rule: relationshipRule,
       candidate_pool_summary: slotCandidates.map((slot) => ({
@@ -632,7 +678,27 @@ export async function GET(request: NextRequest) {
         Number(relationshipRule.bonus_pct ?? 5)
       ),
       optimal_final_score: bestResult.final_score,
-    });
+    };
+
+    await pool.query(
+      `
+      INSERT INTO optimal_lineup_cache (
+        puzzle_id,
+        config_signature,
+        payload,
+        computed_at
+      )
+      VALUES ($1, $2, $3::jsonb, NOW())
+      ON CONFLICT (puzzle_id)
+      DO UPDATE SET
+        config_signature = EXCLUDED.config_signature,
+        payload = EXCLUDED.payload,
+        computed_at = NOW()
+      `,
+      [puzzle.puzzle_id, configSignature, JSON.stringify(responsePayload)]
+    );
+
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error("Optimal lineup route failed:", error);
     return NextResponse.json(

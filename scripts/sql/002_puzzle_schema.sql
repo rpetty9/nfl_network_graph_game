@@ -156,6 +156,13 @@ CREATE TABLE IF NOT EXISTS puzzle_submission_player (
   CHECK (slot_number BETWEEN 1 AND 5)
 );
 
+CREATE TABLE IF NOT EXISTS optimal_lineup_cache (
+  puzzle_id BIGINT PRIMARY KEY REFERENCES daily_puzzle(puzzle_id) ON DELETE CASCADE,
+  config_signature TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_filter_definition_category
   ON filter_definition (filter_category);
 
@@ -179,3 +186,6 @@ CREATE INDEX IF NOT EXISTS idx_puzzle_submission_puzzle_score
 
 CREATE INDEX IF NOT EXISTS idx_puzzle_submission_player_submission
   ON puzzle_submission_player (submission_id, slot_number);
+
+CREATE INDEX IF NOT EXISTS idx_optimal_lineup_cache_signature
+  ON optimal_lineup_cache (config_signature);
