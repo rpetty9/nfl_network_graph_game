@@ -589,6 +589,37 @@ def main() -> None:
                     }
                 )
 
+            cur.execute(
+                """
+                SELECT DISTINCT college_name
+                FROM player_college_history
+                WHERE college_name IS NOT NULL
+                  AND BTRIM(college_name) <> ''
+                ORDER BY college_name
+                """
+            )
+            for (college_name,) in cur.fetchall():
+                normalized_college = str(college_name).strip()
+                if not normalized_college:
+                    continue
+                college_slug = (
+                    normalized_college.lower()
+                    .replace("&", "and")
+                    .replace(".", "")
+                    .replace("'", "")
+                    .replace("/", "_")
+                    .replace("-", "_")
+                    .replace(" ", "_")
+                )
+                slot_rules.append(
+                    {
+                        "rule_name": f"college_{college_slug}",
+                        "parameter_type": "college",
+                        "parameter_value": normalized_college,
+                        "display_text": normalized_college,
+                    }
+                )
+
             cur.executemany(
                 """
                 INSERT INTO slot_rule_definition (

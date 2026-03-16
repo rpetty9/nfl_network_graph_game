@@ -20,6 +20,7 @@ type CandidatePlayer = {
   theme_start_season: number | null;
   theme_end_season: number | null;
   fantasy_points: number;
+  player_colleges?: string[];
   theme_team_abbrs?: string[];
   theme_conferences?: string[];
   theme_divisions?: string[];
@@ -95,6 +96,10 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
     case "division":
       return (player.theme_divisions ?? []).some(
         (division) => String(division).toUpperCase() === ruleValue
+      );
+    case "college":
+      return (player.player_colleges ?? []).some(
+        (college) => String(college).toUpperCase() === ruleValue
       );
     case "any":
     default:
@@ -302,6 +307,16 @@ async function loadPlayersForTheme(themeRule: string) {
         ON pth.team_id = t.team_id
       WHERE ts.season IS NOT NULL
       GROUP BY p.player_id
+    ),
+    player_college_traits AS (
+      SELECT
+        pch.player_id,
+        ARRAY_REMOVE(
+          ARRAY_AGG(DISTINCT pch.college_name),
+          NULL
+        ) AS player_colleges
+      FROM player_college_history pch
+      GROUP BY pch.player_id
     )
     SELECT
       p.player_id::text,
@@ -312,6 +327,7 @@ async function loadPlayersForTheme(themeRule: string) {
       pts.theme_start_season,
       pts.theme_end_season,
       pts.fantasy_points::float8 AS fantasy_points,
+      COALESCE(pct.player_colleges, ARRAY[]::text[]) AS player_colleges,
       COALESCE(pst.theme_team_abbrs, ARRAY[]::text[]) AS theme_team_abbrs,
       COALESCE(pst.theme_conferences, ARRAY[]::text[]) AS theme_conferences,
       COALESCE(pst.theme_divisions, ARRAY[]::text[]) AS theme_divisions
@@ -320,6 +336,8 @@ async function loadPlayersForTheme(themeRule: string) {
       ON pts.player_id = p.player_id
     LEFT JOIN player_slot_traits pst
       ON p.player_id = pst.player_id
+    LEFT JOIN player_college_traits pct
+      ON p.player_id = pct.player_id
     `,
     [themeRule]
   );
@@ -400,8 +418,14 @@ async function loadRelationships(playerIds: number[], themeRule: string) {
         ELSE false
       END AS same_franchise_flag,
       CASE
-        WHEN p1.college_name IS NOT NULL
-         AND p1.college_name = p2.college_name
+        WHEN EXISTS (
+          SELECT 1
+          FROM player_college_history c1
+          JOIN player_college_history c2
+            ON c1.college_name = c2.college_name
+          WHERE c1.player_id = pb.player_id_1
+            AND c2.player_id = pb.player_id_2
+        )
         THEN true
         ELSE false
       END AS same_college_flag,

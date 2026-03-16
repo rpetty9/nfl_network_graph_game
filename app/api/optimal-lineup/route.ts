@@ -23,6 +23,7 @@ type CandidatePlayer = {
   theme_end_season: number | null;
   fantasy_points: number;
   headshot_url?: string | null;
+  player_colleges?: string[];
   theme_team_abbrs?: string[];
   theme_conferences?: string[];
   theme_divisions?: string[];
@@ -57,6 +58,7 @@ const SLOT_LIMITS: Record<string, number> = {
   conference: 24,
   division: 22,
   team: 20,
+  college: 18,
 };
 
 function getPairKey(playerId1: string, playerId2: string) {
@@ -85,6 +87,10 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
     case "division":
       return (player.theme_divisions ?? []).some(
         (division) => String(division).toUpperCase() === ruleValue
+      );
+    case "college":
+      return (player.player_colleges ?? []).some(
+        (college) => String(college).toUpperCase() === ruleValue
       );
     case "any":
     default:
@@ -288,6 +294,16 @@ export async function GET(request: NextRequest) {
           ON pth.team_id = t.team_id
         WHERE ts.season IS NOT NULL
         GROUP BY p.player_id
+      ),
+      player_college_traits AS (
+        SELECT
+          pch.player_id,
+          ARRAY_REMOVE(
+            ARRAY_AGG(DISTINCT pch.college_name),
+            NULL
+          ) AS player_colleges
+        FROM player_college_history pch
+        GROUP BY pch.player_id
       )
       SELECT
         p.player_id::text,
@@ -299,6 +315,7 @@ export async function GET(request: NextRequest) {
         pts.theme_end_season,
         pts.fantasy_points::float8 AS fantasy_points,
         p.headshot_url,
+        COALESCE(pct.player_colleges, ARRAY[]::text[]) AS player_colleges,
         COALESCE(pst.theme_team_abbrs, ARRAY[]::text[]) AS theme_team_abbrs,
         COALESCE(pst.theme_conferences, ARRAY[]::text[]) AS theme_conferences,
         COALESCE(pst.theme_divisions, ARRAY[]::text[]) AS theme_divisions
@@ -307,6 +324,8 @@ export async function GET(request: NextRequest) {
         ON pts.player_id = p.player_id
       LEFT JOIN player_slot_traits pst
         ON p.player_id = pst.player_id
+      LEFT JOIN player_college_traits pct
+        ON p.player_id = pct.player_id
       ORDER BY pts.fantasy_points DESC, p.player_name
       `,
       [themeRule]
@@ -411,8 +430,14 @@ export async function GET(request: NextRequest) {
                   ELSE false
                 END AS same_franchise_flag,
                 CASE
-                  WHEN p1.college_name IS NOT NULL
-                   AND p1.college_name = p2.college_name
+                  WHEN EXISTS (
+                    SELECT 1
+                    FROM player_college_history c1
+                    JOIN player_college_history c2
+                      ON c1.college_name = c2.college_name
+                    WHERE c1.player_id = pb.player_id_1
+                      AND c2.player_id = pb.player_id_2
+                  )
                   THEN true
                   ELSE false
                 END AS same_college_flag,

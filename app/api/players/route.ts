@@ -205,6 +205,16 @@ export async function GET(request: NextRequest) {
           ON pth.team_id = t.team_id
         WHERE ts.season IS NOT NULL
         GROUP BY p.player_id
+      ),
+      player_college_traits AS (
+        SELECT
+          pch.player_id,
+          ARRAY_REMOVE(
+            ARRAY_AGG(DISTINCT pch.college_name),
+            NULL
+          ) AS player_colleges
+        FROM player_college_history pch
+        GROUP BY pch.player_id
       )
       SELECT
         p.player_id,
@@ -218,6 +228,7 @@ export async function GET(request: NextRequest) {
         pts.eligible_season_count,
         pts.fantasy_points,
         p.headshot_url,
+        COALESCE(pct.player_colleges, ARRAY[]::text[]) AS player_colleges,
         COALESCE(pst.theme_team_abbrs, ARRAY[]::text[]) AS theme_team_abbrs,
         COALESCE(pst.theme_conferences, ARRAY[]::text[]) AS theme_conferences,
         COALESCE(pst.theme_divisions, ARRAY[]::text[]) AS theme_divisions,
@@ -231,6 +242,8 @@ export async function GET(request: NextRequest) {
         ON p.player_id = pf.player_id
       LEFT JOIN player_slot_traits pst
         ON p.player_id = pst.player_id
+      LEFT JOIN player_college_traits pct
+        ON p.player_id = pct.player_id
       ORDER BY pts.fantasy_points DESC, p.player_name
       `,
       [

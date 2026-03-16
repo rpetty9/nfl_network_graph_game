@@ -64,6 +64,7 @@ type PlayerOption = {
   played_titans_flag: number | boolean;
   played_until_33_flag: number | boolean;
   headshot_url?: string | null;
+  player_colleges?: string[];
   theme_team_abbrs?: string[];
   theme_conferences?: string[];
   theme_divisions?: string[];
@@ -628,6 +629,7 @@ export default function HomePage() {
       case "team":
       case "conference":
       case "division":
+      case "college":
         return `Choose a ${rule.display_text} player...`;
       default:
         return "Choose a player...";
@@ -656,6 +658,10 @@ export default function HomePage() {
       case "division":
         return (player.theme_divisions ?? []).some(
           (division) => String(division).toUpperCase() === ruleValue
+        );
+      case "college":
+        return (player.player_colleges ?? []).some(
+          (college) => String(college).toUpperCase() === ruleValue
         );
       case "any":
       default:

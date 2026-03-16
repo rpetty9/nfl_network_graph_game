@@ -6,6 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from itertools import combinations
 from pathlib import Path
+import re
 from typing import Any
 
 import psycopg
@@ -21,6 +22,7 @@ except ImportError as exc:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "scripts" / "sql"
 ENV_FILE = ROOT / ".env.local"
+COLLEGE_SPLIT_RE = re.compile(r"\s*;\s*")
 
 TEAM_METADATA: dict[str, dict[str, str | None]] = {
     "ARI": {"team_name": "Arizona Cardinals", "nickname": "Cardinals", "city": "Arizona", "conference": "NFC", "division": "West"},
@@ -208,6 +210,24 @@ def clean_str(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def split_colleges(raw_value: str | None) -> list[str]:
+    if not raw_value:
+        return []
+
+    colleges: list[str] = []
+    seen: set[str] = set()
+    for piece in COLLEGE_SPLIT_RE.split(raw_value):
+        cleaned = piece.strip()
+        if not cleaned:
+            continue
+        normalized = cleaned.casefold()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        colleges.append(cleaned)
+    return colleges
 
 
 def safe_int(value: Any) -> int | None:
@@ -905,6 +925,41 @@ def replace_stat_rows(
         )
 
 
+def sync_player_college_history(conn: psycopg.Connection[Any]) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT player_id, college_name
+            FROM player_dim
+            WHERE college_name IS NOT NULL
+              AND BTRIM(college_name) <> ''
+            ORDER BY player_id
+            """
+        )
+        players = cur.fetchall()
+
+        cur.execute("DELETE FROM player_college_history")
+
+        rows_to_insert: list[tuple[int, str, int]] = []
+        for player_id, college_name in players:
+            colleges = split_colleges(str(college_name))
+            for display_order, college in enumerate(colleges, start=1):
+                rows_to_insert.append((int(player_id), college, display_order))
+
+        if rows_to_insert:
+            cur.executemany(
+                """
+                INSERT INTO player_college_history (
+                  player_id,
+                  college_name,
+                  display_order
+                )
+                VALUES (%s, %s, %s)
+                """,
+                rows_to_insert,
+            )
+
+
 def full_refresh_core_tables(conn: psycopg.Connection[Any]) -> None:
     conn.execute(
         """
@@ -1139,6 +1194,7 @@ def main() -> None:
             franchise_id_map = fetch_franchise_map(conn)
             upsert_teams(conn, build_team_rows(rosters.records, stats.records, franchise_id_map))
             upsert_players(conn, build_player_rows(stats.records, rosters.records, draft_records))
+            sync_player_college_history(conn)
 
             player_id_map = fetch_lookup_map(conn, "player_dim", "external_player_id", "player_id")
             team_id_map = fetch_lookup_map(conn, "team_dim", "team_abbr", "team_id")

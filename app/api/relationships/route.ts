@@ -125,8 +125,14 @@ export async function GET(request: NextRequest) {
           ELSE false
         END AS same_franchise_flag,
         CASE
-          WHEN p1.college_name IS NOT NULL
-           AND p1.college_name = p2.college_name
+          WHEN EXISTS (
+            SELECT 1
+            FROM player_college_history c1
+            JOIN player_college_history c2
+              ON c1.college_name = c2.college_name
+            WHERE c1.player_id = pb.player_id_1
+              AND c2.player_id = pb.player_id_2
+          )
           THEN true
           ELSE false
         END AS same_college_flag,
