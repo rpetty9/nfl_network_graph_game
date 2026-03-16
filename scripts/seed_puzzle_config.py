@@ -253,8 +253,8 @@ BASE_SLOT_RULES = [
     },
     {
         "rule_name": "flex_player",
-        "parameter_type": "any",
-        "parameter_value": "ANY",
+        "parameter_type": "position",
+        "parameter_value": "FLEX",
         "display_text": "Flex",
     },
     {

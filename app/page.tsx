@@ -580,8 +580,8 @@ export default function HomePage() {
       slot_number: slotNumber,
       slot_rule_id: `default-${slotNumber}`,
       rule_name: slotNumber === 5 ? "flex_player" : "any_player",
-      parameter_type: "any",
-      parameter_value: "ANY",
+      parameter_type: slotNumber === 5 ? "position" : "any",
+      parameter_value: slotNumber === 5 ? "FLEX" : "ANY",
       display_text: slotNumber === 5 ? "Flex" : "Any",
     }));
     const incomingRules = puzzleData?.slot_rules ?? [];
@@ -644,7 +644,10 @@ export default function HomePage() {
         return (
           !ruleValue ||
           ruleValue === "ANY" ||
-          ruleValue === "FLEX" ||
+          (ruleValue === "FLEX" &&
+            ["RB", "WR", "TE"].includes(
+              String(player.primary_position ?? "").toUpperCase()
+            )) ||
           String(player.primary_position ?? "").toUpperCase() === ruleValue
         );
       case "team":
