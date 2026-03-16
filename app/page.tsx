@@ -82,6 +82,7 @@ type PairRelationship = {
   same_draft_round_flag?: boolean;
   both_undrafted_flag?: boolean;
   both_super_bowl_winner_flag?: boolean;
+  both_non_super_bowl_winner_flag?: boolean;
   same_position_flag?: boolean;
 };
 
@@ -1030,6 +1031,8 @@ export default function HomePage() {
         return pair.both_undrafted_flag === true;
       case "super_bowl_winner":
         return pair.both_super_bowl_winner_flag === true;
+      case "non_super_bowl_winner":
+        return pair.both_non_super_bowl_winner_flag === true;
       case "same_position":
         return pair.same_position_flag === true;
       default:
@@ -1043,13 +1046,13 @@ export default function HomePage() {
         x: 700,
         y: 130,
         mobileOffsetX: 0,
-        mobileOffsetY: 164,
+        mobileOffsetY: 148,
       },
       {
         nodeId: 2,
         x: 300,
         y: 347,
-        mobileOffsetX: 124,
+        mobileOffsetX: 140,
         mobileOffsetY: 180,
       },
       {
@@ -1070,7 +1073,7 @@ export default function HomePage() {
         nodeId: 5,
         x: 1100,
         y: 347,
-        mobileOffsetX: -124,
+        mobileOffsetX: -140,
         mobileOffsetY: 180,
       },
   ];
@@ -1994,15 +1997,6 @@ export default function HomePage() {
                   </span>
                   <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.03em] text-sky-800">
                     {puzzleData.theme?.display_name ?? "Daily Time Period"}
-                  </span>
-                </div>
-
-                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-slate-200 bg-white/92 px-2 py-1 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)]">
-                  <span className="rounded-full bg-slate-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-slate-600">
-                    Players
-                  </span>
-                  <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-slate-700">
-                    {players.length} Available
                   </span>
                 </div>
               </div>
