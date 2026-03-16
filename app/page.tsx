@@ -784,35 +784,35 @@ export default function HomePage() {
       x: 700,
       y: 108,
       mobileOffsetX: 0,
-      mobileOffsetY: 132,
+      mobileOffsetY: 164,
     },
     {
       nodeId: 2,
       x: 255,
       y: 325,
       mobileOffsetX: 156,
-      mobileOffsetY: 148,
+      mobileOffsetY: 180,
     },
     {
       nodeId: 3,
       x: 335,
       y: 700,
       mobileOffsetX: 120,
-      mobileOffsetY: 118,
+      mobileOffsetY: 150,
     },
     {
       nodeId: 4,
       x: 1065,
       y: 700,
       mobileOffsetX: -120,
-      mobileOffsetY: 118,
+      mobileOffsetY: 150,
     },
     {
       nodeId: 5,
       x: 1145,
       y: 325,
       mobileOffsetX: -156,
-      mobileOffsetY: 148,
+      mobileOffsetY: 180,
     },
   ];
 
@@ -833,7 +833,7 @@ export default function HomePage() {
     x: 700,
     y: 445,
     mobileOffsetX: 0,
-    mobileOffsetY: 56,
+    mobileOffsetY: 88,
   };
 
   function getNodeById(nodeId: number) {
