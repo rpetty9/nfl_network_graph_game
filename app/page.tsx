@@ -1052,7 +1052,7 @@ export default function HomePage() {
         nodeId: 2,
         x: 300,
         y: 347,
-        mobileOffsetX: 156,
+        mobileOffsetX: 92,
         mobileOffsetY: 180,
       },
       {
@@ -1073,7 +1073,7 @@ export default function HomePage() {
         nodeId: 5,
         x: 1100,
         y: 347,
-        mobileOffsetX: -156,
+        mobileOffsetX: -92,
         mobileOffsetY: 180,
       },
   ];
