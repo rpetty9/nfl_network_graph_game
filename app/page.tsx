@@ -2476,8 +2476,8 @@ export default function HomePage() {
         )}
 
         {!submitted && !rulesOpen && (
-          <div className="pointer-events-none fixed inset-x-0 bottom-3 z-[90] flex justify-center px-4 sm:hidden">
-            <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-[26px] border-[3px] border-sky-200 bg-white/95 px-3 py-2 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
+          <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[90] w-[min(92vw,22rem)] -translate-x-1/2 sm:hidden">
+            <div className="pointer-events-auto flex w-full items-center gap-3 rounded-[26px] border-[3px] border-sky-200 bg-white/95 px-3 py-2 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => focusRelativeNode(-1)}
