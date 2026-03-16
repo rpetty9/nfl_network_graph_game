@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <circle cx="60" cy="60" r="54" fill="#fff" stroke="#16a34a" stroke-width="8"/>
-  <circle cx="60" cy="60" r="38" fill="#dcfce7" stroke="#4ade80" stroke-width="4"/>
-  <circle cx="50" cy="44" r="10" fill="#166534"/>
-  <path d="M42 58c7-6 17-7 24-3l10 5c3 1 4 5 2 8l-5 7c-1 2-4 3-7 2l-8-3-7 10-7-5 6-11-9-2c-3-1-5-4-4-7l1-5c0-2 2-4 4-6z" fill="#15803d"/>
-  <path d="M79 52c3 0 5 2 5 5s-2 5-5 5h-8v-10h8z" fill="#22c55e"/>
-  <text x="60" y="97" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">RB</text>
+  <circle cx="60" cy="60" r="54" fill="#F7FFF9" stroke="#16A34A" stroke-width="8"/>
+  <circle cx="60" cy="54" r="24" fill="#DCFCE7" stroke="#4ADE80" stroke-width="4"/>
+  <path d="M49 45h22v18c0 4-3 7-7 7H56c-4 0-7-3-7-7V45z" fill="#15803D"/>
+  <path d="M54 45c0-4 3-7 6-7s6 3 6 7" stroke="#15803D" stroke-width="4" stroke-linecap="round"/>
+  <path d="M53 53h14M53 59h14" stroke="#DCFCE7" stroke-width="3" stroke-linecap="round"/>
+  <text x="60" y="96" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="800" fill="#0F172A">RB</text>
 </svg>
