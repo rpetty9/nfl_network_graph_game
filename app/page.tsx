@@ -766,11 +766,40 @@ export default function HomePage() {
   }
 
   const nodePositions = [
-    { nodeId: 1, x: 700, y: 108, mobileNudgeClass: "" },
-    { nodeId: 2, x: 255, y: 325, mobileNudgeClass: "translate-x-26 sm:translate-x-0" },
-    { nodeId: 3, x: 335, y: 700, mobileNudgeClass: "translate-x-18 sm:translate-x-0" },
-    { nodeId: 4, x: 1065, y: 700, mobileNudgeClass: "-translate-x-18 sm:translate-x-0" },
-    { nodeId: 5, x: 1145, y: 325, mobileNudgeClass: "-translate-x-26 sm:translate-x-0" },
+    {
+      nodeId: 1,
+      x: 700,
+      y: 108,
+      mobileNudgeClass: "translate-y-6 sm:translate-y-0",
+    },
+    {
+      nodeId: 2,
+      x: 255,
+      y: 325,
+      mobileNudgeClass:
+        "translate-x-[5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
+    },
+    {
+      nodeId: 3,
+      x: 335,
+      y: 700,
+      mobileNudgeClass:
+        "translate-x-[3.25rem] translate-y-10 sm:translate-x-0 sm:translate-y-0",
+    },
+    {
+      nodeId: 4,
+      x: 1065,
+      y: 700,
+      mobileNudgeClass:
+        "-translate-x-[3.25rem] translate-y-10 sm:translate-x-0 sm:translate-y-0",
+    },
+    {
+      nodeId: 5,
+      x: 1145,
+      y: 325,
+      mobileNudgeClass:
+        "-translate-x-[5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
+    },
   ];
 
   const nodePairs = [
@@ -1231,25 +1260,25 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.3)_0%,rgba(191,219,254,0.16)_26%,transparent_68%)]" />
       <div className="relative mx-auto max-w-[1380px]">
         <div className="mx-auto max-w-[1080px] overflow-hidden rounded-[38px] border-[4px] border-sky-300 bg-white/84 shadow-[0_24px_0_rgba(56,189,248,0.14),0_26px_80px_rgba(125,211,252,0.16)] backdrop-blur-sm">
-          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-6 py-8 text-center md:px-10">
+          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-4 py-5 text-center md:px-10 md:py-8">
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
             <div className="relative z-10">
-              <h1 className="mt-6 text-3xl font-black tracking-[0.08em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl">
+              <h1 className="mt-2 text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:mt-6 md:text-5xl md:tracking-[0.08em]">
                 Option Routes
               </h1>
-              <p className="mx-auto mt-5 max-w-4xl text-sm font-semibold text-white/90 md:text-base">
+              <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
                 Pick 5 players, total their fantasy points for the time period, then boost the score with active links.
               </p>
-              <div className="mx-auto mt-7 max-w-xl">
-                <div className="rounded-[28px] border-[3px] border-white/35 bg-white/18 px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm">
+              <div className="mx-auto mt-4 max-w-md md:mt-7 md:max-w-xl">
+                <div className="rounded-[24px] border-[3px] border-white/35 bg-white/18 px-4 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm md:rounded-[28px] md:px-5 md:py-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.1em] text-white/80">
                     Today&apos;s Time Period
                   </p>
-                  <p className="mt-3 font-[family-name:var(--font-display)] text-lg leading-[1.5] text-white md:text-xl">
+                  <p className="mt-2 font-[family-name:var(--font-display)] text-[15px] leading-[1.35] text-white md:mt-3 md:text-xl md:leading-[1.5]">
                     {puzzleData.theme?.display_name ?? "Time Period"}
                   </p>
-                  <p className="mt-2 text-xs font-semibold text-white/80">
+                  <p className="mt-1 text-[11px] font-semibold leading-[1.35] text-white/80 md:mt-2 md:text-xs">
                     Only stats from this season window count toward each player&apos;s score.
                   </p>
                 </div>
