@@ -1680,7 +1680,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fffdf8_0%,#f0f9ff_48%,#e0f2fe_100%)] px-4 py-6 text-slate-900 md:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fffdf8_0%,#f0f9ff_48%,#e0f2fe_100%)] px-4 py-6 pb-28 text-slate-900 md:px-8 md:pb-6">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(56,189,248,0.14)_0%,transparent_28%,rgba(125,211,252,0.1)_56%,rgba(14,165,233,0.12)_84%,transparent_100%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.3)_0%,rgba(191,219,254,0.16)_26%,transparent_68%)]" />
       <div className="relative mx-auto max-w-[1380px]">
