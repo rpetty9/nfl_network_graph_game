@@ -777,28 +777,28 @@ export default function HomePage() {
       x: 255,
       y: 325,
       mobileNudgeClass:
-        "translate-x-[5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
+        "translate-x-[7.5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
     },
     {
       nodeId: 3,
       x: 335,
       y: 700,
       mobileNudgeClass:
-        "translate-x-[3.25rem] translate-y-10 sm:translate-x-0 sm:translate-y-0",
+        "translate-x-[5.5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
     },
     {
       nodeId: 4,
       x: 1065,
       y: 700,
       mobileNudgeClass:
-        "-translate-x-[3.25rem] translate-y-10 sm:translate-x-0 sm:translate-y-0",
+        "-translate-x-[5.5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
     },
     {
       nodeId: 5,
       x: 1145,
       y: 325,
       mobileNudgeClass:
-        "-translate-x-[5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
+        "-translate-x-[7.5rem] translate-y-8 sm:translate-x-0 sm:translate-y-0",
     },
   ];
 
@@ -1664,7 +1664,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-          <div className="relative mt-4 mx-auto h-[720px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
+          <div className="relative mt-4 mx-auto h-[660px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
               <div className="absolute left-3 top-3 z-40 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border-[3px] border-sky-200 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(125,211,252,0.16)] sm:left-4 sm:top-4 sm:max-w-none sm:gap-3 sm:px-4">
                 <span className="h-3 w-3 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                 <select
@@ -1688,7 +1688,7 @@ export default function HomePage() {
               </div>
 
               <div className="absolute left-3 right-3 top-18 z-40 flex flex-col items-stretch gap-2 sm:left-auto sm:right-3 sm:top-4 sm:max-w-[58%] sm:items-end md:right-4">
-                <div className="inline-flex items-center justify-between gap-2 rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-4 py-2 shadow-[0_10px_24px_rgba(56,189,248,0.18)] sm:justify-start sm:px-5 sm:py-2.5">
+                <div className="hidden items-center justify-between gap-2 rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-4 py-2 shadow-[0_10px_24px_rgba(56,189,248,0.18)] sm:inline-flex sm:justify-start sm:px-5 sm:py-2.5">
                   <span className="rounded-full bg-sky-100 px-2 py-1 text-[8px] font-black uppercase tracking-[0.1em] text-sky-700">
                     Time Period
                   </span>
@@ -1712,7 +1712,7 @@ export default function HomePage() {
                 </div>
               )}
 
-                <div className="absolute left-1/2 top-[49%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.47] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
+                <div className="absolute left-1/2 top-[45%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.47] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
                   <div className="absolute inset-0 overflow-hidden rounded-[30px]">
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0.00)_100%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.14)_0%,transparent_44%)]" />
@@ -1929,9 +1929,10 @@ export default function HomePage() {
         )}
 
         {rulesOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 px-4">
-            <div className="w-full max-w-xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
-              <div className="flex items-start justify-between gap-4">
+          <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/35 px-4 py-6">
+            <div className="flex min-h-full items-start justify-center">
+              <div className="w-full max-w-xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="sticky top-0 z-10 -mx-1 -mt-1 mb-2 flex items-start justify-between gap-4 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] px-1 pt-1">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                     Rules
@@ -1949,7 +1950,7 @@ export default function HomePage() {
                 </button>
               </div>
 
-              <div className="mt-5 space-y-4 text-sm text-slate-700">
+              <div className="mt-5 max-h-[70vh] overflow-y-auto pr-1 space-y-4 text-sm text-slate-700">
                 <p>
                   <span className="font-bold text-sky-900">Sport:</span>{" "}
                   {puzzleData.puzzle.sport.toUpperCase()}
@@ -1990,6 +1991,7 @@ export default function HomePage() {
                   Select five players, activate as many valid links as possible, and submit once every slot is filled.
                 </p>
               </div>
+            </div>
             </div>
           </div>
         )}
