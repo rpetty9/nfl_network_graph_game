@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <circle cx="60" cy="60" r="54" fill="#ffffff" stroke="#0ea5e9" stroke-width="8"/>
+  <circle cx="60" cy="60" r="38" fill="#dbeafe" stroke="#38bdf8" stroke-width="4"/>
+  <path d="M60 26l4.4 13.6h14.3L67.1 48l4.5 13.6L60 53.3l-11.6 8.3L52.9 48 41.3 39.6h14.3L60 26z" fill="#2563eb"/>
+  <text x="60" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#0f172a">AFC</text>
+</svg>

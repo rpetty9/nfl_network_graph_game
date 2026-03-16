@@ -720,8 +720,174 @@ export default function HomePage() {
     return aliasMap[normalized] ?? normalized;
   }
 
+  function getCollegeLogoSlug(collegeName: string) {
+    const normalized = collegeName.trim().toLowerCase();
+    const aliasMap: Record<string, string> = {
+      alabama: "alabama",
+      "ohio state": "ohio-state",
+      "ohio st.": "ohio-state",
+      oklahoma: "oklahoma",
+      lsu: "lsu",
+      "louisiana state": "lsu",
+      "southern california": "usc",
+      usc: "usc",
+      clemson: "clemson",
+      georgia: "georgia",
+      florida: "florida",
+      fsu: "florida-state",
+      "florida state": "florida-state",
+      auburn: "auburn",
+      "ole miss": "mississippi",
+      miami: "miami-fl",
+      "miami (fl)": "miami-fl",
+      "miami fl": "miami-fl",
+      "miami (fla.)": "miami-fl",
+      "miami (oh)": "miami-oh",
+      "miami oh": "miami-oh",
+      michigan: "michigan",
+      "michigan state": "michigan-state",
+      penn: "penn",
+      "penn state": "penn-state",
+      texas: "texas",
+      "texas a&m": "texas-am",
+      tcu: "tcu",
+      oregon: "oregon",
+      "oregon state": "oregon-state",
+      washington: "washington",
+      "washington state": "washington-state",
+      notre: "notre-dame",
+      "notre dame": "notre-dame",
+      wisconsin: "wisconsin",
+      iowa: "iowa",
+      "iowa state": "iowa-state",
+      tennessee: "tennessee",
+      arkansas: "arkansas",
+      kentucky: "kentucky",
+      mississippi: "mississippi",
+      "mississippi state": "mississippi-state",
+      ucla: "ucla",
+      stanford: "stanford",
+      california: "california",
+      cal: "california",
+      syracuse: "syracuse",
+      pitt: "pittsburgh",
+      pittsburgh: "pittsburgh",
+      "north carolina": "north-carolina",
+      unc: "north-carolina",
+      "nc state": "nc-state",
+      "north carolina state": "nc-state",
+      "south carolina": "south-carolina",
+      duke: "duke",
+      vanderbilt: "vanderbilt",
+      byu: "byu",
+      "utah state": "utah-state",
+      utah: "utah",
+      boise: "boise-state",
+      "boise state": "boise-state",
+      nebraska: "nebraska",
+      minnesota: "minnesota",
+      purdue: "purdue",
+      illinois: "illinois",
+      indiana: "indiana",
+      maryland: "maryland",
+      rutgers: "rutgers",
+      "south florida": "south-florida",
+      ucf: "ucf",
+      cincinnati: "cincinnati",
+      houston: "houston",
+      smu: "smu",
+      memphis: "memphis",
+      tulane: "tulane",
+      baylor: "baylor",
+      texastech: "texas-tech",
+      "texas tech": "texas-tech",
+      "oklahoma state": "oklahoma-state",
+      kansas: "kansas",
+      "kansas state": "kansas-state",
+      colorado: "colorado",
+      missouri: "missouri",
+      louisville: "louisville",
+      virginia: "virginia",
+      "virginia tech": "virginia-tech",
+      "west virginia": "west-virginia",
+    };
+
+    if (aliasMap[normalized]) {
+      return aliasMap[normalized];
+    }
+
+    return normalized
+      .replace(/&/g, "and")
+      .replace(/[.'"]/g, "")
+      .replace(/[()]/g, "")
+      .replace(/\//g, " ")
+      .replace(/\s+/g, "-");
+  }
+
   function renderSlotRuleTitle(rule: SlotRule) {
-    if (rule.parameter_type !== "team" || !rule.parameter_value) {
+    if (!rule.parameter_value) {
+      return (
+        <p className="font-[family-name:var(--font-display)] text-[15px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
+          {rule.display_text}
+        </p>
+      );
+    }
+
+    if (rule.parameter_type === "conference") {
+      const conference = String(rule.parameter_value).toUpperCase();
+      const logoUrl = conference === "AFC" ? "/afc-badge.svg" : "/nfc-badge.svg";
+
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <img
+            src={logoUrl}
+            alt={rule.display_text}
+            className="h-10 w-10 object-contain drop-shadow-[0_2px_4px_rgba(15,23,42,0.3)] sm:h-8 sm:w-8"
+          />
+          <p className="font-[family-name:var(--font-display)] text-[15px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
+            {conference}
+          </p>
+        </div>
+      );
+    }
+
+    if (rule.parameter_type === "college") {
+      const collegeLabel = String(rule.display_text);
+      const logoSlug = getCollegeLogoSlug(collegeLabel);
+      const logoUrl = `https://ncaa-api.henrygd.me/logo/${logoSlug}.svg`;
+      const initials = collegeLabel
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => part[0])
+        .slice(0, 3)
+        .join("")
+        .toUpperCase();
+
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/70 bg-white/25 shadow-[0_2px_4px_rgba(15,23,42,0.3)] sm:h-8 sm:w-8">
+            <img
+              src={logoUrl}
+              alt={collegeLabel}
+              className="h-7 w-7 object-contain sm:h-6 sm:w-6"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+                const fallback = event.currentTarget.nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+            <div className="hidden h-full w-full items-center justify-center text-[13px] font-black uppercase text-white sm:text-[10px]">
+              {initials}
+            </div>
+          </div>
+          <p className="font-[family-name:var(--font-display)] text-[15px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
+            {collegeLabel}
+          </p>
+        </div>
+      );
+    }
+
+    if (rule.parameter_type !== "team") {
       return (
         <p className="font-[family-name:var(--font-display)] text-[15px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
           {rule.display_text}
