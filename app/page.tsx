@@ -1577,19 +1577,6 @@ export default function HomePage() {
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
                 Pick 5 players, total their fantasy points for the time period, then boost the score with active links.
               </p>
-              <div className="mx-auto mt-4 max-w-md md:mt-7 md:max-w-xl">
-                <div className="rounded-[24px] border-[3px] border-white/35 bg-white/18 px-4 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm md:rounded-[28px] md:px-5 md:py-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-white/80">
-                    Today&apos;s Time Period
-                  </p>
-                  <p className="mt-2 font-[family-name:var(--font-display)] text-[15px] leading-[1.35] text-white md:mt-3 md:text-xl md:leading-[1.5]">
-                    {puzzleData.theme?.display_name ?? "Time Period"}
-                  </p>
-                  <p className="mt-1 text-[11px] font-semibold leading-[1.35] text-white/80 md:mt-2 md:text-xs">
-                    Only stats from this season window count toward each player&apos;s score.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1995,13 +1982,23 @@ export default function HomePage() {
                   </select>
                 </div>
 
-                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-1.5">
+                <div className="group relative inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-1.5">
                   <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
                     Time Period
                   </span>
                   <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.03em] text-sky-800 sm:text-[11px] sm:tracking-[0.07em]">
                     {puzzleData.theme?.display_name ?? "Daily Time Period"}
                   </span>
+                  <div className="pointer-events-none absolute left-1/2 top-full z-50 hidden w-[240px] -translate-x-1/2 pt-2 opacity-0 transition duration-200 group-hover:opacity-100 sm:block">
+                    <div className="rounded-[18px] border-[2px] border-sky-200 bg-white/96 px-3 py-2 text-left shadow-[0_12px_30px_rgba(56,189,248,0.18)] backdrop-blur-sm">
+                      <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-700">
+                        Time Period Info
+                      </p>
+                      <p className="mt-1 text-[11px] font-semibold leading-[1.35] text-slate-700">
+                        Only stats from this season window count toward each player&apos;s score.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-slate-200 bg-white/92 px-2 py-1 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)] sm:gap-2 sm:px-4 sm:py-1.5">
