@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gridiron Links",
+  title: "Five Wide",
   description: "Daily NFL lineup puzzle game",
 };
 
