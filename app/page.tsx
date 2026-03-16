@@ -2462,7 +2462,10 @@ export default function HomePage() {
                   <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                     Rules
                   </p>
-                  <h2 className="mt-2 font-[family-name:var(--font-body)] text-2xl font-black tracking-normal text-sky-900">
+                  <h2
+                    className="mt-2 text-2xl font-black tracking-normal text-sky-900"
+                    style={{ fontFamily: "var(--font-body), Arial, Helvetica, sans-serif" }}
+                  >
                     How This Puzzle Works
                   </h2>
                 </div>
