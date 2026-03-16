@@ -824,19 +824,6 @@ export default function HomePage() {
       .replace(/\s+/g, "-");
   }
 
-  function getPositionBadge(ruleValue: string) {
-    const normalized = ruleValue.toUpperCase();
-    const badgeMap: Record<string, string> = {
-      QB: "/qb-badge.svg",
-      RB: "/rb-badge.svg",
-      WR: "/wr-badge.svg",
-      TE: "/te-badge.svg",
-      FLEX: "/flex-badge.svg",
-    };
-
-    return badgeMap[normalized] ?? "";
-  }
-
   function renderSlotRuleTitle(rule: SlotRule) {
     if (!rule.parameter_value) {
       return (
@@ -865,23 +852,18 @@ export default function HomePage() {
     }
 
     if (rule.parameter_type === "position" && rule.parameter_value) {
-      const badgeUrl = getPositionBadge(String(rule.parameter_value));
       const positionLabel = String(rule.display_text).toUpperCase();
 
-      if (badgeUrl) {
-        return (
-          <div className="flex items-center justify-center gap-2">
-            <img
-              src={badgeUrl}
-              alt={rule.display_text}
-              className="h-10 w-10 object-contain drop-shadow-[0_2px_4px_rgba(15,23,42,0.3)] sm:h-8 sm:w-8"
-            />
-            <p className="font-[family-name:var(--font-display)] text-[15px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
-              {positionLabel}
-            </p>
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/70 bg-white/25 text-[13px] font-black uppercase text-white shadow-[0_2px_4px_rgba(15,23,42,0.3)] sm:h-8 sm:w-8 sm:text-[10px]">
+            {positionLabel}
           </div>
-        );
-      }
+          <p className="font-[family-name:var(--font-display)] text-[15px] uppercase tracking-[0.08em] text-white sm:text-[10px] sm:tracking-[0.12em]">
+            {positionLabel}
+          </p>
+        </div>
+      );
     }
 
     if (rule.parameter_type === "college") {
