@@ -1131,7 +1131,7 @@ export default function HomePage() {
     const slotPlaceholder = getSlotPlaceholder(slotRule);
 
     return (
-      <div className="w-[230px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]">
+      <div className="w-[180px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]">
         <div className="overflow-hidden rounded-[28px] border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#eefbff_74%,#f0f9ff_100%)] shadow-[0_18px_0_rgba(14,165,233,0.12),0_24px_42px_rgba(14,165,233,0.14)] backdrop-blur-sm">
           <div className="border-b-[3px] border-sky-200 bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_48%,#7dd3fc_100%)] px-5 py-3 text-center">
             {renderSlotRuleTitle(slotRule)}
@@ -1619,8 +1619,8 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="relative mt-4 mx-auto h-[640px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
-              <div className="absolute left-4 top-4 z-40 inline-flex items-center gap-3 rounded-full border-[3px] border-sky-200 bg-white/90 px-4 py-2 shadow-[0_8px_20px_rgba(125,211,252,0.16)]">
+          <div className="relative mt-4 mx-auto h-[900px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] p-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:p-4">
+              <div className="absolute left-3 top-3 z-40 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border-[3px] border-sky-200 bg-white/90 px-3 py-2 shadow-[0_8px_20px_rgba(125,211,252,0.16)] sm:left-4 sm:top-4 sm:max-w-none sm:gap-3 sm:px-4">
                 <span className="h-3 w-3 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                 <select
                   value={selectedDate}
@@ -1631,7 +1631,7 @@ export default function HomePage() {
                       window.history.replaceState({}, "", buildPuzzleUrl(nextDate));
                     }
                   }}
-                  className="bg-transparent text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 outline-none"
+                  className="min-w-0 bg-transparent text-[9px] font-black uppercase tracking-[0.08em] text-sky-700 outline-none sm:text-[10px]"
                   aria-label={`Puzzle date, currently ${formattedPuzzleDate}`}
                 >
                   {renderedDateOptions.map((dateValue) => (
@@ -1642,20 +1642,20 @@ export default function HomePage() {
                 </select>
               </div>
 
-              <div className="absolute right-3 top-4 z-40 flex max-w-[58%] flex-col items-end gap-2 md:right-4">
-                <div className="inline-flex items-center gap-2 rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-5 py-2.5 shadow-[0_10px_24px_rgba(56,189,248,0.18)]">
+              <div className="absolute left-3 right-3 top-18 z-40 flex flex-col items-stretch gap-2 sm:left-auto sm:right-3 sm:top-4 sm:max-w-[58%] sm:items-end md:right-4">
+                <div className="inline-flex items-center justify-between gap-2 rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-4 py-2 shadow-[0_10px_24px_rgba(56,189,248,0.18)] sm:justify-start sm:px-5 sm:py-2.5">
                   <span className="rounded-full bg-sky-100 px-2 py-1 text-[8px] font-black uppercase tracking-[0.1em] text-sky-700">
                     Time Period
                   </span>
-                  <span className="text-[11px] font-black uppercase tracking-[0.07em] text-sky-800">
+                  <span className="text-right text-[10px] font-black uppercase tracking-[0.05em] text-sky-800 sm:text-[11px] sm:tracking-[0.07em]">
                     {puzzleData.theme?.display_name ?? "Daily Time Period"}
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border-[3px] border-slate-200 bg-white/92 px-4 py-2.5 shadow-[0_8px_20px_rgba(148,163,184,0.12)]">
+                <div className="inline-flex items-center justify-between gap-2 rounded-full border-[3px] border-slate-200 bg-white/92 px-4 py-2 shadow-[0_8px_20px_rgba(148,163,184,0.12)] sm:justify-start sm:py-2.5">
                   <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase tracking-[0.1em] text-slate-600">
                     Players
                   </span>
-                  <span className="text-[10px] font-black uppercase tracking-[0.06em] text-slate-700">
+                  <span className="text-right text-[10px] font-black uppercase tracking-[0.05em] text-slate-700 sm:tracking-[0.06em]">
                     {players.length} Available
                   </span>
                 </div>
@@ -1667,7 +1667,7 @@ export default function HomePage() {
                 </div>
               )}
 
-                <div className="absolute left-1/2 top-1/2 h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.5] sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
+                <div className="absolute left-1/2 top-[57%] h-[850px] w-[1400px] -translate-x-1/2 -translate-y-1/2 scale-[0.34] sm:top-1/2 sm:scale-[0.58] md:scale-[0.7] lg:scale-[0.76]">
                   <div className="absolute inset-0 overflow-hidden rounded-[30px]">
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0.00)_100%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.14)_0%,transparent_44%)]" />
