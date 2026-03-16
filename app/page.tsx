@@ -547,6 +547,12 @@ export default function HomePage() {
     puzzleData?.relationship_rule?.relationship_type ?? "teammates";
   const relationshipLabel =
     puzzleData?.relationship_rule?.display_text ?? "Teammates";
+  const relationshipTeamAbbr = getRelationshipTeamAbbr(relationshipType);
+  const relationshipTeamLogoUrl = relationshipTeamAbbr
+    ? `https://a.espncdn.com/i/teamlogos/nfl/500/${getTeamLogoCode(
+        relationshipTeamAbbr
+      )}.png`
+    : null;
   const bonusPct = puzzleData?.relationship_rule?.bonus_pct ?? 5;
   const formattedPuzzleDate = puzzleData?.puzzle?.puzzle_date
     ? new Date(puzzleData.puzzle.puzzle_date).toLocaleDateString(undefined, {
@@ -839,6 +845,14 @@ export default function HomePage() {
     };
 
     return badgeMap[normalized] ?? "";
+  }
+
+  function getRelationshipTeamAbbr(relationshipType: string) {
+    const teamLinkMap: Record<string, string> = {
+      played_for_packers: "GB",
+    };
+
+    return teamLinkMap[relationshipType] ?? null;
   }
 
   function parseDivisionLabel(label: string) {
@@ -2218,6 +2232,18 @@ export default function HomePage() {
                         )}
 
                         <div className="relative z-10">
+                          {!isFullyConnected && relationshipTeamLogoUrl && (
+                            <div className="mb-2 flex justify-center sm:mb-3">
+                              <img
+                                src={relationshipTeamLogoUrl}
+                                alt={relationshipLabel}
+                                className="h-10 w-10 object-contain drop-shadow-[0_2px_6px_rgba(15,23,42,0.22)] sm:h-9 sm:w-9"
+                                onError={(event) => {
+                                  event.currentTarget.style.display = "none";
+                                }}
+                              />
+                            </div>
+                          )}
                           <p
                             className={`text-[10px] font-black uppercase tracking-[0.08em] sm:font-[family-name:var(--font-display)] sm:text-[8px] sm:tracking-[0.04em] ${
                               isFullyConnected ? "text-emerald-700" : "text-sky-700"
