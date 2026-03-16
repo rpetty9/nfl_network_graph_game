@@ -1086,7 +1086,7 @@ export default function HomePage() {
 
   const center = {
     x: 700,
-    y: 445,
+    y: 467,
     mobileOffsetX: 0,
     mobileOffsetY: 118,
   };
