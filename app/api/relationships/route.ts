@@ -161,6 +161,32 @@ export async function GET(request: NextRequest) {
           ELSE false
         END AS both_super_bowl_winner_flag,
         CASE
+          WHEN COALESCE(p1.super_bowl_win_count, 0) = 0
+           AND COALESCE(p2.super_bowl_win_count, 0) = 0
+          THEN true
+          ELSE false
+        END AS both_non_super_bowl_winner_flag,
+        CASE
+          WHEN EXISTS (
+            SELECT 1
+            FROM player_team_history a
+            JOIN team_dim ta
+              ON a.team_id = ta.team_id
+            WHERE a.player_id = pb.player_id_1
+              AND ta.team_abbr = 'GB'
+          )
+           AND EXISTS (
+            SELECT 1
+            FROM player_team_history b
+            JOIN team_dim tb
+              ON b.team_id = tb.team_id
+            WHERE b.player_id = pb.player_id_2
+              AND tb.team_abbr = 'GB'
+          )
+          THEN true
+          ELSE false
+        END AS both_played_packers_flag,
+        CASE
           WHEN p1.primary_position IS NOT NULL
            AND p1.primary_position = p2.primary_position
           THEN true

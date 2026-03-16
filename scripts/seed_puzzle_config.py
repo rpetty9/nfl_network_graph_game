@@ -243,6 +243,18 @@ RELATIONSHIP_RULES = [
         "bonus_pct": 5,
     },
     {
+        "relationship_name": "non_super_bowl_winner_bonus_5",
+        "relationship_type": "non_super_bowl_winner",
+        "display_text": "Non-Super Bowl Winner",
+        "bonus_pct": 5,
+    },
+    {
+        "relationship_name": "played_for_packers_bonus_5",
+        "relationship_type": "played_for_packers",
+        "display_text": "Packers",
+        "bonus_pct": 5,
+    },
+    {
         "relationship_name": "same_position_bonus_5",
         "relationship_type": "same_position",
         "display_text": "Same Position",

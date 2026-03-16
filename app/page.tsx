@@ -83,6 +83,7 @@ type PairRelationship = {
   both_undrafted_flag?: boolean;
   both_super_bowl_winner_flag?: boolean;
   both_non_super_bowl_winner_flag?: boolean;
+  both_played_packers_flag?: boolean;
   same_position_flag?: boolean;
 };
 
@@ -1033,6 +1034,8 @@ export default function HomePage() {
         return pair.both_super_bowl_winner_flag === true;
       case "non_super_bowl_winner":
         return pair.both_non_super_bowl_winner_flag === true;
+      case "played_for_packers":
+        return pair.both_played_packers_flag === true;
       case "same_position":
         return pair.same_position_flag === true;
       default:

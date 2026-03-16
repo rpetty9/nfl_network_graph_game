@@ -38,6 +38,8 @@ type PairRelationship = {
   same_draft_round_flag?: boolean;
   both_undrafted_flag?: boolean;
   both_super_bowl_winner_flag?: boolean;
+  both_non_super_bowl_winner_flag?: boolean;
+  both_played_packers_flag?: boolean;
   same_position_flag?: boolean;
 };
 
@@ -134,6 +136,10 @@ function relationshipPasses(
       return pair.both_undrafted_flag === true;
     case "super_bowl_winner":
       return pair.both_super_bowl_winner_flag === true;
+    case "non_super_bowl_winner":
+      return pair.both_non_super_bowl_winner_flag === true;
+    case "played_for_packers":
+      return pair.both_played_packers_flag === true;
     case "same_position":
       return pair.same_position_flag === true;
     default:
@@ -443,6 +449,14 @@ async function loadRelationships(playerIds: number[], themeRule: string) {
       CASE WHEN p1.draft_round IS NOT NULL AND p1.draft_round = p2.draft_round THEN true ELSE false END AS same_draft_round_flag,
         CASE WHEN COALESCE(p1.undrafted_flag, false) = true AND COALESCE(p2.undrafted_flag, false) = true THEN true ELSE false END AS both_undrafted_flag,
         CASE WHEN COALESCE(p1.super_bowl_win_count, 0) > 0 AND COALESCE(p2.super_bowl_win_count, 0) > 0 THEN true ELSE false END AS both_super_bowl_winner_flag,
+        CASE WHEN COALESCE(p1.super_bowl_win_count, 0) = 0 AND COALESCE(p2.super_bowl_win_count, 0) = 0 THEN true ELSE false END AS both_non_super_bowl_winner_flag,
+        CASE WHEN EXISTS (
+          SELECT 1 FROM player_team_history a JOIN team_dim ta ON a.team_id = ta.team_id
+          WHERE a.player_id = pb.player_id_1 AND ta.team_abbr = 'GB'
+        ) AND EXISTS (
+          SELECT 1 FROM player_team_history b JOIN team_dim tb ON b.team_id = tb.team_id
+          WHERE b.player_id = pb.player_id_2 AND tb.team_abbr = 'GB'
+        ) THEN true ELSE false END AS both_played_packers_flag,
         CASE WHEN p1.primary_position IS NOT NULL AND p1.primary_position = p2.primary_position THEN true ELSE false END AS same_position_flag
     FROM pair_base pb
     LEFT JOIN teammate_flags tf
