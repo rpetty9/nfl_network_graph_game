@@ -154,6 +154,7 @@ type SearchablePlayerSelectProps = {
   onActivate?: () => void;
   registerFocus?: ((focusFn: (() => void) | null) => void) | null;
   onPlayerSelected?: () => void;
+  useMobileSheet?: boolean;
 };
 
 function SearchablePlayerSelect({
@@ -166,11 +167,14 @@ function SearchablePlayerSelect({
   onActivate,
   registerFocus,
   onPlayerSelected,
+  useMobileSheet,
 }: SearchablePlayerSelectProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const sheetInputRef = useRef<HTMLInputElement | null>(null);
+  const useSheet = Boolean(useMobileSheet);
 
   const selectedPlayer = useMemo(
     () => players.find((p) => String(p.player_id) === String(value)) ?? null,
@@ -187,6 +191,7 @@ function SearchablePlayerSelect({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      if (useSheet) return;
       if (!wrapperRef.current) return;
       if (!wrapperRef.current.contains(event.target as Node)) {
         setOpen(false);
@@ -208,6 +213,27 @@ function SearchablePlayerSelect({
 
     return () => registerFocus(null);
   }, [disabled, registerFocus]);
+
+  useEffect(() => {
+    if (!open || !useSheet || disabled) return;
+
+    const timeout = window.setTimeout(() => {
+      sheetInputRef.current?.focus();
+    }, 20);
+
+    return () => window.clearTimeout(timeout);
+  }, [disabled, open, useSheet]);
+
+  useEffect(() => {
+    if (!open || !useSheet) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, useSheet]);
 
   const filteredPlayers = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -237,6 +263,16 @@ function SearchablePlayerSelect({
             if (!disabled) {
               onActivate?.();
               setOpen(true);
+              if (useSheet) {
+                inputRef.current?.blur();
+              }
+            }
+          }}
+          onClick={() => {
+            if (!disabled && useSheet) {
+              onActivate?.();
+              setOpen(true);
+              inputRef.current?.blur();
             }
           }}
           onChange={(e) => {
@@ -257,7 +293,85 @@ function SearchablePlayerSelect({
         </button>
       </div>
 
-      {open && !disabled && (
+      {open && !disabled && useSheet && (
+        <div className="fixed inset-0 z-[120] flex items-end bg-slate-950/35 sm:hidden">
+          <div className="w-full rounded-t-[28px] border-t-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 shadow-[0_-18px_50px_rgba(15,23,42,0.16)]">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-600">
+                  Player Search
+                </p>
+                <p className="mt-1 truncate font-[family-name:var(--font-display)] text-[15px] text-sky-900">
+                  {placeholder}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-full border-[2px] border-sky-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                ref={sheetInputRef}
+                type="text"
+                value={query}
+                disabled={disabled}
+                placeholder={placeholder}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (value) onChange("");
+                }}
+                className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-12 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              />
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => setOpen(false)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sky-600 disabled:cursor-not-allowed"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-3 max-h-[52vh] overflow-y-auto rounded-2xl border-[3px] border-sky-300 bg-white shadow-[0_18px_50px_rgba(56,189,248,0.14)]">
+              {filteredPlayers.length === 0 ? (
+                <div className="px-4 py-3 text-[11px] text-slate-500">
+                  {query.trim() ? "No players found." : "Start typing a player name."}
+                </div>
+              ) : (
+                filteredPlayers.map((player) => (
+                  <button
+                    key={player.player_id}
+                    type="button"
+                    onClick={() => {
+                      onChange(String(player.player_id));
+                      setQuery(getPlayerLabel(player));
+                      setOpen(false);
+                      onPlayerSelected?.();
+                    }}
+                    className="block w-full border-b border-sky-100 px-4 py-3 text-left text-xs text-slate-800 transition hover:bg-sky-50 last:border-b-0"
+                  >
+                    <div className="font-semibold leading-tight">
+                      {player.player_name}
+                    </div>
+                    <div className="mt-1 text-[10px] uppercase tracking-[0.05em] text-slate-500">
+                      {player.primary_position ?? "N/A"} • Career{" "}
+                      {player.career_start_season ?? "N/A"}–
+                      {player.career_end_season ?? "N/A"}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {open && !disabled && !useSheet && (
         <div className="absolute z-40 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border-[3px] border-sky-300 bg-white shadow-[0_18px_50px_rgba(56,189,248,0.14)]">
           {filteredPlayers.length === 0 ? (
             <div className="px-4 py-3 text-[11px] text-slate-500">
@@ -1610,6 +1724,7 @@ export default function HomePage() {
               onActivate={() => setActiveNodeId(nodeId)}
               registerFocus={(focusFn) => registerNodeFocus(nodeId, focusFn)}
               onPlayerSelected={() => handleMobileNodeAdvance(nodeId)}
+              useMobileSheet={isMobileBoard}
             />
 
             <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-2.5 sm:p-3">
