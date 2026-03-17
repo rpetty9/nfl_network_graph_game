@@ -1399,6 +1399,127 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
   );
 }
 
+function LogoConceptCard({
+  title,
+  note,
+  children,
+}: {
+  title: string;
+  note: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[28px] border-[3px] border-sky-200 bg-white/88 p-5 shadow-[0_8px_0_rgba(125,211,252,0.08),0_14px_30px_rgba(125,211,252,0.12)] backdrop-blur-sm">
+      <div className="flex min-h-[220px] items-center justify-center rounded-[24px] border-[2px] border-sky-100 bg-[linear-gradient(180deg,#f8fdff_0%,#eef6ff_100%)] px-4 py-5">
+        {children}
+      </div>
+      <div className="mt-4">
+        <p className="text-[11px] font-black uppercase tracking-[0.12em] text-sky-700">
+          {title}
+        </p>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{note}</p>
+      </div>
+    </div>
+  );
+}
+
+function FormationLogoConcept() {
+  return (
+    <div className="flex w-full max-w-[280px] flex-col items-center text-center">
+      <svg viewBox="0 0 240 120" className="w-full overflow-visible">
+        <rect
+          x="12"
+          y="16"
+          width="216"
+          height="88"
+          rx="24"
+          fill="url(#formationBg)"
+          stroke="#7dd3fc"
+          strokeWidth="4"
+        />
+        <path d="M46 82 Q78 66 108 60" stroke="#38bdf8" strokeWidth="4" strokeDasharray="7 7" fill="none" />
+        <path d="M72 82 Q96 48 120 44" stroke="#818cf8" strokeWidth="4" strokeDasharray="7 7" fill="none" />
+        <path d="M120 82 L120 48" stroke="#f59e0b" strokeWidth="4" strokeDasharray="7 7" fill="none" />
+        <path d="M168 82 Q144 48 120 44" stroke="#818cf8" strokeWidth="4" strokeDasharray="7 7" fill="none" />
+        <path d="M194 82 Q162 66 132 60" stroke="#38bdf8" strokeWidth="4" strokeDasharray="7 7" fill="none" />
+        {[46, 72, 120, 168, 194].map((x, index) => (
+          <circle key={x} cx={x} cy="82" r={index === 2 ? 10 : 8} fill={index === 2 ? "#f59e0b" : "#ffffff"} stroke="#0f172a" strokeWidth="3" />
+        ))}
+        <circle cx="120" cy="38" r="13" fill="#ffffff" stroke="#0f172a" strokeWidth="4" />
+        <path d="M112 38h16" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" />
+        <defs>
+          <linearGradient id="formationBg" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="#eff6ff" />
+            <stop offset="45%" stopColor="#dbeafe" />
+            <stop offset="100%" stopColor="#ede9fe" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="mt-3">
+        <p className="font-[family-name:var(--font-display)] text-2xl text-sky-900">Five Wide</p>
+        <p className="mt-1 text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+          Playbook Formation
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function RoutesLogoConcept() {
+  return (
+    <div className="flex w-full max-w-[280px] items-center justify-center gap-4">
+      <div className="flex h-28 w-28 items-center justify-center rounded-[28px] border-[3px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_48%,#22d3ee_100%)] shadow-[0_16px_26px_rgba(99,102,241,0.18)]">
+        <svg viewBox="0 0 80 80" className="h-20 w-20">
+          <circle cx="16" cy="56" r="5.5" fill="#fff" />
+          <circle cx="30" cy="24" r="5.5" fill="#fff" />
+          <circle cx="40" cy="56" r="6.5" fill="#fef08a" />
+          <circle cx="50" cy="24" r="5.5" fill="#fff" />
+          <circle cx="64" cy="56" r="5.5" fill="#fff" />
+          <path d="M16 56 Q26 42 30 24" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" fill="none" />
+          <path d="M30 24 H50" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" />
+          <path d="M40 56 V36" stroke="#fef08a" strokeWidth="4" strokeLinecap="round" />
+          <path d="M50 24 Q54 42 64 56" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" fill="none" />
+        </svg>
+      </div>
+      <div className="min-w-0">
+        <p className="font-[family-name:var(--font-display)] text-3xl leading-none text-sky-900">
+          Five
+          <br />
+          Wide
+        </p>
+        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">
+          Linked Routes
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CrestLogoConcept() {
+  return (
+    <div className="flex w-full max-w-[300px] flex-col items-center text-center">
+      <div className="relative flex h-36 w-36 items-center justify-center rounded-[36px] border-[3px] border-amber-300 bg-[radial-gradient(circle_at_top,#fff7d6_0%,#fde68a_22%,#fbbf24_48%,#7c3aed_92%)] shadow-[0_18px_34px_rgba(251,191,36,0.25)]">
+        <div className="absolute inset-3 rounded-[28px] border border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.26)_0%,rgba(255,255,255,0.05)_100%)]" />
+        <svg viewBox="0 0 120 120" className="relative z-10 h-24 w-24">
+          <path d="M24 76 L60 34 L96 76" stroke="#0f172a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M60 34 V90" stroke="#0f172a" strokeWidth="9" strokeLinecap="round" />
+          <circle cx="24" cy="76" r="7" fill="#0f172a" />
+          <circle cx="42" cy="58" r="7" fill="#0f172a" />
+          <circle cx="60" cy="40" r="8" fill="#f8fafc" stroke="#0f172a" strokeWidth="4" />
+          <circle cx="78" cy="58" r="7" fill="#0f172a" />
+          <circle cx="96" cy="76" r="7" fill="#0f172a" />
+        </svg>
+      </div>
+      <p className="mt-4 font-[family-name:var(--font-display)] text-[28px] leading-none text-slate-900">
+        Five Wide
+      </p>
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">
+        Premium Crest
+      </p>
+    </div>
+  );
+}
+
 function RecentSubmissionList({
   submissions,
   emptyMessage,
@@ -4974,6 +5095,44 @@ export default function HomePage() {
               </div>
           </>
         )}
+
+        <section className="mx-auto mt-8 max-w-[1080px]">
+          <div className="rounded-[34px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] p-5 shadow-[0_8px_0_rgba(125,211,252,0.08),0_14px_32px_rgba(125,211,252,0.12)] md:p-7">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-sky-700">
+                Logo Lab
+              </p>
+              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl text-sky-900 md:text-4xl">
+                Five Wide Logo Concepts
+              </h2>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-base">
+                Three different directions to compare quickly: a true playbook formation,
+                a more modern route-diagram mark, and a polished crest version.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-5 lg:grid-cols-3">
+              <LogoConceptCard
+                title="Concept 1"
+                note="Most literal to the game: five spread receivers, a central link point, and route structure like a real playsheet."
+              >
+                <FormationLogoConcept />
+              </LogoConceptCard>
+              <LogoConceptCard
+                title="Concept 2"
+                note="Cleaner and more app-like: a compact route network mark that still clearly feels football-specific."
+              >
+                <RoutesLogoConcept />
+              </LogoConceptCard>
+              <LogoConceptCard
+                title="Concept 3"
+                note="A more premium badge look if you want Five Wide to feel like a polished sports property or game brand."
+              >
+                <CrestLogoConcept />
+              </LogoConceptCard>
+            </div>
+          </div>
+        </section>
 
         {accountChoiceOpen && !signedInUsername && !needsUsername && (
           <div className="fixed inset-0 z-[108] overflow-y-auto bg-slate-950/45 px-4 py-6">
