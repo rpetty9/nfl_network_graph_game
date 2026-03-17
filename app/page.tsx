@@ -216,6 +216,7 @@ function FeaturedBadgeSlot({
   badge,
   active,
   onToggle,
+  onRemove,
 }: {
   badge: Pick<
     UserBadge,
@@ -223,6 +224,7 @@ function FeaturedBadgeSlot({
   > | null;
   active: boolean;
   onToggle: () => void;
+  onRemove?: (() => void) | null;
 }) {
   if (!badge) {
     return (
@@ -276,14 +278,20 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-center text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">
-            Featured Badge
-          </p>
-          <p className="mt-1 text-center text-sm font-black uppercase tracking-[0.08em] text-slate-900">
+          <p className="text-center text-sm font-black uppercase tracking-[0.08em] text-slate-900">
             {badge.title}
           </p>
         </div>
       </button>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute right-2 top-2 z-20 rounded-full border border-white/70 bg-white/85 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.12)] transition hover:bg-white"
+        >
+          Remove
+        </button>
+      ) : null}
       <div
         className={`pointer-events-none absolute left-0 right-0 top-[calc(100%+0.45rem)] z-20 rounded-[18px] border border-slate-200 bg-white/98 px-4 py-3 text-left shadow-[0_18px_40px_rgba(15,23,42,0.18)] transition md:opacity-0 md:translate-y-1 md:group-hover:pointer-events-auto md:group-hover:translate-y-0 md:group-hover:opacity-100 ${
           active ? "pointer-events-auto opacity-100 translate-y-0" : "opacity-0 translate-y-1 md:block hidden"
@@ -3632,6 +3640,11 @@ export default function HomePage() {
                               setActiveFeaturedBadgeKey((current) =>
                                 current === badge?.badgeKey ? null : (badge?.badgeKey ?? null)
                               )
+                            }
+                            onRemove={
+                              badge
+                                ? () => handleToggleFeaturedBadge(badge.badgeKey)
+                                : null
                             }
                           />
                         ))}
