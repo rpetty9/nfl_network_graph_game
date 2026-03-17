@@ -4310,35 +4310,7 @@ export default function HomePage() {
                         ))}
                       </div>
 
-                      {avatarOptionPageCount > 1 ? (
-                        <div className="mt-3 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
-                          <button
-                            type="button"
-                            onClick={() => setAvatarOptionPage((current) => Math.max(0, current - 1))}
-                            disabled={avatarOptionPage === 0}
-                            className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                          >
-                            Prev
-                          </button>
-                          <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            {avatarOptionPage + 1}/{avatarOptionPageCount}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setAvatarOptionPage((current) =>
-                                Math.min(avatarOptionPageCount - 1, current + 1)
-                              )
-                            }
-                            disabled={avatarOptionPage >= avatarOptionPageCount - 1}
-                            className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-4">
                         {pagedAvatarOptions.map((option) => {
                           const optionKey = String(option);
                           const isSelected = avatarEditorConfig.selected === option;
@@ -4350,7 +4322,7 @@ export default function HomePage() {
                                 key={optionKey}
                                 type="button"
                                 onClick={() => setAvatarStyleDraft(styleOption)}
-                                className={`rounded-[22px] border-[3px] px-4 py-4 text-center transition ${
+                                className={`rounded-[18px] border-[3px] px-2 py-3 text-center transition sm:rounded-[22px] sm:px-4 sm:py-4 ${
                                   isSelected
                                     ? "border-sky-300 bg-sky-50 shadow-[0_12px_28px_rgba(56,189,248,0.16)]"
                                     : "border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/60"
@@ -4362,10 +4334,10 @@ export default function HomePage() {
                                     bg={avatarBgDraft}
                                     accent={avatarAccentDraft}
                                     border={avatarBorderDraft}
-                                    size="md"
+                                    size="sm"
                                   />
                                 </div>
-                                <p className="mt-3 text-xs font-black uppercase tracking-[0.08em] text-slate-800">
+                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-800 sm:mt-3 sm:text-xs">
                                   {formatAvatarOptionLabel(optionKey)}
                                 </p>
                               </button>
@@ -4388,7 +4360,7 @@ export default function HomePage() {
                                   setAvatarBorderDraft(colorOption);
                                 }
                               }}
-                              className={`rounded-[22px] border-[3px] px-4 py-4 text-center transition ${
+                              className={`rounded-[18px] border-[3px] px-2 py-3 text-center transition sm:rounded-[22px] sm:px-4 sm:py-4 ${
                                 isSelected
                                   ? `${palette.chip} shadow-[0_12px_28px_rgba(56,189,248,0.16)]`
                                   : "border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/60"
@@ -4396,7 +4368,7 @@ export default function HomePage() {
                             >
                               <div className="flex justify-center">
                                 <span
-                                  className="inline-flex h-12 w-12 rounded-full border-[4px] shadow-[0_8px_18px_rgba(15,23,42,0.12)]"
+                                  className="inline-flex h-10 w-10 rounded-full border-[4px] shadow-[0_8px_18px_rgba(15,23,42,0.12)] sm:h-12 sm:w-12"
                                   style={{
                                     background:
                                       avatarEditorTab === "background"
@@ -4411,14 +4383,14 @@ export default function HomePage() {
                                   }}
                                 >
                                   <span
-                                    className={`m-auto inline-flex h-7 w-7 rounded-full ${
+                                    className={`m-auto inline-flex h-6 w-6 rounded-full sm:h-7 sm:w-7 ${
                                       avatarEditorTab === "background"
                                         ? `bg-gradient-to-br ${palette.bg}`
                                         : `bg-gradient-to-br ${AVATAR_COLOR_CLASSES[avatarBgDraft].bg}`
                                     }`}
                                   >
                                     <span
-                                      className="m-auto h-3 w-3 rounded-full"
+                                      className="m-auto h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3"
                                       style={{
                                         backgroundColor:
                                           avatarEditorTab === "icon"
@@ -4429,13 +4401,43 @@ export default function HomePage() {
                                   </span>
                                 </span>
                               </div>
-                              <p className="mt-3 text-xs font-black uppercase tracking-[0.08em] text-slate-800">
+                              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-800 sm:mt-3 sm:text-xs">
                                 {formatAvatarOptionLabel(optionKey)}
                               </p>
                             </button>
                           );
                         })}
                       </div>
+
+                      {avatarOptionPageCount > 1 ? (
+                        <div className="mt-4 flex justify-center">
+                          <div className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
+                            <button
+                              type="button"
+                              onClick={() => setAvatarOptionPage((current) => Math.max(0, current - 1))}
+                              disabled={avatarOptionPage === 0}
+                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                            >
+                              Prev
+                            </button>
+                            <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              {avatarOptionPage + 1}/{avatarOptionPageCount}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAvatarOptionPage((current) =>
+                                  Math.min(avatarOptionPageCount - 1, current + 1)
+                                )
+                              }
+                              disabled={avatarOptionPage >= avatarOptionPageCount - 1}
+                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
