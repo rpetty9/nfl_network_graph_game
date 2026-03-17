@@ -3887,7 +3887,7 @@ export default function HomePage() {
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
               {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
-                <div className="mx-auto mt-4 w-full max-w-5xl overflow-hidden rounded-[22px] border-[3px] border-white/35 bg-white/14 px-2 py-1.5 shadow-[0_14px_30px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-5 md:px-3 md:py-2">
+                <div className="mt-1 w-[calc(100%-4px)] overflow-hidden rounded-[22px] border-[3px] border-white/35 bg-white/14 px-2 py-1.5 shadow-[0_14px_30px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-2 md:w-[calc(100%-8px)] md:px-3 md:py-2">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] text-white/85 md:px-2.5 md:py-1 md:text-[9px] md:tracking-[0.1em]">
                       Yesterday&apos;s Top 10
