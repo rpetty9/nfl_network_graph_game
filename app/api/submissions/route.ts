@@ -154,6 +154,13 @@ function makeDisplayName() {
   return `${adjective} ${noun} ${number}`;
 }
 
+function normalizeClientToken(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 120) return null;
+  return trimmed;
+}
+
 async function loadPuzzleContext(requestedDate: string | null) {
   const puzzleResult = requestedDate
     ? await pool.query(
@@ -475,11 +482,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const requestedDate = typeof body?.date === "string" ? body.date : null;
+    const clientToken = normalizeClientToken(body?.client_token);
     const lineup = Array.isArray(body?.lineup) ? body.lineup : [];
     const optimalFinalScore =
       typeof body?.optimal_final_score === "number"
         ? body.optimal_final_score
         : null;
+
+    if (!clientToken) {
+      return NextResponse.json(
+        { error: "Missing browser submission token" },
+        { status: 400 }
+      );
+    }
 
     if (lineup.length !== 5) {
       return NextResponse.json({ error: "Lineup must contain 5 slots" }, { status: 400 });
@@ -561,6 +576,7 @@ export async function POST(request: NextRequest) {
       `
       INSERT INTO puzzle_submission (
         puzzle_id,
+        client_token,
         display_name,
         base_score,
         active_links,
@@ -569,11 +585,12 @@ export async function POST(request: NextRequest) {
         optimal_final_score,
         percent_of_optimal
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING submission_id, display_name
       `,
       [
         puzzle.puzzle_id,
+        clientToken,
         displayName,
         baseScore,
         activeLinks,
@@ -617,6 +634,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Submission route failed:", error);
+
+    if ((error as { code?: string }).code === "23505") {
+      return NextResponse.json(
+        { error: "This browser already submitted for this puzzle." },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: (error as Error).message || "Failed to save submission" },
       { status: 500 }

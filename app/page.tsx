@@ -325,8 +325,70 @@ function buildPuzzleUrl(dateValue: string) {
   return `/p/${dateValue}`;
 }
 
+const CLIENT_TOKEN_STORAGE_KEY = "five-wide-client-token";
+const SUBMITTED_DATES_STORAGE_KEY = "five-wide-submitted-dates";
+
+function getCurrentLocalDateIso() {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+
+function buildNavigationUrl(dateValue: string, todayIso: string) {
+  return dateValue === todayIso ? "/" : buildPuzzleUrl(dateValue);
+}
+
+function generateClientToken() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `browser-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+}
+
+function getOrCreateClientToken() {
+  if (typeof window === "undefined") return "";
+
+  const existing = window.localStorage.getItem(CLIENT_TOKEN_STORAGE_KEY);
+  if (existing) return existing;
+
+  const created = generateClientToken();
+  window.localStorage.setItem(CLIENT_TOKEN_STORAGE_KEY, created);
+  return created;
+}
+
+function readSubmittedDates(): string[] {
+  if (typeof window === "undefined") return [];
+
+  const raw = window.localStorage.getItem(SUBMITTED_DATES_STORAGE_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function hasBrowserSubmittedForDate(dateValue: string) {
+  return readSubmittedDates().includes(dateValue);
+}
+
+function markBrowserSubmittedForDate(dateValue: string) {
+  if (typeof window === "undefined") return;
+
+  const nextDates = Array.from(new Set([...readSubmittedDates(), dateValue])).sort();
+  window.localStorage.setItem(
+    SUBMITTED_DATES_STORAGE_KEY,
+    JSON.stringify(nextDates)
+  );
+}
+
 export default function HomePage() {
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = getCurrentLocalDateIso();
   const loadRequestRef = useRef(0);
   const relationshipRequestRef = useRef(0);
   const nodeFocusMapRef = useRef(new Map<number, () => void>());
@@ -346,10 +408,14 @@ export default function HomePage() {
   const [activeNodeId, setActiveNodeId] = useState(1);
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const [browserClientToken, setBrowserClientToken] = useState("");
+  const [hasSubmittedForSelectedDate, setHasSubmittedForSelectedDate] =
+    useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [optimalLineup, setOptimalLineup] = useState<OptimalLineupResponse | null>(
     null
   );
@@ -381,15 +447,30 @@ export default function HomePage() {
 
     if ((!urlDate || !isSupportedPuzzleDate(urlDate)) && window.location.pathname !== "/") {
       window.history.replaceState({}, "", "/");
+      return;
     }
+
+    if (urlDate === todayIso && window.location.pathname !== "/") {
+      window.history.replaceState({}, "", "/");
+    }
+  }, [todayIso]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setBrowserClientToken(getOrCreateClientToken());
   }, []);
+
+  useEffect(() => {
+    setHasSubmittedForSelectedDate(hasBrowserSubmittedForDate(selectedDate));
+    setSubmissionError(null);
+  }, [selectedDate]);
 
   useEffect(() => {
     if (isSupportedPuzzleDate(selectedDate)) return;
     setSelectedDate(todayIso);
 
     if (typeof window !== "undefined") {
-      window.history.replaceState({}, "", buildPuzzleUrl(todayIso));
+      window.history.replaceState({}, "", "/");
     }
   }, [selectedDate, todayIso]);
 
@@ -401,6 +482,7 @@ export default function HomePage() {
       try {
         setLoading(true);
         setLoadError(null);
+        setSubmissionError(null);
         setPairRelationships([]);
         const params = selectedDate ? `?date=${encodeURIComponent(selectedDate)}` : "";
         const [puzzleRes, playersRes] = await Promise.all([
@@ -476,22 +558,25 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window === "undefined" || !selectedDate) return;
-    const nextPath = buildPuzzleUrl(selectedDate);
-    if (window.location.pathname === nextPath) return;
+    const nextPath = buildNavigationUrl(selectedDate, todayIso);
+    const currentPath = window.location.pathname;
+    if (currentPath === nextPath) return;
     window.history.replaceState({}, "", nextPath);
-  }, [selectedDate]);
+  }, [selectedDate, todayIso]);
 
   useEffect(() => {
     const handlePopState = () => {
       const urlDate = getDateFromLocation(window.location);
-      if (urlDate && urlDate !== selectedDate) {
-        setSelectedDate(urlDate);
+      const nextDate =
+        urlDate && isSupportedPuzzleDate(urlDate) ? urlDate : todayIso;
+      if (nextDate !== selectedDate) {
+        setSelectedDate(nextDate);
       }
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [selectedDate]);
+  }, [selectedDate, todayIso]);
 
   useEffect(() => {
     if (!selectedDate && puzzleData?.puzzle?.puzzle_date) {
@@ -1350,7 +1435,11 @@ export default function HomePage() {
   const optimalPercent = optimalLineup?.optimal_final_score
     ? (finalScore / Number(optimalLineup.optimal_final_score)) * 100
     : null;
-  const canSubmit = allFilled && !duplicatePlayersExist && !submitted;
+  const canSubmit =
+    allFilled &&
+    !duplicatePlayersExist &&
+    !submitted &&
+    !hasSubmittedForSelectedDate;
 
   useEffect(() => {
     if (!isFullyConnected) {
@@ -1425,6 +1514,11 @@ export default function HomePage() {
       try {
         setLeaderboardLoading(true);
         setLeaderboardError(null);
+        setSubmissionError(null);
+
+        if (!browserClientToken) {
+          throw new Error("Unable to verify this browser for submission.");
+        }
 
         const saveResponse = await fetch("/api/submissions", {
           method: "POST",
@@ -1433,6 +1527,7 @@ export default function HomePage() {
           },
           body: JSON.stringify({
             date: selectedDate,
+            client_token: browserClientToken,
             lineup: nodes.map((node) => ({
               slot_number: node.node_id,
               player_id: Number(node.player_id),
@@ -1443,13 +1538,25 @@ export default function HomePage() {
         });
 
         if (!saveResponse.ok) {
-          const body = await saveResponse.text();
-          throw new Error(body || "Failed to save submission");
+          const body = await saveResponse.json().catch(() => null);
+          const message =
+            body && typeof body.error === "string"
+              ? body.error
+              : "Failed to save submission";
+
+          if (saveResponse.status === 409) {
+            markBrowserSubmittedForDate(selectedDate);
+            setHasSubmittedForSelectedDate(true);
+          }
+
+          throw new Error(message);
         }
 
         const saved: SubmissionResponse = await saveResponse.json();
         if (controller.signal.aborted) return;
         setSubmissionResult(saved);
+        markBrowserSubmittedForDate(selectedDate);
+        setHasSubmittedForSelectedDate(true);
 
         const leaderboardResponse = await fetch(
           `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
@@ -1471,7 +1578,8 @@ export default function HomePage() {
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
-        setLeaderboardError((error as Error).message);
+        setSubmitted(false);
+        setSubmissionError((error as Error).message);
       } finally {
         if (!controller.signal.aborted) {
           setLeaderboardLoading(false);
@@ -1481,10 +1589,11 @@ export default function HomePage() {
 
     saveSubmissionAndLoadLeaderboard();
     return () => controller.abort();
-  }, [submitted, optimalLineup, selectedDate, nodes]);
+  }, [submitted, optimalLineup, selectedDate, nodes, browserClientToken]);
 
   function handleSubmit() {
     if (!canSubmit) return;
+    setSubmissionError(null);
     setSubmitted(true);
   }
 
@@ -1500,6 +1609,7 @@ export default function HomePage() {
     setLeaderboard([]);
     setLeaderboardLoading(false);
     setLeaderboardError(null);
+    setSubmissionError(null);
   }
 
   function renderHeadshot(
@@ -2114,7 +2224,11 @@ export default function HomePage() {
                       const nextDate = e.target.value;
                       setSelectedDate(nextDate);
                       if (typeof window !== "undefined") {
-                        window.history.replaceState({}, "", buildPuzzleUrl(nextDate));
+                        window.history.replaceState(
+                          {},
+                          "",
+                          buildNavigationUrl(nextDate, todayIso)
+                        );
                       }
                     }}
                     className="min-w-0 bg-transparent text-center text-[8px] font-black uppercase tracking-[0.05em] text-sky-700 outline-none"
@@ -2149,7 +2263,11 @@ export default function HomePage() {
                       const nextDate = e.target.value;
                       setSelectedDate(nextDate);
                       if (typeof window !== "undefined") {
-                        window.history.replaceState({}, "", buildPuzzleUrl(nextDate));
+                        window.history.replaceState(
+                          {},
+                          "",
+                          buildNavigationUrl(nextDate, todayIso)
+                        );
                       }
                     }}
                     className="min-w-0 bg-transparent text-center text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 outline-none"
@@ -2430,6 +2548,19 @@ export default function HomePage() {
             </div>
 
               <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_14px_0_rgba(125,211,252,0.1),0_18px_40px_rgba(125,211,252,0.12)] backdrop-blur-sm">
+                {(hasSubmittedForSelectedDate || submissionError) && (
+                  <div
+                    className={`mb-4 rounded-[18px] border px-4 py-3 text-sm font-semibold ${
+                      hasSubmittedForSelectedDate
+                        ? "border-amber-200 bg-amber-50 text-amber-900"
+                        : "border-rose-200 bg-rose-50 text-rose-900"
+                    }`}
+                  >
+                    {hasSubmittedForSelectedDate
+                      ? `This browser already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, but the leaderboard only accepts one entry per browser per date.`
+                      : submissionError}
+                  </div>
+                )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"

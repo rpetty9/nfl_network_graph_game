@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS daily_puzzle_slot_rule (
 CREATE TABLE IF NOT EXISTS puzzle_submission (
   submission_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   puzzle_id BIGINT NOT NULL REFERENCES daily_puzzle(puzzle_id) ON DELETE CASCADE,
+  client_token TEXT,
   display_name TEXT NOT NULL,
   base_score NUMERIC(12,2) NOT NULL,
   active_links INTEGER NOT NULL,
@@ -145,6 +146,9 @@ CREATE TABLE IF NOT EXISTS puzzle_submission (
   percent_of_optimal NUMERIC(8,2),
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE puzzle_submission
+  ADD COLUMN IF NOT EXISTS client_token TEXT;
 
 CREATE TABLE IF NOT EXISTS puzzle_submission_player (
   submission_player_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -183,6 +187,10 @@ CREATE INDEX IF NOT EXISTS idx_daily_puzzle_slot_rule_puzzle
 
 CREATE INDEX IF NOT EXISTS idx_puzzle_submission_puzzle_score
   ON puzzle_submission (puzzle_id, final_score DESC, submitted_at ASC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_puzzle_submission_puzzle_client
+  ON puzzle_submission (puzzle_id, client_token)
+  WHERE client_token IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_puzzle_submission_player_submission
   ON puzzle_submission_player (submission_id, slot_number);
