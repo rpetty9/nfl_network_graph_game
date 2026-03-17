@@ -3901,7 +3901,7 @@ export default function HomePage() {
                         setLeaderboardTab("yesterday");
                         setLeaderboardOpen(true);
                       }}
-                      className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.06em] text-white/85 transition hover:bg-white/22 md:px-2 md:py-0.5 md:text-[7px] md:tracking-[0.08em]"
+                      className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[4px] font-black uppercase tracking-[0.05em] text-white/85 transition hover:bg-white/22 md:px-2 md:py-0.5 md:text-[5px] md:tracking-[0.06em]"
                     >
                       Yesterday&apos;s Top 10
                     </button>
@@ -3920,15 +3920,15 @@ export default function HomePage() {
                               className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-left transition hover:-translate-y-0.5 md:gap-1.5 md:px-2 md:py-1 ${placementClasses.shell}`}
                             >
                               <span
-                                className={`text-[6px] font-black uppercase tracking-[0.04em] md:text-[7px] md:tracking-[0.06em] ${placementClasses.place}`}
+                              className={`text-[4px] font-black uppercase tracking-[0.03em] md:text-[5px] md:tracking-[0.04em] ${placementClasses.place}`}
                               >
                                 #{winner.placement}
                               </span>
-                              <span className="font-[family-name:var(--font-display)] whitespace-nowrap text-[7px] md:text-[8px]">
+                              <span className="font-[family-name:var(--font-display)] whitespace-nowrap text-[4.5px] md:text-[5.5px]">
                                 {winner.display_name}
                               </span>
                               <span
-                                className={`text-[6px] font-black uppercase tracking-[0.03em] md:text-[7px] md:tracking-[0.04em] ${placementClasses.score}`}
+                                className={`text-[4px] font-black uppercase tracking-[0.02em] md:text-[5px] md:tracking-[0.03em] ${placementClasses.score}`}
                               >
                                 {formatCompactScore(winner.final_score)}
                               </span>
