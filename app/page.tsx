@@ -3786,7 +3786,7 @@ export default function HomePage() {
                   </h1>
                   <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm">
                     <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_0_3px_rgba(244,114,182,0.18)]" />
-                    Beta
+                    Alpha
                   </span>
                 </div>
                 <div className="absolute right-1.5 top-1.5 z-20">
@@ -3821,7 +3821,7 @@ export default function HomePage() {
                 </h1>
                 <span className="inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm">
                   <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_0_3px_rgba(244,114,182,0.18)]" />
-                  Beta
+                  Alpha
                 </span>
               </div>
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
