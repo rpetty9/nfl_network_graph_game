@@ -69,6 +69,7 @@ Auth-related values for optional Google profiles:
 - `AUTH_SECRET`
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
+- `CRON_SECRET`
 
 ## Google Sign-In Setup
 
@@ -92,6 +93,22 @@ AUTH_GOOGLE_SECRET=your-google-client-secret
 Google requires the redirect URI to match exactly, including scheme, host, path, and trailing slash behavior.
 
 Do not commit real secrets. `.env.local` is already ignored by `.gitignore`.
+
+## Automatic Leaderboard Awards
+
+Top-10 leaderboard badges can be awarded automatically through:
+
+- `/api/cron/award-leaderboard`
+
+The included [vercel.json](./vercel.json) schedules that endpoint daily at `06:05 UTC`, which is safely after midnight in `America/Chicago` year-round and awards the previous Chicago puzzle date.
+
+Set `CRON_SECRET` in Vercel so the cron route only accepts authorized requests.
+
+You can still manually award a finished day with:
+
+```powershell
+npm.cmd run award:leaderboard -- --date 2026-03-16
+```
 
 ## Database / ETL
 

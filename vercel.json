@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/award-leaderboard",
+      "schedule": "5 6 * * *"
+    }
+  ]
+}
