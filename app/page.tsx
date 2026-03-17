@@ -2140,7 +2140,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="absolute inset-x-4 top-4 z-40 hidden grid-cols-[3fr_4fr_3fr] gap-3 sm:grid">
+              <div className="absolute inset-x-4 top-4 z-40 hidden grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:grid">
                 <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-4 py-1.5 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                   <select
@@ -2163,32 +2163,34 @@ export default function HomePage() {
                   </select>
                 </div>
 
-                <div className="group relative inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-1.5">
-                  <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
-                    Time Period
-                  </span>
-                  <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.03em] text-sky-800 sm:text-[11px] sm:tracking-[0.07em]">
-                    {puzzleData.theme?.display_name ?? "Daily Time Period"}
-                  </span>
-                  <div className="pointer-events-none absolute left-1/2 top-full z-50 hidden w-[240px] -translate-x-1/2 pt-2 opacity-0 transition duration-200 group-hover:opacity-100 sm:block">
-                    <div className="rounded-[18px] border-[2px] border-sky-200 bg-white/96 px-3 py-2 text-left shadow-[0_12px_30px_rgba(56,189,248,0.18)] backdrop-blur-sm">
-                      <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-700">
-                        Time Period Info
-                      </p>
-                      <p className="mt-1 text-[11px] font-semibold leading-[1.35] text-slate-700">
-                        Only stats from this season window count toward each player&apos;s score.
-                      </p>
+                <div className="flex min-w-0 flex-col items-end gap-2">
+                  <div className="group relative inline-flex min-w-0 items-center justify-center gap-1.5 self-end rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-1.5">
+                    <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
+                      Time Period
+                    </span>
+                    <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.03em] text-sky-800 sm:text-[11px] sm:tracking-[0.07em]">
+                      {puzzleData.theme?.display_name ?? "Daily Time Period"}
+                    </span>
+                    <div className="pointer-events-none absolute left-1/2 top-full z-50 hidden w-[240px] -translate-x-1/2 pt-2 opacity-0 transition duration-200 group-hover:opacity-100 sm:block">
+                      <div className="rounded-[18px] border-[2px] border-sky-200 bg-white/96 px-3 py-2 text-left shadow-[0_12px_30px_rgba(56,189,248,0.18)] backdrop-blur-sm">
+                        <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          Time Period Info
+                        </p>
+                        <p className="mt-1 text-[11px] font-semibold leading-[1.35] text-slate-700">
+                          Only stats from this season window count toward each player&apos;s score.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border-[2px] border-slate-200 bg-white/92 px-2 py-1 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)] sm:gap-2 sm:px-4 sm:py-1.5">
-                  <span className="rounded-full bg-slate-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-slate-600 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
-                    Players
-                  </span>
-                  <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-slate-700 sm:text-[10px] sm:tracking-[0.06em]">
-                    {players.length} Available
-                  </span>
+                  <div className="inline-flex min-w-0 items-center justify-center gap-1.5 self-end rounded-full border-[2px] border-slate-200 bg-white/92 px-2 py-1 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)] sm:gap-2 sm:px-4 sm:py-1.5">
+                    <span className="rounded-full bg-slate-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-slate-600 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
+                      Players
+                    </span>
+                    <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-slate-700 sm:text-[10px] sm:tracking-[0.06em]">
+                      {players.length} Available
+                    </span>
+                  </div>
                 </div>
               </div>
 
