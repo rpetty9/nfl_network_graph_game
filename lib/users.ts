@@ -21,6 +21,7 @@ export type AppUser = {
   google_subject: string;
   email: string;
   email_normalized: string;
+  created_at: string;
   username: string | null;
   username_normalized: string | null;
   avatar_style: AvatarStyle;
@@ -166,6 +167,7 @@ const USER_SELECT_COLUMNS = `
   google_subject,
   email,
   email_normalized,
+  created_at::text,
   username,
   username_normalized,
   avatar_style,

@@ -52,6 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (appUser) {
             token.appUserId = appUser.user_id;
             token.googleSubject = appUser.google_subject;
+            token.createdAt = appUser.created_at;
             token.username = appUser.username;
             token.avatarStyle = appUser.avatar_style;
             token.avatarBg = appUser.avatar_bg;
@@ -70,6 +71,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const refreshedUser = await getUserById(String(token.appUserId));
         if (refreshedUser) {
           token.username = refreshedUser.username;
+          token.createdAt = refreshedUser.created_at;
           token.avatarStyle = refreshedUser.avatar_style;
           token.avatarBg = refreshedUser.avatar_bg;
           token.avatarAccent = refreshedUser.avatar_accent;
@@ -85,6 +87,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const appUser = await getUserByGoogleSubject(String(token.googleSubject));
         if (appUser) {
           token.appUserId = appUser.user_id;
+          token.createdAt = appUser.created_at;
           token.username = appUser.username;
           token.avatarStyle = appUser.avatar_style;
           token.avatarBg = appUser.avatar_bg;
@@ -101,6 +104,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.appUserId ? String(token.appUserId) : "";
+        session.user.createdAt =
+          typeof token.createdAt === "string" ? token.createdAt : null;
         session.user.username =
           typeof token.username === "string" ? token.username : null;
         session.user.avatarStyle =

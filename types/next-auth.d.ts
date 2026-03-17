@@ -9,6 +9,7 @@ declare module "next-auth" {
       email?: string | null;
       name?: string | null;
       image?: string | null;
+      createdAt: string | null;
       username: string | null;
       avatarStyle: string;
       avatarBg: string;
@@ -29,6 +30,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     appUserId?: string;
     googleSubject?: string;
+    createdAt?: string | null;
     username?: string | null;
     avatarStyle?: string;
     avatarBg?: string;

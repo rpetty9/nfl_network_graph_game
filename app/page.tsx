@@ -166,6 +166,18 @@ function formatBadgeAwardDate(value: string) {
   });
 }
 
+function formatProfileCreatedDate(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function getBadgeProgressLabel(badge: BadgeDefinition) {
   return badge.unlockHint;
 }
@@ -173,6 +185,89 @@ function getBadgeProgressLabel(badge: BadgeDefinition) {
 function clampPageIndex(pageIndex: number, totalItems: number, pageSize: number) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   return Math.min(Math.max(pageIndex, 0), totalPages - 1);
+}
+
+function FeaturedBadgeSlot({
+  badge,
+  active,
+  onToggle,
+}: {
+  badge: Pick<
+    UserBadge,
+    "badgeKey" | "title" | "description" | "tone" | "icon" | "awardedAt"
+  > | null;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  if (!badge) {
+    return (
+      <div className="rounded-[18px] border-[3px] border-dashed border-sky-200 bg-sky-50/60 px-4 py-3 text-left">
+        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+          Empty Slot
+        </p>
+        <p className="mt-1 text-sm font-semibold text-slate-500">
+          Feature a badge from the gallery below.
+        </p>
+      </div>
+    );
+  }
+
+  const tone = getBadgeToneClasses(badge.tone);
+  const isCreatorBadge = badge.badgeKey === "creator";
+
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`flex w-full items-center gap-3 rounded-[18px] border px-4 py-3 text-left transition hover:-translate-y-0.5 ${tone.shell} ${
+          isCreatorBadge
+            ? "shadow-[0_18px_40px_rgba(245,158,11,0.18)]"
+            : "shadow-[0_10px_22px_rgba(15,23,42,0.08)]"
+        }`}
+      >
+        <div
+          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-white/50 ${tone.icon}`}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <BadgeGlyph icon={badge.icon} />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">
+            Featured Badge
+          </p>
+          <p className="mt-1 truncate text-sm font-black uppercase tracking-[0.08em] text-slate-900">
+            {badge.title}
+          </p>
+        </div>
+      </button>
+      <div
+        className={`pointer-events-none absolute left-0 right-0 top-[calc(100%+0.45rem)] z-20 rounded-[18px] border border-slate-200 bg-white/98 px-4 py-3 text-left shadow-[0_18px_40px_rgba(15,23,42,0.18)] transition md:opacity-0 md:translate-y-1 md:group-hover:pointer-events-auto md:group-hover:translate-y-0 md:group-hover:opacity-100 ${
+          active ? "pointer-events-auto opacity-100 translate-y-0" : "opacity-0 translate-y-1 md:block hidden"
+        }`}
+      >
+        <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-900">
+          {badge.title}
+        </p>
+        <p className="mt-1 text-sm font-semibold leading-5 text-slate-600">
+          {badge.description}
+        </p>
+        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+          Earned {formatBadgeAwardDate(badge.awardedAt)}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 type NodeState = {
@@ -789,7 +884,9 @@ export default function HomePage() {
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [badgeSaving, setBadgeSaving] = useState(false);
   const [badgeError, setBadgeError] = useState<string | null>(null);
-  const [earnedBadgesPage, setEarnedBadgesPage] = useState(0);
+  const [activeFeaturedBadgeKey, setActiveFeaturedBadgeKey] = useState<string | null>(
+    null
+  );
   const [galleryPage, setGalleryPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
@@ -814,6 +911,7 @@ export default function HomePage() {
   const sessionAvatarBg = (session?.user?.avatarBg ?? DEFAULT_AVATAR.bg) as AvatarColor;
   const sessionAvatarAccent = (session?.user?.avatarAccent ??
     DEFAULT_AVATAR.accent) as AvatarColor;
+  const profileCreatedAt = session?.user?.createdAt ?? null;
   const userBadges = useMemo(
     () => (session?.user?.badges ?? []) as UserBadge[],
     [session?.user?.badges]
@@ -835,19 +933,10 @@ export default function HomePage() {
     () => new Map(userBadges.map((badge) => [badge.badgeKey, badge])),
     [userBadges]
   );
-  const earnedBadgesPageSize = 4;
   const galleryPageSize = 4;
-  const pagedEarnedBadges = userBadges.slice(
-    earnedBadgesPage * earnedBadgesPageSize,
-    (earnedBadgesPage + 1) * earnedBadgesPageSize
-  );
   const pagedGalleryBadges = publicBadgeDefinitions.slice(
     galleryPage * galleryPageSize,
     (galleryPage + 1) * galleryPageSize
-  );
-  const earnedBadgePageCount = Math.max(
-    1,
-    Math.ceil(userBadges.length / earnedBadgesPageSize)
   );
   const galleryPageCount = Math.max(
     1,
@@ -856,6 +945,7 @@ export default function HomePage() {
   const featuredBadges = featuredBadgeDraft
     .map((badgeKey) => earnedBadgeMap.get(badgeKey))
     .filter((badge): badge is UserBadge => Boolean(badge));
+  const featuredBadgeSlots = [0, 1, 2].map((index) => featuredBadges[index] ?? null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -924,10 +1014,8 @@ export default function HomePage() {
   }, [needsUsername, signedInUsername]);
 
   useEffect(() => {
-    setEarnedBadgesPage((current) =>
-      clampPageIndex(current, userBadges.length, earnedBadgesPageSize)
-    );
-  }, [earnedBadgesPageSize, userBadges.length]);
+    setActiveFeaturedBadgeKey(null);
+  }, [featuredBadgeDraft, profileOpen]);
 
   useEffect(() => {
     setGalleryPage((current) =>
@@ -3458,145 +3546,78 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                <div className="mt-6 grid gap-6 md:grid-cols-[240px_1fr]">
-                  <div className="space-y-4">
-                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-5 text-center">
-                      <ProfileAvatar
-                        style={avatarStyleDraft}
-                        bg={avatarBgDraft}
-                        accent={avatarAccentDraft}
-                        size="lg"
-                      />
-                      <p className="mt-4 text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
-                        Preview
-                      </p>
-                      <p className="mt-1 text-lg font-black text-slate-900">
-                        {signedInUsername}
-                      </p>
-                      <div className="mt-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
-                          Featured Badges
-                        </p>
-                        {featuredBadges.length > 0 ? (
-                          <div className="mt-3 space-y-2 text-left">
-                            {featuredBadges.map((badge) => (
-                              <ProfileBadgeCard
-                                key={`featured-${badge.badgeKey}`}
-                                badge={badge}
-                                compact
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/60 px-4 py-4 text-sm font-semibold text-slate-600">
-                            Pick up to 3 earned badges to display here.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
-                        Stats
-                      </p>
-                      <div className="mt-4 grid gap-3">
-                        <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            Puzzles Submitted
+                <div className="mt-6 space-y-6">
+                  <div className="rounded-[28px] border-[3px] border-sky-100 bg-white/90 p-5">
+                    <div className="grid gap-5 md:grid-cols-[240px_1fr]">
+                      <div className="flex items-center gap-4">
+                        <ProfileAvatar
+                          style={avatarStyleDraft}
+                          bg={avatarBgDraft}
+                          accent={avatarAccentDraft}
+                          size="lg"
+                        />
+                        <div>
+                          <p className="text-xl font-black text-slate-900">
+                            {signedInUsername}
                           </p>
-                          <p className="mt-1 text-2xl font-black text-slate-900">
-                            {userStats.puzzles_submitted}
-                          </p>
-                        </div>
-                        <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            Leaderboards Made
-                          </p>
-                          <p className="mt-1 text-2xl font-black text-slate-900">
-                            {userStats.leaderboard_finishes}
-                          </p>
-                        </div>
-                        <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            Links Created
-                          </p>
-                          <p className="mt-1 text-2xl font-black text-slate-900">
-                            {userStats.links_created}
+                          <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            Joined {formatProfileCreatedDate(profileCreatedAt)}
                           </p>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
-                          Earned Badges
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            {userBadges.length}
-                          </span>
-                          {userBadges.length > earnedBadgesPageSize ? (
-                            <div className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setEarnedBadgesPage((current) =>
-                                    Math.max(0, current - 1)
-                                  )
-                                }
-                                disabled={earnedBadgesPage === 0}
-                                className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                              >
-                                Prev
-                              </button>
-                              <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                                {earnedBadgesPage + 1}/{earnedBadgePageCount}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setEarnedBadgesPage((current) =>
-                                    Math.min(earnedBadgePageCount - 1, current + 1)
-                                  )
-                                }
-                                disabled={earnedBadgesPage >= earnedBadgePageCount - 1}
-                                className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                              >
-                                Next
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
+                      <div className="space-y-3">
+                        {featuredBadgeSlots.map((badge, index) => (
+                          <FeaturedBadgeSlot
+                            key={badge?.badgeKey ?? `empty-${index}`}
+                            badge={badge}
+                            active={activeFeaturedBadgeKey === badge?.badgeKey}
+                            onToggle={() =>
+                              setActiveFeaturedBadgeKey((current) =>
+                                current === badge?.badgeKey ? null : (badge?.badgeKey ?? null)
+                              )
+                            }
+                          />
+                        ))}
                       </div>
-                      {userBadges.length > 0 ? (
-                        <div className="mt-4 space-y-3">
-                          {pagedEarnedBadges.map((badge) => (
-                            <ProfileBadgeCard
-                              key={badge.badgeKey}
-                              badge={badge}
-                              actionLabel={
-                                featuredBadgeDraft.includes(badge.badgeKey)
-                                  ? "Remove"
-                                  : "Feature"
-                              }
-                              onAction={() => handleToggleFeaturedBadge(badge.badgeKey)}
-                              actionDisabled={
-                                !featuredBadgeDraft.includes(badge.badgeKey) &&
-                                featuredBadgeDraft.length >= 3
-                              }
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="mt-4 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/60 px-4 py-4 text-sm font-semibold text-slate-600">
-                          Submit puzzles, crack the top 10, and hit special milestones to start earning badges.
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  <div className="space-y-5">
+                  <div className="grid gap-6 md:grid-cols-[240px_1fr]">
+                    <div className="space-y-4">
+                      <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                          Stats
+                        </p>
+                        <div className="mt-4 grid gap-3">
+                          <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Puzzles Submitted
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-slate-900">
+                              {userStats.puzzles_submitted}
+                            </p>
+                          </div>
+                          <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Leaderboards Made
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-slate-900">
+                              {userStats.leaderboard_finishes}
+                            </p>
+                          </div>
+                          <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Links Created
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-slate-900">
+                              {userStats.links_created}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-5">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                         Style
@@ -3737,6 +3758,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
 
                 {(avatarError || badgeError) && (
