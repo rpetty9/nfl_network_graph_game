@@ -1304,7 +1304,17 @@ export default function HomePage() {
         setSubmissionError(null);
         setPairRelationships([]);
         const params = selectedDate ? `?date=${encodeURIComponent(selectedDate)}` : "";
-        const [puzzleRes, playersRes] = await Promise.all([
+        const submissionParams = new URLSearchParams();
+        submissionParams.set("date", selectedDate);
+        if (!isTrackedAccountUser && browserClientToken) {
+          submissionParams.set("client_token", browserClientToken);
+        }
+
+        const shouldTryLoadSavedSubmission = Boolean(
+          isTrackedAccountUser || browserClientToken
+        );
+
+        const [puzzleRes, playersRes, savedSubmissionRes] = await Promise.all([
           fetch(`/api/puzzle${params}`, {
             cache: "no-store",
             signal: controller.signal,
@@ -1313,20 +1323,37 @@ export default function HomePage() {
             cache: "no-store",
             signal: controller.signal,
           }),
+          shouldTryLoadSavedSubmission
+            ? fetch(`/api/submissions?${submissionParams.toString()}`, {
+                cache: "no-store",
+                signal: controller.signal,
+              })
+            : Promise.resolve(null),
         ]);
 
-        if (!puzzleRes.ok || !playersRes.ok) {
-          const [puzzleBody, playersBody] = await Promise.all([
+        if (
+          !puzzleRes.ok ||
+          !playersRes.ok ||
+          (savedSubmissionRes &&
+            !savedSubmissionRes.ok &&
+            savedSubmissionRes.status !== 404)
+        ) {
+          const [puzzleBody, playersBody, submissionBody] = await Promise.all([
             puzzleRes.text(),
             playersRes.text(),
+            savedSubmissionRes ? savedSubmissionRes.text() : Promise.resolve(""),
           ]);
           throw new Error(
-            `puzzle ${puzzleRes.status}: ${puzzleBody || "no body"} | players ${playersRes.status}: ${playersBody || "no body"}`
+            `puzzle ${puzzleRes.status}: ${puzzleBody || "no body"} | players ${playersRes.status}: ${playersBody || "no body"} | submission ${savedSubmissionRes?.status ?? "skipped"}: ${submissionBody || "no body"}`
           );
         }
 
         const puzzleJson: PuzzleResponse = await puzzleRes.json();
         const playersJson: PlayersResponse = await playersRes.json();
+        const savedSubmissionJson: SubmissionResponse | null =
+          savedSubmissionRes && savedSubmissionRes.ok
+            ? await savedSubmissionRes.json()
+            : null;
 
         if (controller.signal.aborted || requestId !== loadRequestRef.current) {
           return;
@@ -1335,8 +1362,19 @@ export default function HomePage() {
         setPuzzleData(puzzleJson);
         setPlayersData(playersJson);
         setAccountHasSubmittedForSelectedDate(
-          Boolean(puzzleJson.viewer_has_submitted && isTrackedAccountUser)
+          Boolean(
+            isTrackedAccountUser &&
+              (puzzleJson.viewer_has_submitted || savedSubmissionJson)
+          )
         );
+        if (!isTrackedAccountUser) {
+          if (savedSubmissionJson) {
+            markBrowserSubmittedForDate(selectedDate);
+          }
+          setHasSubmittedForSelectedDate(
+            Boolean(savedSubmissionJson) || hasBrowserSubmittedForDate(selectedDate)
+          );
+        }
         setOptimalLineup(null);
         setOptimalError(null);
         setOptimalLoading(false);
@@ -1345,13 +1383,19 @@ export default function HomePage() {
         setLeaderboard([]);
         setLeaderboardLoading(false);
         setLeaderboardError(null);
-        const initial = [1, 2, 3, 4, 5].map((nodeId) => ({
-          node_id: nodeId,
-          player_id: "",
-        }));
+        const initial =
+          savedSubmissionJson?.lineup && savedSubmissionJson.lineup.length === 5
+            ? savedSubmissionJson.lineup.map((entry) => ({
+                node_id: Number(entry.slot_number),
+                player_id: String(entry.player_id),
+              }))
+            : [1, 2, 3, 4, 5].map((nodeId) => ({
+                node_id: nodeId,
+                player_id: "",
+              }));
 
         setNodes(initial);
-          setActiveNodeId(1);
+        setActiveNodeId(1);
         setMobileNavigatorOpen(true);
         setSubmitted(false);
       } catch (error) {
@@ -1376,7 +1420,13 @@ export default function HomePage() {
     loadData();
 
     return () => controller.abort();
-  }, [selectedDate, session?.user?.id, signedInUsername, isTrackedAccountUser]);
+  }, [
+    selectedDate,
+    session?.user?.id,
+    signedInUsername,
+    isTrackedAccountUser,
+    browserClientToken,
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !selectedDate) return;
@@ -2322,6 +2372,7 @@ export default function HomePage() {
   const isLockedForSelectedDate = isTrackedAccountUser
     ? accountHasSubmittedForSelectedDate
     : hasSubmittedForSelectedDate;
+  const isBoardLocked = submitted || isLockedForSelectedDate;
   const canSubmit =
     allFilled &&
     !duplicatePlayersExist &&
@@ -2879,7 +2930,7 @@ export default function HomePage() {
       <div
         className="w-[235px] -translate-x-1/2 -translate-y-1/2 sm:w-[245px] md:w-[270px]"
         onClick={() => {
-          if (submitted) return;
+          if (isBoardLocked) return;
           setActiveNodeId(nodeId);
         }}
       >
@@ -2904,7 +2955,7 @@ export default function HomePage() {
             <SearchablePlayerSelect
               value={node?.player_id ?? ""}
               players={availablePlayers}
-              disabled={submitted}
+              disabled={isBoardLocked}
               placeholder={slotPlaceholder}
               onChange={(playerId) => updateNode(nodeId, playerId)}
               getPlayerLabel={getPlayerLabel}
