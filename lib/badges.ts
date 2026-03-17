@@ -12,7 +12,8 @@ export type BadgeIcon =
   | "trophy"
   | "link"
   | "shield"
-  | "flag";
+  | "flag"
+  | "crown";
 
 export type BadgeKey =
   | "first_submission"
@@ -116,10 +117,10 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
   creator: {
     key: "creator",
     title: "Creator",
-    description: "Built Five Wide from the ground up.",
+    description: "Built Five Wide from the ground up and calls the shots.",
     unlockHint: "Awarded manually by the app creator.",
-    tone: "rose",
-    icon: "shield",
+    tone: "amber",
+    icon: "crown",
     manualOnly: true,
   },
   founder: {

@@ -621,6 +621,14 @@ function BadgeGlyph({ icon }: { icon: BadgeIcon }) {
           <path d="M7 5h8l-1.6 2.5L15 10H7" />
         </>
       );
+    case "crown":
+      return (
+        <>
+          <path d="M5 17h14l-1.2-8-3.8 3-2-5-2 5-3.8-3L5 17Z" />
+          <path d="M7 20h10" />
+          <path d="M8 17h8" />
+        </>
+      );
     case "spark":
     default:
       return (
