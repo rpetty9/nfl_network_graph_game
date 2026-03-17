@@ -288,6 +288,42 @@ function getRelationshipTooltip(relationshipType: string, relationshipLabel: str
   }
 }
 
+function getRecapPlacementClasses(placement: number) {
+  if (placement === 1) {
+    return {
+      shell:
+        "border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98)_0%,rgba(253,230,138,0.92)_34%,rgba(245,158,11,0.82)_100%)] text-amber-950 shadow-[0_10px_26px_rgba(245,158,11,0.22)]",
+      place: "text-amber-900",
+      score: "text-amber-900/90",
+    };
+  }
+
+  if (placement === 2) {
+    return {
+      shell:
+        "border-slate-200/80 bg-[linear-gradient(135deg,rgba(248,250,252,0.98)_0%,rgba(226,232,240,0.94)_36%,rgba(148,163,184,0.78)_100%)] text-slate-900 shadow-[0_10px_24px_rgba(100,116,139,0.18)]",
+      place: "text-slate-800",
+      score: "text-slate-700/90",
+    };
+  }
+
+  if (placement === 3) {
+    return {
+      shell:
+        "border-orange-300/80 bg-[linear-gradient(135deg,rgba(255,247,237,0.98)_0%,rgba(253,186,116,0.9)_38%,rgba(194,65,12,0.76)_100%)] text-orange-950 shadow-[0_10px_24px_rgba(194,65,12,0.18)]",
+      place: "text-orange-900",
+      score: "text-orange-900/90",
+    };
+  }
+
+  return {
+    shell:
+      "border-white/35 bg-white/18 text-white shadow-[0_8px_20px_rgba(15,23,42,0.14)]",
+    place: "text-white/75",
+    score: "text-white/80",
+  };
+}
+
 function formatCompactScore(value: number) {
   return Number(value).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -3835,24 +3871,34 @@ export default function HomePage() {
                     </div>
                     <div className="min-w-0 flex-1 overflow-hidden">
                       <div className="home-recap-ticker flex w-max items-center gap-2">
-                        {homeRecapTickerEntries.map((winner, index) => (
-                          <button
-                            key={`${winner.user_id}-${winner.placement}-${index}`}
-                            type="button"
-                            onClick={() => void openPublicProfile(winner.user_id)}
-                            className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/18 px-2.5 py-1.5 text-left text-white transition hover:-translate-y-0.5 hover:bg-white/24"
-                          >
-                            <span className="text-[9px] font-black uppercase tracking-[0.08em] text-white/75">
-                              #{winner.placement}
-                            </span>
-                            <span className="max-w-[120px] truncate font-[family-name:var(--font-display)] text-[10px]">
-                              {winner.display_name}
-                            </span>
-                            <span className="text-[9px] font-black uppercase tracking-[0.06em] text-white/80">
-                              {formatCompactScore(winner.final_score)}
-                            </span>
-                          </button>
-                        ))}
+                        {homeRecapTickerEntries.map((winner, index) => {
+                          const placementClasses = getRecapPlacementClasses(
+                            winner.placement
+                          );
+
+                          return (
+                            <button
+                              key={`${winner.user_id}-${winner.placement}-${index}`}
+                              type="button"
+                              onClick={() => void openPublicProfile(winner.user_id)}
+                              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-left transition hover:-translate-y-0.5 ${placementClasses.shell}`}
+                            >
+                              <span
+                                className={`text-[9px] font-black uppercase tracking-[0.08em] ${placementClasses.place}`}
+                              >
+                                #{winner.placement}
+                              </span>
+                              <span className="max-w-[120px] truncate font-[family-name:var(--font-display)] text-[10px]">
+                                {winner.display_name}
+                              </span>
+                              <span
+                                className={`text-[9px] font-black uppercase tracking-[0.06em] ${placementClasses.score}`}
+                              >
+                                {formatCompactScore(winner.final_score)}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                     <span className="hidden shrink-0 rounded-full border border-white/35 bg-white/16 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-white/85 md:inline-flex">
@@ -5843,7 +5889,7 @@ export default function HomePage() {
         }
 
         .home-recap-ticker {
-          animation: home-recap-scroll 34s linear infinite;
+          animation: home-recap-scroll 22s linear infinite;
         }
 
         .home-recap-ticker:hover {
