@@ -409,6 +409,7 @@ export default function HomePage() {
   const [hasSubmittedForSelectedDate, setHasSubmittedForSelectedDate] =
     useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1588,6 +1589,48 @@ export default function HomePage() {
     return () => controller.abort();
   }, [submitted, optimalLineup, selectedDate, nodes, browserClientToken]);
 
+  useEffect(() => {
+    if (!leaderboardOpen || submitted) return;
+
+    const controller = new AbortController();
+
+    async function loadLeaderboard() {
+      try {
+        setLeaderboardLoading(true);
+        setLeaderboardError(null);
+
+        const leaderboardResponse = await fetch(
+          `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
+
+        if (!leaderboardResponse.ok) {
+          const body = await leaderboardResponse.text();
+          throw new Error(body || "Failed to load leaderboard");
+        }
+
+        const leaderboardJson: { leaderboard: LeaderboardEntry[] } =
+          await leaderboardResponse.json();
+        if (controller.signal.aborted) return;
+        setLeaderboard(leaderboardJson.leaderboard ?? []);
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+        console.error(error);
+        setLeaderboardError((error as Error).message);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLeaderboardLoading(false);
+        }
+      }
+    }
+
+    loadLeaderboard();
+    return () => controller.abort();
+  }, [leaderboardOpen, selectedDate, submitted]);
+
   function handleSubmit() {
     if (!canSubmit) return;
     setSubmissionError(null);
@@ -2241,6 +2284,13 @@ export default function HomePage() {
               </div>
 
               <div className="absolute right-3 top-3 z-40 flex w-[24%] min-w-[110px] max-w-[132px] flex-col gap-2 sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardOpen(true)}
+                  className="inline-flex items-center justify-center rounded-full border-[2px] border-amber-200 bg-white/92 px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.08em] text-amber-700 shadow-[0_6px_16px_rgba(251,191,36,0.16)]"
+                >
+                  Trophy
+                </button>
                 <div className="group relative inline-flex min-w-0 flex-col items-center justify-center gap-1 rounded-[18px] border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1.5 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)]">
                   <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700">
                     Time Period
@@ -2279,6 +2329,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex min-w-0 flex-col items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLeaderboardOpen(true)}
+                    className="inline-flex items-center gap-2 self-end rounded-full border-[2px] border-amber-200 bg-white/92 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-amber-700 shadow-[0_6px_16px_rgba(251,191,36,0.16)] transition hover:-translate-y-0.5 hover:bg-amber-50"
+                  >
+                    <span aria-hidden="true">Trophy</span>
+                    <span>Leaderboard</span>
+                  </button>
+
                   <div className="group relative inline-flex min-w-0 items-center justify-center gap-1.5 self-end rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-1.5">
                     <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
                       Time Period
@@ -2581,6 +2640,77 @@ export default function HomePage() {
                 </div>
               </div>
           </>
+        )}
+
+        {leaderboardOpen && (
+          <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/35 px-4 py-6">
+            <div className="flex min-h-full items-start justify-center">
+              <div className="w-full max-w-lg rounded-[30px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+                <div className="sticky top-0 z-10 -mx-1 -mt-1 mb-2 flex items-start justify-between gap-4 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] px-1 pt-1">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
+                      Trophy Board
+                    </p>
+                    <h2 className="mt-2 text-2xl font-black tracking-normal text-amber-900">
+                      {formatPuzzleDateLabel(selectedDate)} Leaderboard
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLeaderboardOpen(false)}
+                    className="rounded-full border-[3px] border-amber-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-amber-700"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="mt-5 max-h-[70vh] overflow-y-auto pr-1">
+                  {leaderboardError ? (
+                    <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                      {leaderboardError}
+                    </div>
+                  ) : leaderboardLoading && leaderboard.length === 0 ? (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      Loading leaderboard...
+                    </div>
+                  ) : leaderboard.length > 0 ? (
+                    <div className="space-y-3">
+                      {leaderboard.map((entry, index) => (
+                        <div
+                          key={entry.submission_id}
+                          className="flex items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
+                              #{index + 1}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                              {entry.display_name}
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                              Total Points
+                            </p>
+                            <p className="mt-1 text-lg font-black text-amber-700">
+                              {Number(entry.final_score).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      No leaderboard entries yet for this puzzle.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {rulesOpen && (
