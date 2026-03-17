@@ -958,10 +958,15 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
     <div className="mt-1 flex items-center gap-1">
       {badges.map((badge) => {
         const tone = getBadgeToneClasses(badge.tone);
+        const isCreatorBadge = badge.key === "creator";
         return (
           <span
             key={badge.key}
-            className={`inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/70 shadow-[0_6px_12px_rgba(15,23,42,0.08)] ${tone.icon}`}
+            className={`relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/70 shadow-[0_6px_12px_rgba(15,23,42,0.08)] ${
+              isCreatorBadge
+                ? "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_28%,#facc15_56%,#f59e0b_78%,#b45309_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.52),0_0_14px_rgba(251,191,36,0.55),0_10px_20px_rgba(245,158,11,0.3)] before:absolute before:-inset-1 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(251,191,36,0.48),transparent_68%)] before:blur-[6px] before:content-['']"
+                : tone.icon
+            }`}
             title={badge.title}
           >
             <svg
