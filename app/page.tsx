@@ -3049,7 +3049,10 @@ export default function HomePage() {
                   Base Fantasy Points
                 </p>
                 <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {baseFantasyPoints.toFixed(2)}
+                  {baseFantasyPoints.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
               </div>
 
