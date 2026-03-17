@@ -3691,8 +3691,8 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(56,189,248,0.14)_0%,transparent_28%,rgba(125,211,252,0.1)_56%,rgba(14,165,233,0.12)_84%,transparent_100%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.3)_0%,rgba(191,219,254,0.16)_26%,transparent_68%)]" />
       <div className="relative mx-auto max-w-[1380px]">
-        <div className="mx-auto max-w-[1080px] overflow-hidden rounded-[38px] border-[4px] border-sky-300 bg-white/84 shadow-[0_24px_0_rgba(56,189,248,0.14),0_26px_80px_rgba(125,211,252,0.16)] backdrop-blur-sm">
-          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-4 py-3 text-center md:px-10 md:py-8">
+        <div className="mx-auto max-w-[1080px] overflow-hidden rounded-[38px] border-[4px] border-sky-300 bg-white/84 shadow-[0_10px_0_rgba(56,189,248,0.08),0_14px_36px_rgba(125,211,252,0.12)] backdrop-blur-sm">
+          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-3 py-2.5 text-center md:px-8 md:py-7">
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
             <div className="absolute left-5 top-5 z-20 hidden md:block">
@@ -3887,7 +3887,7 @@ export default function HomePage() {
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
               {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
-                <div className="mt-0.5 w-[calc(100%-4px)] overflow-hidden rounded-[18px] border-[2px] border-white/35 bg-white/14 px-1.5 py-1 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:mt-1 md:w-[calc(100%-8px)] md:px-2 md:py-1.5">
+                <div className="-mx-1.5 mt-px w-[calc(100%+12px)] overflow-hidden rounded-[18px] border-[2px] border-white/35 bg-white/14 px-1.5 py-1 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:-mx-4 md:w-[calc(100%+32px)] md:px-2 md:py-1.5">
                   <div className="flex items-center gap-1.5 md:gap-2">
                     <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.06em] text-white/85 md:px-2 md:py-0.5 md:text-[7px] md:tracking-[0.08em]">
                       Yesterday&apos;s Top 10
@@ -3935,7 +3935,7 @@ export default function HomePage() {
         </div>
 
         {submitted ? (
-          <div className="relative mx-auto mt-8 max-w-[1080px] rounded-[34px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-10 text-center shadow-[0_18px_0_rgba(52,211,153,0.12),0_24px_60px_rgba(52,211,153,0.12)] backdrop-blur-sm">
+          <div className="relative mx-auto mt-8 max-w-[1080px] rounded-[34px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-10 text-center shadow-[0_10px_0_rgba(52,211,153,0.08),0_14px_34px_rgba(52,211,153,0.1)] backdrop-blur-sm">
             <button
               type="button"
               onClick={handleCloseSubmittedView}
@@ -4028,7 +4028,7 @@ export default function HomePage() {
             )}
 
             <div className="mx-auto mt-8 grid max-w-6xl gap-6 xl:grid-cols-2">
-              <div className="rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(125,211,252,0.14)]">
+              <div className="rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(125,211,252,0.1)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                   Your Lineup
                 </p>
@@ -4079,7 +4079,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(129,140,248,0.14)]">
+              <div className="rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(129,140,248,0.1)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
                   Optimal Lineup
                 </p>
@@ -4157,7 +4157,7 @@ export default function HomePage() {
 
             {submissionResult?.awarded_badges &&
             submissionResult.awarded_badges.length > 0 ? (
-              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-6 text-left shadow-[0_14px_36px_rgba(16,185,129,0.12)]">
+              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-6 text-left shadow-[0_8px_22px_rgba(16,185,129,0.1)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">
                   New Badges
                 </p>
@@ -4174,7 +4174,7 @@ export default function HomePage() {
             ) : null}
 
             {isTrackedAccountUser ? (
-              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(56,189,248,0.12)]">
+              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(56,189,248,0.1)]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
@@ -4248,7 +4248,7 @@ export default function HomePage() {
               </div>
             ) : null}
 
-            <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-6 text-left shadow-[0_14px_36px_rgba(251,191,36,0.12)]">
+            <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-6 text-left shadow-[0_8px_22px_rgba(251,191,36,0.1)]">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
                 {formatPuzzleDateLabel(selectedDate)} Leaderboard
               </p>
@@ -4308,7 +4308,7 @@ export default function HomePage() {
             </div>
 
             {optimalLineup && (
-              <div className="hidden mx-auto mt-8 max-w-3xl rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(129,140,248,0.14)]">
+              <div className="hidden mx-auto mt-8 max-w-3xl rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(129,140,248,0.1)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
                   Optimal Lineup
                 </p>
@@ -4388,7 +4388,7 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="hidden mx-auto mt-8 max-w-3xl rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(125,211,252,0.14)]">
+            <div className="hidden mx-auto mt-8 max-w-3xl rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(125,211,252,0.1)]">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                 Player Breakdown
               </p>
@@ -4426,7 +4426,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-          <div className="relative mt-4 mx-auto h-[500px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] px-1.5 pb-1 pt-3 shadow-[0_20px_0_rgba(125,211,252,0.12),0_24px_60px_rgba(125,211,252,0.18)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:px-2 md:pb-2 md:pt-4">
+          <div className="relative mt-4 mx-auto h-[500px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] px-1.5 pb-1 pt-3 shadow-[0_10px_0_rgba(125,211,252,0.08),0_16px_38px_rgba(125,211,252,0.12)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:px-2 md:pb-2 md:pt-4">
               <div className="absolute left-3 top-3 z-40 sm:hidden">
                 <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
@@ -4783,7 +4783,7 @@ export default function HomePage() {
                 </div>
             </div>
 
-              <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_14px_0_rgba(125,211,252,0.1),0_18px_40px_rgba(125,211,252,0.12)] backdrop-blur-sm">
+              <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_8px_0_rgba(125,211,252,0.07),0_12px_28px_rgba(125,211,252,0.1)] backdrop-blur-sm">
                 {submissionError && !isLockedForSelectedDate && (
                   <div
                     className="mb-4 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900"
@@ -4830,7 +4830,7 @@ export default function HomePage() {
         {accountChoiceOpen && !signedInUsername && !needsUsername && (
           <div className="fixed inset-0 z-[108] overflow-y-auto bg-slate-950/45 px-4 py-6">
             <div className="flex min-h-full items-center justify-center">
-              <div className="w-full max-w-md rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="w-full max-w-md rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.16)] md:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
@@ -4875,7 +4875,7 @@ export default function HomePage() {
         {needsUsername && (
           <div className="fixed inset-0 z-[110] overflow-y-auto bg-slate-950/45 px-4 py-6">
             <div className="flex min-h-full items-center justify-center">
-              <div className="w-full max-w-md rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="w-full max-w-md rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.16)] md:p-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                   Finish Profile
                 </p>
@@ -4933,7 +4933,7 @@ export default function HomePage() {
         {profileOpen && signedInUsername && (
           <div className="fixed inset-0 z-[105] overflow-y-auto bg-slate-950/40 px-4 py-6">
             <div className="flex min-h-full items-center justify-center">
-              <div className="w-full max-w-3xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="w-full max-w-3xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.16)] md:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
@@ -5360,7 +5360,7 @@ export default function HomePage() {
         {publicProfileOpen && (
           <div className="fixed inset-0 z-[106] overflow-y-auto bg-slate-950/40 px-4 py-6">
             <div className="flex min-h-full items-center justify-center">
-              <div className="w-full max-w-3xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="w-full max-w-3xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.16)] md:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
@@ -5531,7 +5531,7 @@ export default function HomePage() {
         {leaderboardOpen && (
           <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/35 px-4 py-6">
             <div className="flex min-h-full items-start justify-center">
-              <div className="relative w-full max-w-lg rounded-[30px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="relative w-full max-w-lg rounded-[30px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.16)] md:p-6">
                 <div className="mb-2 pr-12">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
@@ -5675,7 +5675,7 @@ export default function HomePage() {
         {rulesOpen && (
           <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/35 px-4 py-6">
             <div className="flex min-h-full items-start justify-center">
-              <div className="w-full max-w-xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="w-full max-w-xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.16)] md:p-6">
               <div className="sticky top-0 z-10 -mx-1 -mt-1 mb-2 flex items-start justify-between gap-4 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] px-1 pt-1">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
