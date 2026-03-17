@@ -3895,9 +3895,16 @@ export default function HomePage() {
               {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
                 <div className="-mx-1.5 mt-px w-[calc(100%+12px)] overflow-hidden rounded-[18px] border-[2px] border-white/35 bg-white/14 px-1.5 py-1 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:-mx-6 md:mt-0 md:w-[calc(100%+48px)] md:px-2 md:py-1.5">
                   <div className="flex items-center gap-1.5 md:gap-2">
-                    <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.06em] text-white/85 md:px-2 md:py-0.5 md:text-[7px] md:tracking-[0.08em]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLeaderboardTab("yesterday");
+                        setLeaderboardOpen(true);
+                      }}
+                      className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.06em] text-white/85 transition hover:bg-white/22 md:px-2 md:py-0.5 md:text-[7px] md:tracking-[0.08em]"
+                    >
                       Yesterday&apos;s Top 10
-                    </div>
+                    </button>
                     <div className="min-w-0 flex-1 overflow-hidden">
                       <div className="home-recap-ticker flex w-max items-center gap-1.5 md:gap-2">
                         {homeRecapTickerEntries.map((winner, index) => {
