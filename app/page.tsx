@@ -4022,19 +4022,11 @@ export default function HomePage() {
             </div>
 
               <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_14px_0_rgba(125,211,252,0.1),0_18px_40px_rgba(125,211,252,0.12)] backdrop-blur-sm">
-                {(isLockedForSelectedDate || submissionError) && (
+                {submissionError && !isLockedForSelectedDate && (
                   <div
-                    className={`mb-4 rounded-[18px] border px-4 py-3 text-sm font-semibold ${
-                      isLockedForSelectedDate
-                        ? "border-amber-200 bg-amber-50 text-amber-900"
-                        : "border-rose-200 bg-rose-50 text-rose-900"
-                    }`}
+                    className="mb-4 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900"
                   >
-                    {isLockedForSelectedDate
-                      ? isTrackedAccountUser
-                        ? `Your account already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, and you can reopen that saved lineup below, but each account only gets one leaderboard entry per date.`
-                        : `This browser already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, and you can reopen that saved lineup below, but the leaderboard only accepts one entry per browser per date.`
-                      : submissionError}
+                    {submissionError}
                   </div>
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -4062,6 +4054,13 @@ export default function HomePage() {
                     Rules
                   </button>
                 </div>
+                {isLockedForSelectedDate && (
+                  <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-sky-800/80 sm:text-sm">
+                    {isTrackedAccountUser
+                      ? `You already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each account only gets one official score per day.`
+                      : `This browser already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but guest play only gets one official score per day.`}
+                  </p>
+                )}
               </div>
           </>
         )}
