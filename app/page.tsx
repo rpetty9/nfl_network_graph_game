@@ -261,6 +261,33 @@ function formatHistoryDateLabel(value: string) {
   });
 }
 
+function getRelationshipTooltip(relationshipType: string, relationshipLabel: string) {
+  switch (relationshipType) {
+    case "teammates":
+      return "A link activates if those two players were ever teammates at any point in their careers. It is not limited to the puzzle's featured time period.";
+    case "same_franchise":
+      return "A link activates if both players played for the same franchise at any point in their careers, even if they were not there at the same time.";
+    case "same_college":
+      return "A link activates if both players attended the same college at any point before entering the NFL.";
+    case "same_draft_class":
+      return "A link activates if both players entered the NFL in the same draft year.";
+    case "same_draft_round":
+      return "A link activates if both players were selected in the same draft round.";
+    case "both_undrafted":
+      return "A link activates if both players entered the league as undrafted free agents.";
+    case "both_super_bowl_winner":
+      return "A link activates if both players won at least one Super Bowl in their careers.";
+    case "both_non_super_bowl_winner":
+      return "A link activates if neither player ever won a Super Bowl.";
+    case "both_played_packers":
+      return "A link activates if both players played for the Packers at some point in their careers.";
+    case "same_position":
+      return "A link activates if both players share the same primary listed position.";
+    default:
+      return `${relationshipLabel} is the active link rule for this puzzle. A link turns on whenever a pair of selected players satisfies that rule.`;
+  }
+}
+
 function formatCompactScore(value: number) {
   return Number(value).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -1470,6 +1497,7 @@ export default function HomePage() {
   const [homeRecap, setHomeRecap] = useState<HomeRecapResponse["recap"]>(null);
   const [homeRecapLoading, setHomeRecapLoading] = useState(true);
   const [savedSubmissionLoading, setSavedSubmissionLoading] = useState(false);
+  const [relationshipTooltipOpen, setRelationshipTooltipOpen] = useState(false);
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
   const signedInUsername = session?.user?.username ?? null;
@@ -1953,6 +1981,10 @@ export default function HomePage() {
         relationshipTeamAbbr
       )}.png`
     : null;
+  const relationshipTooltipText = getRelationshipTooltip(
+    relationshipType,
+    relationshipLabel
+  );
   const bonusPct = puzzleData?.relationship_rule?.bonus_pct ?? 5;
   const formattedPuzzleDate = puzzleData?.puzzle?.puzzle_date
     ? new Date(puzzleData.puzzle.puzzle_date).toLocaleDateString(undefined, {
@@ -4610,7 +4642,34 @@ export default function HomePage() {
                               isFullyConnected ? "text-emerald-900" : "text-sky-900"
                             }`}
                           >
-                            {isFullyConnected ? "Fully Linked" : relationshipLabel}
+                            {isFullyConnected ? (
+                              "Fully Linked"
+                            ) : (
+                              <span className="inline-flex items-center justify-center gap-2">
+                                <span>{relationshipLabel}</span>
+                                <span
+                                  className="relative inline-flex"
+                                  onMouseEnter={() => setRelationshipTooltipOpen(true)}
+                                  onMouseLeave={() => setRelationshipTooltipOpen(false)}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setRelationshipTooltipOpen((current) => !current)
+                                    }
+                                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border-[2px] border-sky-200 bg-white/90 text-[11px] font-black text-sky-700 shadow-[0_8px_18px_rgba(14,165,233,0.12)] transition hover:-translate-y-0.5 hover:bg-sky-50"
+                                    aria-label={`How ${relationshipLabel} links work`}
+                                  >
+                                    ?
+                                  </button>
+                                  {relationshipTooltipOpen ? (
+                                    <span className="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-[18px] border-[3px] border-sky-200 bg-white px-3 py-3 text-left text-[11px] font-semibold normal-case leading-5 tracking-normal text-slate-700 shadow-[0_18px_34px_rgba(14,165,233,0.16)] sm:w-64">
+                                      {relationshipTooltipText}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              </span>
+                            )}
                           </p>
 
                           <p
