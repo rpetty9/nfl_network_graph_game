@@ -2063,7 +2063,7 @@ export default function HomePage() {
     leaderboardTab === "all-time"
       ? "All-Time Standings"
       : leaderboardTab === "yesterday" && homeRecap?.puzzle_date
-        ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Yesterday's Top 10`
+        ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Yesterday`
         : `${formatPuzzleDateLabel(activePuzzleDate)} Leaderboard`;
   function formatPuzzleDateLabel(dateValue: string) {
     const [year, month, day] = dateValue.split("-").map(Number);
@@ -3906,7 +3906,7 @@ export default function HomePage() {
                       }}
                       className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1 py-[2px] text-[3px] font-black uppercase tracking-[0.04em] text-white/85 transition hover:bg-white/22 md:px-1.5 md:py-[3px] md:text-[4px] md:tracking-[0.05em]"
                     >
-                      Yesterday&apos;s Top 10
+                      Yesterday
                     </button>
                     <div className="min-w-0 flex-1 overflow-hidden">
                       <div className="home-recap-ticker flex w-max items-center gap-1 md:gap-1.5">
