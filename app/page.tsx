@@ -176,14 +176,7 @@ function SearchablePlayerSelect({
     () => players.find((p) => String(p.player_id) === String(value)) ?? null,
     [players, value]
   );
-
-  useEffect(() => {
-    if (selectedPlayer) {
-      setQuery(getPlayerLabel(selectedPlayer));
-    } else {
-      setQuery("");
-    }
-  }, [selectedPlayer, getPlayerLabel]);
+  const selectedPlayerLabel = selectedPlayer ? getPlayerLabel(selectedPlayer) : "";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -202,12 +195,13 @@ function SearchablePlayerSelect({
 
     registerFocus(() => {
       if (disabled) return;
+      setQuery(selectedPlayerLabel);
       inputRef.current?.focus();
       setOpen(true);
     });
 
     return () => registerFocus(null);
-  }, [disabled, registerFocus]);
+  }, [disabled, registerFocus, selectedPlayerLabel]);
 
   const filteredPlayers = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -224,17 +218,20 @@ function SearchablePlayerSelect({
       .slice(0, 50);
   }, [players, query]);
 
+  const inputValue = open ? query : selectedPlayerLabel || query;
+
   return (
     <div ref={wrapperRef} className="relative">
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
-          value={query}
+          value={inputValue}
           disabled={disabled}
           placeholder={placeholder}
           onFocus={() => {
             if (!disabled) {
+              setQuery(selectedPlayerLabel || query);
               onActivate?.();
               setOpen(true);
             }
