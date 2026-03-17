@@ -193,7 +193,32 @@ type PublicProfileResponse = {
       links_created: number;
       longest_submission_streak: number;
     };
+    recent_submissions: Array<{
+      submission_id: number;
+      puzzle_date: string;
+      final_score: number;
+      base_score: number;
+      active_links: number;
+      multiplier: number;
+      percent_of_optimal: number | null;
+      placement: number | null;
+    }>;
   };
+};
+
+type SelfProfileResponse = PublicProfileResponse;
+
+type HomeRecapResponse = {
+  recap: {
+    puzzle_date: string;
+    winners: Array<{
+      user_id: string;
+      display_name: string;
+      placement: number;
+      final_score: number;
+      featured_badges?: BadgeKey[];
+    }>;
+  } | null;
 };
 
 type ActiveLinkDetail = {
@@ -223,6 +248,124 @@ function formatProfileCreatedDate(value: string | null) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatHistoryDateLabel(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatCompactScore(value: number) {
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+type BadgeProgressStats = {
+  puzzles_submitted: number;
+  leaderboard_finishes: number;
+  links_created: number;
+  longest_submission_streak: number;
+};
+
+type NextBadgeGoal = {
+  badge: BadgeDefinition;
+  progressLabel: string;
+  progressRatio: number;
+  note: string;
+};
+
+function getNextBadgeGoals(input: {
+  stats: BadgeProgressStats;
+  earnedBadgeKeys: Set<BadgeKey>;
+  currentSubmissionLinks: number;
+}) {
+  const { stats, earnedBadgeKeys, currentSubmissionLinks } = input;
+  const goals: NextBadgeGoal[] = [];
+
+  const pushGoal = (
+    badgeKey: BadgeKey,
+    progress: number,
+    target: number,
+    note: string,
+    progressLabel = `${Math.min(progress, target)}/${target}`
+  ) => {
+    if (earnedBadgeKeys.has(badgeKey)) return;
+    const badge = getBadgeDefinition(badgeKey);
+    if (!badge) return;
+    goals.push({
+      badge,
+      progressLabel,
+      progressRatio: target > 0 ? Math.min(progress / target, 1) : 0,
+      note,
+    });
+  };
+
+  pushGoal(
+    "submissions_10",
+    stats.puzzles_submitted,
+    10,
+    "Keep locking in daily lineups."
+  );
+  pushGoal(
+    "submissions_25",
+    stats.puzzles_submitted,
+    25,
+    "Volume milestones stack up fast."
+  );
+  pushGoal(
+    "links_25",
+    stats.links_created,
+    25,
+    "Every active player-to-player connection counts."
+  );
+  pushGoal(
+    "top_10_finish",
+    stats.leaderboard_finishes,
+    1,
+    "Finalized top-10 badges award after the nightly snapshot."
+  );
+  pushGoal(
+    "top_10_finish_5",
+    stats.leaderboard_finishes,
+    5,
+    "Rack up multiple nightly top-10 finishes."
+  );
+  pushGoal(
+    "streak_3",
+    stats.longest_submission_streak,
+    3,
+    "Submit on consecutive puzzle dates to build your streak."
+  );
+  pushGoal(
+    "streak_7",
+    stats.longest_submission_streak,
+    7,
+    "A full week in a row unlocks this one."
+  );
+
+  if (!earnedBadgeKeys.has("ten_links_submission")) {
+    const badge = getBadgeDefinition("ten_links_submission");
+    if (badge) {
+      goals.push({
+        badge,
+        progressLabel: `${Math.min(currentSubmissionLinks, 10)}/10`,
+        progressRatio: Math.min(currentSubmissionLinks / 10, 1),
+        note: "One fully connected lineup hits the max 2.00x bonus.",
+      });
+    }
+  }
+
+  return goals
+    .sort((a, b) => b.progressRatio - a.progressRatio)
+    .slice(0, 3);
 }
 
 function getBadgeProgressLabel(
@@ -1175,6 +1318,60 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
   );
 }
 
+function RecentSubmissionList({
+  submissions,
+  emptyMessage,
+}: {
+  submissions: PublicProfileResponse["profile"]["recent_submissions"];
+  emptyMessage: string;
+}) {
+  if (submissions.length === 0) {
+    return (
+      <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+        {emptyMessage}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {submissions.map((submission) => (
+        <div
+          key={submission.submission_id}
+          className="rounded-[18px] border-[3px] border-sky-100 bg-white/90 px-4 py-3 shadow-[0_10px_22px_rgba(125,211,252,0.08)]"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                {formatHistoryDateLabel(submission.puzzle_date)}
+              </p>
+              <p className="mt-1 text-sm font-black text-slate-900">
+                {submission.placement != null
+                  ? `Finalized #${submission.placement}`
+                  : "Lineup locked"}
+              </p>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-sky-700/80">
+                {submission.active_links} links • {submission.multiplier.toFixed(2)}x •{" "}
+                {submission.percent_of_optimal != null
+                  ? `${Number(submission.percent_of_optimal).toFixed(1)}% optimal`
+                  : "Optimal pending"}
+              </p>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                Final Score
+              </p>
+              <p className="mt-1 text-lg font-black text-sky-800">
+                {formatCompactScore(submission.final_score)}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const todayIso = getCurrentLocalDateIso();
   const loadRequestRef = useRef(0);
@@ -1264,9 +1461,14 @@ export default function HomePage() {
   const [publicProfile, setPublicProfile] = useState<PublicProfileResponse["profile"] | null>(
     null
   );
+  const [selfProfile, setSelfProfile] = useState<SelfProfileResponse["profile"] | null>(null);
+  const [selfProfileLoading, setSelfProfileLoading] = useState(false);
+  const [selfProfileError, setSelfProfileError] = useState<string | null>(null);
   const [activePublicFeaturedBadgeKey, setActivePublicFeaturedBadgeKey] = useState<string | null>(
     null
   );
+  const [homeRecap, setHomeRecap] = useState<HomeRecapResponse["recap"]>(null);
+  const [homeRecapLoading, setHomeRecapLoading] = useState(true);
   const [savedSubmissionLoading, setSavedSubmissionLoading] = useState(false);
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
@@ -1287,12 +1489,17 @@ export default function HomePage() {
     () => (session?.user?.badges ?? []) as UserBadge[],
     [session?.user?.badges]
   );
-  const userStats = session?.user?.stats ?? {
-    puzzles_submitted: 0,
-    leaderboard_finishes: 0,
-    links_created: 0,
-    longest_submission_streak: 0,
-  };
+  const userStats = useMemo(
+    () =>
+      session?.user?.stats ?? {
+        puzzles_submitted: 0,
+        leaderboard_finishes: 0,
+        links_created: 0,
+        longest_submission_streak: 0,
+      },
+    [session?.user?.stats]
+  );
+  const selfRecentSubmissions = selfProfile?.recent_submissions ?? [];
   const featuredBadgeKeys = useMemo(
     () =>
       ((session?.user?.featuredBadges ?? []) as string[])
@@ -2566,6 +2773,35 @@ export default function HomePage() {
   const linkBonusPct = getLinkBonusPct(activeLinkCount, bonusPct);
   const multiplier = getLinkMultiplier(activeLinkCount, bonusPct);
   const finalScore = baseFantasyPoints * multiplier;
+  const projectedPostSubmitStats = useMemo(() => {
+    if (!isTrackedAccountUser || !submitted || submissionViewMode !== "new") {
+      return userStats;
+    }
+
+    return {
+      ...userStats,
+      puzzles_submitted: userStats.puzzles_submitted + 1,
+      links_created:
+        userStats.links_created +
+        Number(submissionResult?.active_links ?? activeLinkCount ?? 0),
+    };
+  }, [
+    activeLinkCount,
+    isTrackedAccountUser,
+    submissionResult?.active_links,
+    submissionViewMode,
+    submitted,
+    userStats,
+  ]);
+  const nextBadgeGoals = useMemo(
+    () =>
+      getNextBadgeGoals({
+        stats: projectedPostSubmitStats,
+        earnedBadgeKeys: new Set(userBadges.map((badge) => badge.badgeKey)),
+        currentSubmissionLinks: Number(submissionResult?.active_links ?? activeLinkCount ?? 0),
+      }),
+    [activeLinkCount, projectedPostSubmitStats, submissionResult?.active_links, userBadges]
+  );
   const liveEnergy = isFullyConnected ? 1 : linkProgressPct;
   const ringGlowStrength = 0.22 + liveEnergy * 0.5;
   const shellGlowStrength = 0.12 + liveEnergy * 0.34;
@@ -2650,6 +2886,77 @@ export default function HomePage() {
     loadOptimalLineup();
     return () => controller.abort();
   }, [submitted, selectedDate]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadHomeRecap() {
+      try {
+        setHomeRecapLoading(true);
+        const response = await fetch("/api/home/recap", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load home recap");
+        }
+
+        const json = (await response.json()) as HomeRecapResponse;
+        if (!controller.signal.aborted) {
+          setHomeRecap(json.recap ?? null);
+        }
+      } catch (error) {
+        if ((error as Error).name !== "AbortError" && !controller.signal.aborted) {
+          setHomeRecap(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setHomeRecapLoading(false);
+        }
+      }
+    }
+
+    void loadHomeRecap();
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!profileOpen || !signedInUsername) return;
+
+    const controller = new AbortController();
+
+    async function loadSelfProfile() {
+      try {
+        setSelfProfileLoading(true);
+        setSelfProfileError(null);
+        const response = await fetch("/api/profile", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(body || "Failed to load profile.");
+        }
+
+        const json = (await response.json()) as SelfProfileResponse;
+        if (!controller.signal.aborted) {
+          setSelfProfile(json.profile);
+        }
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+        setSelfProfileError((error as Error).message);
+      } finally {
+        if (!controller.signal.aborted) {
+          setSelfProfileLoading(false);
+        }
+      }
+    }
+
+    void loadSelfProfile();
+    return () => controller.abort();
+  }, [profileOpen, signedInUsername]);
 
   useEffect(() => {
     if (!submitted || !optimalLineup) return;
@@ -3484,6 +3791,44 @@ export default function HomePage() {
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
+              {!homeRecapLoading && homeRecap ? (
+                <div className="mx-auto mt-4 w-full max-w-3xl rounded-[24px] border-[3px] border-white/35 bg-white/16 p-3 text-left shadow-[0_16px_34px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-5 md:p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-white/80">
+                        Yesterday&apos;s Winners
+                      </p>
+                      <p className="mt-1 text-sm font-bold text-white md:text-base">
+                        Finalized {formatPuzzleDateLabel(homeRecap.puzzle_date)} finishers
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-white/35 bg-white/18 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white/85">
+                      Top 3
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-3">
+                    {homeRecap.winners.map((winner) => (
+                      <button
+                        key={`${winner.user_id}-${winner.placement}`}
+                        type="button"
+                        onClick={() => void openPublicProfile(winner.user_id)}
+                        className="rounded-[18px] border border-white/35 bg-white/16 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:bg-white/22"
+                      >
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-white/75">
+                          #{winner.placement}
+                        </p>
+                        <p className="mt-1 truncate text-sm font-black text-white md:text-base">
+                          {winner.display_name}
+                        </p>
+                        <LeaderboardBadgeIcons badgeKeys={winner.featured_badges} />
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-white/80">
+                          {formatCompactScore(winner.final_score)}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -3722,6 +4067,81 @@ export default function HomePage() {
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   {submissionResult.awarded_badges.map((badge) => (
                     <ProfileBadgeCard key={badge.badgeKey} badge={badge} compact />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {isTrackedAccountUser ? (
+              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_14px_36px_rgba(56,189,248,0.12)]">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                      Next Goals
+                    </p>
+                    <h3 className="mt-2 text-2xl font-black text-sky-900">
+                      Keep the streak going
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
+                      Account stats are tracked across days, and daily leaderboard badges lock from the nightly finalized snapshot.
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/90 px-4 py-3 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                      Projected Totals
+                    </p>
+                    <p className="mt-1 text-sm font-black text-slate-900">
+                      {projectedPostSubmitStats.puzzles_submitted} puzzles •{" "}
+                      {projectedPostSubmitStats.links_created} links
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {nextBadgeGoals.map((goal) => (
+                    <div
+                      key={`goal-${goal.badge.key}`}
+                      className="rounded-[20px] border-[3px] border-sky-100 bg-white/90 p-4 shadow-[0_10px_24px_rgba(56,189,248,0.08)]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-white/60 bg-[linear-gradient(145deg,#e0f2fe,#7dd3fc)] text-sky-900 shadow-[0_10px_18px_rgba(56,189,248,0.18)]">
+                          <svg
+                            aria-hidden="true"
+                            viewBox="0 0 24 24"
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <BadgeGlyph icon={goal.badge.icon} />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black uppercase tracking-[0.08em] text-sky-800">
+                            {goal.badge.title}
+                          </p>
+                          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                            {goal.progressLabel}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-sky-100">
+                        <div
+                          className="h-full rounded-full bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_100%)]"
+                          style={{
+                            width: `${
+                              goal.progressRatio <= 0
+                                ? 0
+                                : Math.max(8, goal.progressRatio * 100)
+                            }%`,
+                          }}
+                        />
+                      </div>
+                      <p className="mt-3 text-sm font-semibold leading-5 text-slate-600">
+                        {goal.note}
+                      </p>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -4274,8 +4694,8 @@ export default function HomePage() {
                 {isLockedForSelectedDate && (
                   <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-sky-800/80 sm:text-sm">
                     {isTrackedAccountUser
-                      ? `You already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each user only gets one official score per day.`
-                      : `This browser already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each guest only gets one official score per day.`}
+                      ? `Locked lineup loaded for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each user only gets one official score per day.`
+                      : `Locked lineup loaded for ${formatPuzzleDateLabel(selectedDate)} on this browser. You can still review that saved entry, but each guest only gets one official score per day.`}
                   </p>
                 )}
               </div>
@@ -4480,6 +4900,37 @@ export default function HomePage() {
                               {userStats.links_created}
                             </p>
                           </div>
+                        </div>
+                      </div>
+                      <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                              Recent Runs
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-slate-600">
+                              Your latest locked lineups and finalized finishes.
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            {selfRecentSubmissions.length}
+                          </span>
+                        </div>
+                        <div className="mt-4">
+                          {selfProfileError ? (
+                            <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900">
+                              {selfProfileError}
+                            </div>
+                          ) : selfProfileLoading && selfRecentSubmissions.length === 0 ? (
+                            <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                              Loading recent history...
+                            </div>
+                          ) : (
+                            <RecentSubmissionList
+                              submissions={selfRecentSubmissions}
+                              emptyMessage="No saved puzzle history yet."
+                            />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -4891,6 +5342,27 @@ export default function HomePage() {
                                 {publicProfile.stats.links_created}
                               </p>
                             </div>
+                          </div>
+                        </div>
+                        <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                                Recent Runs
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-slate-600">
+                                Latest locked lineups from this profile.
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              {publicProfile.recent_submissions.length}
+                            </span>
+                          </div>
+                          <div className="mt-4">
+                            <RecentSubmissionList
+                              submissions={publicProfile.recent_submissions}
+                              emptyMessage="No saved puzzle history yet."
+                            />
                           </div>
                         </div>
                       </div>

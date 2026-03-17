@@ -39,6 +39,7 @@ export type AppUser = {
     links_created: number;
     longest_submission_streak: number;
   };
+  recent_submissions: RecentSubmission[];
 };
 
 export type PublicUserProfile = {
@@ -57,6 +58,18 @@ export type PublicUserProfile = {
     links_created: number;
     longest_submission_streak: number;
   };
+  recent_submissions: RecentSubmission[];
+};
+
+export type RecentSubmission = {
+  submission_id: number;
+  puzzle_date: string;
+  final_score: number;
+  base_score: number;
+  active_links: number;
+  multiplier: number;
+  percent_of_optimal: number | null;
+  placement: number | null;
 };
 
 type AppUserRow = Omit<AppUser, "badges" | "stats">;
@@ -66,6 +79,17 @@ type UserBadgeRow = {
   awarded_at: string;
   awarded_by_user_id: string | null;
   award_note: string | null;
+};
+
+type RecentSubmissionRow = {
+  submission_id: string;
+  puzzle_date: string;
+  final_score: string;
+  base_score: string;
+  active_links: string;
+  multiplier: string;
+  percent_of_optimal: string | null;
+  placement: string | null;
 };
 
 type UsernameValidationResult =
@@ -311,6 +335,44 @@ async function loadStatsForUser(userId: string) {
   };
 }
 
+async function loadRecentSubmissionsForUser(userId: string, limit = 6) {
+  const result = await pool.query<RecentSubmissionRow>(
+    `
+    SELECT
+      ps.submission_id::text,
+      dp.puzzle_date::text,
+      ps.final_score::text,
+      ps.base_score::text,
+      ps.active_links::text,
+      ps.multiplier::text,
+      ps.percent_of_optimal::text,
+      dlf.placement::text
+    FROM puzzle_submission ps
+    JOIN daily_puzzle dp
+      ON dp.puzzle_id = ps.puzzle_id
+    LEFT JOIN daily_leaderboard_finish dlf
+      ON dlf.puzzle_id = ps.puzzle_id
+      AND dlf.user_id = ps.user_id
+    WHERE ps.user_id = $1
+    ORDER BY dp.puzzle_date DESC, ps.submitted_at DESC
+    LIMIT $2
+    `,
+    [Number(userId), limit]
+  );
+
+  return result.rows.map((row) => ({
+    submission_id: Number(row.submission_id),
+    puzzle_date: row.puzzle_date,
+    final_score: Number(row.final_score ?? "0"),
+    base_score: Number(row.base_score ?? "0"),
+    active_links: Number(row.active_links ?? "0"),
+    multiplier: Number(row.multiplier ?? "1"),
+    percent_of_optimal:
+      row.percent_of_optimal == null ? null : Number(row.percent_of_optimal),
+    placement: row.placement == null ? null : Number(row.placement),
+  }));
+}
+
 async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> {
   if (!user) return null;
 
@@ -330,9 +392,10 @@ async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> 
     badgeKeys: derivedBadgeKeys,
   });
 
-  const [badges, stats] = await Promise.all([
+  const [badges, stats, recentSubmissions] = await Promise.all([
     loadBadgesForUser(user.user_id),
     loadStatsForUser(user.user_id),
+    loadRecentSubmissionsForUser(user.user_id),
   ]);
 
   return {
@@ -340,6 +403,7 @@ async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> 
     featured_badges: sanitizeFeaturedBadges(user.featured_badges),
     badges,
     stats,
+    recent_submissions: recentSubmissions,
   };
 }
 
@@ -401,6 +465,7 @@ export async function getPublicUserProfileById(userId: string): Promise<PublicUs
     featured_badges: user.featured_badges,
     badges: user.badges,
     stats: user.stats,
+    recent_submissions: user.recent_submissions,
   };
 }
 
