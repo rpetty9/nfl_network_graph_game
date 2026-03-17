@@ -3075,7 +3075,7 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.3)_0%,rgba(191,219,254,0.16)_26%,transparent_68%)]" />
       <div className="relative mx-auto max-w-[1380px]">
         <div className="mx-auto max-w-[1080px] overflow-hidden rounded-[38px] border-[4px] border-sky-300 bg-white/84 shadow-[0_24px_0_rgba(56,189,248,0.14),0_26px_80px_rgba(125,211,252,0.16)] backdrop-blur-sm">
-          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-4 py-5 text-center md:px-10 md:py-8">
+          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-4 py-3 text-center md:px-10 md:py-8">
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
             <div className="absolute left-5 top-5 z-20 hidden md:block">
@@ -3180,7 +3180,7 @@ export default function HomePage() {
             </button>
             <div className="relative z-10">
               <div className="md:hidden">
-                <div className="absolute left-2 top-2 z-20">
+                <div className="absolute left-1.5 top-1.5 z-20">
                   {sessionStatus === "loading" ? (
                     <div className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/55 bg-white/15 text-[10px] font-black uppercase tracking-[0.08em] text-white/90 backdrop-blur-sm">
                       ...
@@ -3222,7 +3222,7 @@ export default function HomePage() {
                     />
                   )}
                 </div>
-                <div className="mx-auto flex max-w-[320px] flex-col items-center pt-7 text-center">
+                <div className="mx-auto flex max-w-[320px] flex-col items-center pt-2 text-center">
                   <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)]">
                     Five Wide
                   </h1>
@@ -3231,7 +3231,7 @@ export default function HomePage() {
                     Beta
                   </span>
                 </div>
-                <div className="absolute right-2 top-2 z-20">
+                <div className="absolute right-1.5 top-1.5 z-20">
                   <button
                     type="button"
                     onClick={() => setLeaderboardOpen(true)}
