@@ -4048,7 +4048,7 @@ export default function HomePage() {
                     )
                   )}
                 </div>
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <div className="mt-5 grid gap-3 md:grid-cols-4">
                   <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
                     <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
                       Base
@@ -4074,6 +4074,17 @@ export default function HomePage() {
                     </p>
                     <p className="mt-1 text-lg font-black text-slate-900">
                       {multiplier.toFixed(2)}x
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border-[3px] border-sky-200 bg-sky-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(125,211,252,0.12)]">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                      Total
+                    </p>
+                    <p className="mt-1 text-lg font-black text-sky-900">
+                      {Number(finalScore).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
                 </div>
@@ -4131,7 +4142,7 @@ export default function HomePage() {
                       </div>
                       <div className="rounded-[18px] border-[3px] border-indigo-200 bg-indigo-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(129,140,248,0.12)]">
                         <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-700">
-                          Optimal Total
+                          Total
                         </p>
                         <p className="mt-1 text-lg font-black text-indigo-900">
                           {Number(optimalLineup.optimal_final_score).toLocaleString(
