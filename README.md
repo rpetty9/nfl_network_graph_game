@@ -70,6 +70,27 @@ Auth-related values for optional Google profiles:
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
 
+## Google Sign-In Setup
+
+To enable Google sign-in for tracked profiles:
+
+1. Create an OAuth client in Google Cloud Console.
+2. Choose `Web application` as the client type.
+3. Add these Authorized JavaScript origins:
+   - `http://localhost:3000`
+   - your production origin, for example `https://your-app-domain.com`
+4. Add these Authorized redirect URIs:
+   - `http://localhost:3000/api/auth/callback/google`
+   - your production callback, for example `https://your-app-domain.com/api/auth/callback/google`
+5. Copy the Google client ID and client secret into `.env.local`:
+
+```powershell
+AUTH_GOOGLE_ID=your-google-client-id
+AUTH_GOOGLE_SECRET=your-google-client-secret
+```
+
+Google requires the redirect URI to match exactly, including scheme, host, path, and trailing slash behavior.
+
 Do not commit real secrets. `.env.local` is already ignored by `.gitignore`.
 
 ## Database / ETL
