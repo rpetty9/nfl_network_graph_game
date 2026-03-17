@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { pool } from "@/lib/db";
+import { getAcceptedFriendUserIds } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -39,6 +41,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    let friendUserIds: string[] = [];
+    if (scope === "friends") {
+      const session = await auth();
+      const userId = session?.user?.id;
+
+      if (!userId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      friendUserIds = [userId, ...(await getAcceptedFriendUserIds(userId))];
+    }
+
     const puzzleResult = requestedDate
       ? await pool.query(
           `
@@ -66,35 +80,62 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No puzzle found" }, { status: 404 });
     }
 
-    const submissionsResult = await pool.query(
-      `
-      SELECT
-        ps.user_id::text AS user_id,
-        ps.submission_id,
-        ps.display_name,
-        ps.base_score,
-        ps.active_links,
-        ps.multiplier,
-        ps.final_score,
-        ps.optimal_final_score,
-        ps.percent_of_optimal,
-        ps.submitted_at,
-        COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
-      FROM puzzle_submission ps
-      JOIN app_user au
-        ON ps.user_id = au.user_id
-      WHERE ps.puzzle_id = $1
-        AND ps.user_id IS NOT NULL
-      ORDER BY ps.final_score DESC, ps.submitted_at ASC
-      LIMIT $2
-      `,
-      [puzzle.puzzle_id, limit]
-    );
+    const submissionsResult =
+      scope === "friends"
+        ? await pool.query(
+            `
+            SELECT
+              ps.user_id::text AS user_id,
+              ps.submission_id,
+              ps.display_name,
+              ps.base_score,
+              ps.active_links,
+              ps.multiplier,
+              ps.final_score,
+              ps.optimal_final_score,
+              ps.percent_of_optimal,
+              ps.submitted_at,
+              COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
+            FROM puzzle_submission ps
+            JOIN app_user au
+              ON ps.user_id = au.user_id
+            WHERE ps.puzzle_id = $1
+              AND ps.user_id IS NOT NULL
+              AND ps.user_id = ANY($2::bigint[])
+            ORDER BY ps.final_score DESC, ps.submitted_at ASC
+            LIMIT $3
+            `,
+            [puzzle.puzzle_id, friendUserIds.map(Number), limit]
+          )
+        : await pool.query(
+            `
+            SELECT
+              ps.user_id::text AS user_id,
+              ps.submission_id,
+              ps.display_name,
+              ps.base_score,
+              ps.active_links,
+              ps.multiplier,
+              ps.final_score,
+              ps.optimal_final_score,
+              ps.percent_of_optimal,
+              ps.submitted_at,
+              COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
+            FROM puzzle_submission ps
+            JOIN app_user au
+              ON ps.user_id = au.user_id
+            WHERE ps.puzzle_id = $1
+              AND ps.user_id IS NOT NULL
+            ORDER BY ps.final_score DESC, ps.submitted_at ASC
+            LIMIT $2
+            `,
+            [puzzle.puzzle_id, limit]
+          );
 
     return NextResponse.json({
       puzzle_date: String(puzzle.puzzle_date).slice(0, 10),
       leaderboard: submissionsResult.rows,
-      scope: "daily",
+      scope: scope === "friends" ? "friends" : "daily",
     });
   } catch (error) {
     console.error("Leaderboard route failed:", error);

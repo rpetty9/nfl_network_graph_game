@@ -208,6 +208,37 @@ type PublicProfileResponse = {
 
 type SelfProfileResponse = PublicProfileResponse;
 
+type FriendProfileSummary = {
+  user_id: string;
+  username: string;
+  avatar_style: AvatarStyle;
+  avatar_bg: AvatarColor;
+  avatar_accent: AvatarColor;
+  avatar_border: AvatarColor;
+  created_at: string;
+};
+
+type FriendRequestSummary = FriendProfileSummary & {
+  request_id: string;
+  direction: "incoming" | "outgoing";
+  status: "pending";
+  requested_at: string;
+};
+
+type FriendOverviewResponse = {
+  overview: {
+    friends: FriendProfileSummary[];
+    incoming_requests: FriendRequestSummary[];
+    outgoing_requests: FriendRequestSummary[];
+  };
+};
+
+type FriendSearchResponse = {
+  match: (FriendProfileSummary & {
+    relationship_status: "self" | "friend" | "incoming" | "outgoing" | "none";
+  }) | null;
+};
+
 type HomeRecapResponse = {
   recap: {
     puzzle_date: string;
@@ -286,42 +317,6 @@ function getRelationshipTooltip(relationshipType: string, relationshipLabel: str
     default:
       return `${relationshipLabel} is the active link rule for this puzzle. A link turns on whenever a pair of selected players satisfies that rule.`;
   }
-}
-
-function getRecapPlacementClasses(placement: number) {
-  if (placement === 1) {
-    return {
-      shell:
-        "border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98)_0%,rgba(253,230,138,0.92)_34%,rgba(245,158,11,0.82)_100%)] text-amber-950 shadow-[0_10px_26px_rgba(245,158,11,0.22)]",
-      place: "text-amber-900",
-      score: "text-amber-900/90",
-    };
-  }
-
-  if (placement === 2) {
-    return {
-      shell:
-        "border-slate-200/80 bg-[linear-gradient(135deg,rgba(248,250,252,0.98)_0%,rgba(226,232,240,0.94)_36%,rgba(148,163,184,0.78)_100%)] text-slate-900 shadow-[0_10px_24px_rgba(100,116,139,0.18)]",
-      place: "text-slate-800",
-      score: "text-slate-700/90",
-    };
-  }
-
-  if (placement === 3) {
-    return {
-      shell:
-        "border-orange-300/80 bg-[linear-gradient(135deg,rgba(255,247,237,0.98)_0%,rgba(253,186,116,0.9)_38%,rgba(194,65,12,0.76)_100%)] text-orange-950 shadow-[0_10px_24px_rgba(194,65,12,0.18)]",
-      place: "text-orange-900",
-      score: "text-orange-900/90",
-    };
-  }
-
-  return {
-    shell:
-      "border-white/35 bg-white/18 text-white shadow-[0_8px_20px_rgba(15,23,42,0.14)]",
-    place: "text-white/75",
-    score: "text-white/80",
-  };
 }
 
 function formatCompactScore(value: number) {
@@ -1533,12 +1528,19 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
-  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "yesterday" | "all-time">("daily");
+  const [leaderboardTab, setLeaderboardTab] = useState<
+    "daily" | "friends" | "yesterday" | "all-time"
+  >("daily");
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<AllTimeLeaderboardEntry[]>(
     []
   );
   const [allTimeLeaderboardLoading, setAllTimeLeaderboardLoading] = useState(false);
   const [allTimeLeaderboardError, setAllTimeLeaderboardError] = useState<string | null>(
+    null
+  );
+  const [friendsLeaderboard, setFriendsLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [friendsLeaderboardLoading, setFriendsLeaderboardLoading] = useState(false);
+  const [friendsLeaderboardError, setFriendsLeaderboardError] = useState<string | null>(
     null
   );
   const [publicProfileOpen, setPublicProfileOpen] = useState(false);
@@ -1550,6 +1552,18 @@ export default function HomePage() {
   const [selfProfile, setSelfProfile] = useState<SelfProfileResponse["profile"] | null>(null);
   const [selfProfileLoading, setSelfProfileLoading] = useState(false);
   const [selfProfileError, setSelfProfileError] = useState<string | null>(null);
+  const [friendOverview, setFriendOverview] = useState<FriendOverviewResponse["overview"] | null>(
+    null
+  );
+  const [friendOverviewLoading, setFriendOverviewLoading] = useState(false);
+  const [friendOverviewError, setFriendOverviewError] = useState<string | null>(null);
+  const [friendSearchDraft, setFriendSearchDraft] = useState("");
+  const [friendSearchResult, setFriendSearchResult] =
+    useState<FriendSearchResponse["match"]>(null);
+  const [friendSearchLoading, setFriendSearchLoading] = useState(false);
+  const [friendSearchMessage, setFriendSearchMessage] = useState<string | null>(null);
+  const [friendActionLoadingId, setFriendActionLoadingId] = useState<string | null>(null);
+  const [friendActionError, setFriendActionError] = useState<string | null>(null);
   const [activePublicFeaturedBadgeKey, setActivePublicFeaturedBadgeKey] = useState<string | null>(
     null
   );
@@ -1769,6 +1783,15 @@ export default function HomePage() {
   useEffect(() => {
     setActiveFeaturedBadgeKey(null);
   }, [featuredBadgeDraft, profileOpen]);
+
+  useEffect(() => {
+    if (!profileOpen) {
+      setFriendSearchDraft("");
+      setFriendSearchResult(null);
+      setFriendSearchMessage(null);
+      setFriendActionError(null);
+    }
+  }, [profileOpen]);
 
   useEffect(() => {
     setGalleryPage((current) =>
@@ -2058,6 +2081,8 @@ export default function HomePage() {
   const leaderboardHeading =
     leaderboardTab === "all-time"
       ? "All-Time Standings"
+      : leaderboardTab === "friends"
+        ? `${formatPuzzleDateLabel(activePuzzleDate)} Friends`
       : leaderboardTab === "yesterday" && homeRecap?.puzzle_date
         ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Yesterday`
         : `${formatPuzzleDateLabel(activePuzzleDate)} Leaderboard`;
@@ -3026,35 +3051,54 @@ export default function HomePage() {
 
     const controller = new AbortController();
 
-    async function loadSelfProfile() {
+    async function loadProfileData() {
       try {
         setSelfProfileLoading(true);
         setSelfProfileError(null);
-        const response = await fetch("/api/profile", {
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        setFriendOverviewLoading(true);
+        setFriendOverviewError(null);
+        const [profileResponse, friendsResponse] = await Promise.all([
+          fetch("/api/profile", {
+            cache: "no-store",
+            signal: controller.signal,
+          }),
+          fetch("/api/profile/friends", {
+            cache: "no-store",
+            signal: controller.signal,
+          }),
+        ]);
 
-        if (!response.ok) {
-          const body = await response.text();
-          throw new Error(body || "Failed to load profile.");
+        if (!profileResponse.ok || !friendsResponse.ok) {
+          const [profileBody, friendsBody] = await Promise.all([
+            profileResponse.text(),
+            friendsResponse.text(),
+          ]);
+          throw new Error(
+            profileBody || friendsBody || "Failed to load profile."
+          );
         }
 
-        const json = (await response.json()) as SelfProfileResponse;
+        const [profileJson, friendsJson] = (await Promise.all([
+          profileResponse.json(),
+          friendsResponse.json(),
+        ])) as [SelfProfileResponse, FriendOverviewResponse];
         if (!controller.signal.aborted) {
-          setSelfProfile(json.profile);
+          setSelfProfile(profileJson.profile);
+          setFriendOverview(friendsJson.overview);
         }
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         setSelfProfileError((error as Error).message);
+        setFriendOverviewError((error as Error).message);
       } finally {
         if (!controller.signal.aborted) {
           setSelfProfileLoading(false);
+          setFriendOverviewLoading(false);
         }
       }
     }
 
-    void loadSelfProfile();
+    void loadProfileData();
     return () => controller.abort();
   }, [profileOpen, signedInUsername]);
 
@@ -3066,13 +3110,13 @@ export default function HomePage() {
     const submissionRequestKey =
       submissionViewMode === "new"
         ? JSON.stringify({
-            date: selectedDate,
+            date: activePuzzleDate,
             lineup: nodes.map((node) => ({
               slot_number: node.node_id,
               player_id: String(node.player_id),
             })),
           })
-        : `existing:${selectedDate}`;
+        : `existing:${activePuzzleDate}`;
 
     async function loadLeaderboardForSubmission() {
       const leaderboardResponse = await fetch(
@@ -3183,7 +3227,7 @@ export default function HomePage() {
   }, [
     submitted,
     optimalLineup,
-    selectedDate,
+    activePuzzleDate,
     nodes,
     browserClientToken,
     isTrackedAccountUser,
@@ -3273,6 +3317,48 @@ export default function HomePage() {
     void loadAllTimeLeaderboard();
     return () => controller.abort();
   }, [leaderboardOpen, leaderboardTab, allTimeLeaderboard.length]);
+
+  useEffect(() => {
+    if (!leaderboardOpen || leaderboardTab !== "friends" || !signedInUsername) return;
+
+    const controller = new AbortController();
+
+    async function loadFriendsLeaderboard() {
+      try {
+        setFriendsLeaderboardLoading(true);
+        setFriendsLeaderboardError(null);
+
+        const response = await fetch(
+          `/api/leaderboard?scope=friends&date=${encodeURIComponent(activePuzzleDate)}&limit=25`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(body || "Failed to load friends leaderboard");
+        }
+
+        const json: { leaderboard: LeaderboardEntry[] } = await response.json();
+        if (!controller.signal.aborted) {
+          setFriendsLeaderboard(json.leaderboard ?? []);
+        }
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+        console.error(error);
+        setFriendsLeaderboardError((error as Error).message);
+      } finally {
+        if (!controller.signal.aborted) {
+          setFriendsLeaderboardLoading(false);
+        }
+      }
+    }
+
+    void loadFriendsLeaderboard();
+    return () => controller.abort();
+  }, [activePuzzleDate, leaderboardOpen, leaderboardTab, signedInUsername]);
 
   function handleSubmit() {
     if (!canSubmit) return;
@@ -3432,6 +3518,96 @@ export default function HomePage() {
       setPublicProfileError((error as Error).message);
     } finally {
       setPublicProfileLoading(false);
+    }
+  }
+
+  async function refreshFriendOverview() {
+    const response = await fetch("/api/profile/friends", {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(body || "Unable to load friends.");
+    }
+
+    const json = (await response.json()) as FriendOverviewResponse;
+    setFriendOverview(json.overview);
+  }
+
+  async function handleFriendSearch() {
+    const trimmed = friendSearchDraft.trim();
+    if (!trimmed) {
+      setFriendSearchResult(null);
+      setFriendSearchMessage("Enter an exact username.");
+      return;
+    }
+
+    try {
+      setFriendSearchLoading(true);
+      setFriendSearchMessage(null);
+      setFriendActionError(null);
+
+      const response = await fetch(
+        `/api/profile/friends?username=${encodeURIComponent(trimmed)}`,
+        { cache: "no-store" }
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || "Unable to search usernames.");
+      }
+
+      const json = (await response.json()) as FriendSearchResponse;
+      setFriendSearchResult(json.match);
+      if (!json.match) {
+        setFriendSearchMessage("No exact username match found.");
+      }
+    } catch (error) {
+      setFriendSearchResult(null);
+      setFriendSearchMessage((error as Error).message);
+    } finally {
+      setFriendSearchLoading(false);
+    }
+  }
+
+  async function handleFriendAction(
+    action: "send" | "accept" | "decline" | "cancel" | "remove",
+    targetUserId: string
+  ) {
+    try {
+      setFriendActionLoadingId(`${action}:${targetUserId}`);
+      setFriendActionError(null);
+
+      const response = await fetch("/api/profile/friends", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          target_user_id: targetUserId,
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || "Unable to update friends.");
+      }
+
+      await refreshFriendOverview();
+
+      if (friendSearchResult?.user_id === targetUserId) {
+        await handleFriendSearch();
+      }
+
+      if (leaderboardTab === "friends") {
+        setFriendsLeaderboard([]);
+      }
+    } catch (error) {
+      setFriendActionError((error as Error).message);
+    } finally {
+      setFriendActionLoadingId(null);
     }
   }
 
@@ -5003,6 +5179,283 @@ export default function HomePage() {
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                              Friends
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-slate-600">
+                              Add exact usernames and build a private rivalry list.
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            {friendOverview?.friends.length ?? 0}
+                          </span>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <input
+                            type="text"
+                            value={friendSearchDraft}
+                            onChange={(e) => setFriendSearchDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                void handleFriendSearch();
+                              }
+                            }}
+                            placeholder="Exact username"
+                            className="min-w-0 flex-1 rounded-[16px] border-[3px] border-sky-100 bg-white px-3 py-2 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => void handleFriendSearch()}
+                            disabled={friendSearchLoading}
+                            className="rounded-[16px] border-[3px] border-sky-200 bg-sky-50 px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
+                          >
+                            {friendSearchLoading ? "..." : "Find"}
+                          </button>
+                        </div>
+                        {friendSearchResult ? (
+                          <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/70 p-3">
+                            <div className="flex items-center gap-3">
+                              <ProfileAvatar
+                                style={friendSearchResult.avatar_style}
+                                bg={friendSearchResult.avatar_bg}
+                                accent={friendSearchResult.avatar_accent}
+                                border={friendSearchResult.avatar_border}
+                                size="sm"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-black text-slate-900">
+                                  {friendSearchResult.username}
+                                </p>
+                                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                  Joined {formatProfileCreatedDate(friendSearchResult.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {friendSearchResult.relationship_status === "none" ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleFriendAction("send", friendSearchResult.user_id)
+                                  }
+                                  disabled={
+                                    friendActionLoadingId ===
+                                    `send:${friendSearchResult.user_id}`
+                                  }
+                                  className="rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-white"
+                                >
+                                  Add Friend
+                                </button>
+                              ) : friendSearchResult.relationship_status === "incoming" ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void handleFriendAction("accept", friendSearchResult.user_id)
+                                    }
+                                    disabled={
+                                      friendActionLoadingId ===
+                                      `accept:${friendSearchResult.user_id}`
+                                    }
+                                    className="rounded-full border-[3px] border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void handleFriendAction("decline", friendSearchResult.user_id)
+                                    }
+                                    disabled={
+                                      friendActionLoadingId ===
+                                      `decline:${friendSearchResult.user_id}`
+                                    }
+                                    className="rounded-full border-[3px] border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                  >
+                                    Decline
+                                  </button>
+                                </>
+                              ) : friendSearchResult.relationship_status === "outgoing" ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleFriendAction("cancel", friendSearchResult.user_id)
+                                  }
+                                  disabled={
+                                    friendActionLoadingId ===
+                                    `cancel:${friendSearchResult.user_id}`
+                                  }
+                                  className="rounded-full border-[3px] border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                >
+                                  Pending
+                                </button>
+                              ) : friendSearchResult.relationship_status === "friend" ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleFriendAction("remove", friendSearchResult.user_id)
+                                  }
+                                  disabled={
+                                    friendActionLoadingId ===
+                                    `remove:${friendSearchResult.user_id}`
+                                  }
+                                  className="rounded-full border-[3px] border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-amber-700"
+                                >
+                                  Friends
+                                </button>
+                              ) : (
+                                <span className="rounded-full border-[3px] border-sky-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                  That&apos;s you
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+                        {friendSearchMessage ? (
+                          <p className="mt-3 text-xs font-semibold text-slate-600">
+                            {friendSearchMessage}
+                          </p>
+                        ) : null}
+                        {friendActionError || friendOverviewError ? (
+                          <div className="mt-3 rounded-[16px] border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
+                            {friendActionError ?? friendOverviewError}
+                          </div>
+                        ) : null}
+                        <div className="mt-4 space-y-3">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Your Friends
+                            </p>
+                            <div className="mt-2 space-y-2">
+                              {friendOverviewLoading && !friendOverview ? (
+                                <div className="rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-4 text-center text-xs font-semibold text-slate-600">
+                                  Loading friends...
+                                </div>
+                              ) : friendOverview?.friends.length ? (
+                                friendOverview.friends.map((friend) => (
+                                  <div
+                                    key={`friend-${friend.user_id}`}
+                                    className="flex items-center gap-3 rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-2"
+                                  >
+                                    <ProfileAvatar
+                                      style={friend.avatar_style}
+                                      bg={friend.avatar_bg}
+                                      accent={friend.avatar_accent}
+                                      border={friend.avatar_border}
+                                      size="sm"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm font-black text-slate-900">
+                                        {friend.username}
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleFriendAction("remove", friend.user_id)}
+                                      disabled={friendActionLoadingId === `remove:${friend.user_id}`}
+                                      className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="rounded-[16px] border-[3px] border-dashed border-sky-200 bg-sky-50/60 px-3 py-4 text-center text-xs font-semibold text-slate-500">
+                                  No friends added yet.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {friendOverview?.incoming_requests.length ? (
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                Incoming Requests
+                              </p>
+                              <div className="mt-2 space-y-2">
+                                {friendOverview.incoming_requests.map((friend) => (
+                                  <div
+                                    key={`incoming-${friend.request_id}`}
+                                    className="rounded-[16px] border-[3px] border-emerald-100 bg-emerald-50/70 px-3 py-2"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <ProfileAvatar
+                                        style={friend.avatar_style}
+                                        bg={friend.avatar_bg}
+                                        accent={friend.avatar_accent}
+                                        border={friend.avatar_border}
+                                        size="sm"
+                                      />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-black text-slate-900">
+                                          {friend.username}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-2 flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleFriendAction("accept", friend.user_id)}
+                                        disabled={friendActionLoadingId === `accept:${friend.user_id}`}
+                                        className="rounded-full border-[2px] border-emerald-300 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                                      >
+                                        Accept
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleFriendAction("decline", friend.user_id)}
+                                        disabled={friendActionLoadingId === `decline:${friend.user_id}`}
+                                        className="rounded-full border-[2px] border-slate-200 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                      >
+                                        Decline
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                          {friendOverview?.outgoing_requests.length ? (
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                Sent Requests
+                              </p>
+                              <div className="mt-2 space-y-2">
+                                {friendOverview.outgoing_requests.map((friend) => (
+                                  <div
+                                    key={`outgoing-${friend.request_id}`}
+                                    className="flex items-center gap-3 rounded-[16px] border-[3px] border-slate-100 bg-slate-50/70 px-3 py-2"
+                                  >
+                                    <ProfileAvatar
+                                      style={friend.avatar_style}
+                                      bg={friend.avatar_bg}
+                                      accent={friend.avatar_accent}
+                                      border={friend.avatar_border}
+                                      size="sm"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm font-black text-slate-900">
+                                        {friend.username}
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleFriendAction("cancel", friend.user_id)}
+                                      disabled={friendActionLoadingId === `cancel:${friend.user_id}`}
+                                      className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                               Recent Runs
                             </p>
                             <p className="mt-1 text-sm font-semibold text-slate-600">
@@ -5538,6 +5991,19 @@ export default function HomePage() {
                   >
                     Daily Puzzle
                   </button>
+                  {signedInUsername ? (
+                    <button
+                      type="button"
+                      onClick={() => setLeaderboardTab("friends")}
+                      className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
+                        leaderboardTab === "friends"
+                          ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
+                          : "text-amber-700"
+                      }`}
+                    >
+                      Friends
+                    </button>
+                  ) : null}
                   {homeRecap?.winners?.length ? (
                     <button
                       type="button"
@@ -5608,6 +6074,50 @@ export default function HomePage() {
                   ) : (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
                       No leaderboard entries yet for this puzzle.
+                    </div>
+                  ) : leaderboardTab === "friends" ? friendsLeaderboardError ? (
+                    <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                      {friendsLeaderboardError}
+                    </div>
+                  ) : friendsLeaderboardLoading ? (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      Loading friends leaderboard...
+                    </div>
+                  ) : friendsLeaderboard.length > 0 ? (
+                    <div className="space-y-3">
+                      {friendsLeaderboard.map((entry, index) => (
+                        <button
+                          type="button"
+                          key={`friend-${entry.submission_id}`}
+                          onClick={() => void openPublicProfile(entry.user_id)}
+                          className="flex w-full flex-col items-start gap-2 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
+                        >
+                          <div className="min-w-0 w-full sm:w-auto">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
+                              #{index + 1}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                              {entry.display_name}
+                            </p>
+                            <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
+                          </div>
+                          <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                              Total Points
+                            </p>
+                            <p className="mt-1 text-base font-black text-amber-700 sm:text-lg">
+                              {Number(entry.final_score).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      No friend scores yet for this puzzle. Add exact usernames in your profile to build your friends board.
                     </div>
                   ) : leaderboardTab === "yesterday" ? homeRecapLoading ? (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">

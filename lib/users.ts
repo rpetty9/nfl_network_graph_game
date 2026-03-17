@@ -72,6 +72,33 @@ export type RecentSubmission = {
   placement: number | null;
 };
 
+export type FriendProfileSummary = {
+  user_id: string;
+  username: string;
+  avatar_style: AvatarStyle;
+  avatar_bg: AvatarColor;
+  avatar_accent: AvatarColor;
+  avatar_border: AvatarColor;
+  created_at: string;
+};
+
+export type FriendRequestSummary = FriendProfileSummary & {
+  request_id: string;
+  direction: "incoming" | "outgoing";
+  status: "pending";
+  requested_at: string;
+};
+
+export type FriendOverview = {
+  friends: FriendProfileSummary[];
+  incoming_requests: FriendRequestSummary[];
+  outgoing_requests: FriendRequestSummary[];
+};
+
+export type FriendSearchResult = FriendProfileSummary & {
+  relationship_status: "self" | "friend" | "incoming" | "outgoing" | "none";
+};
+
 type AppUserRow = Omit<AppUser, "badges" | "stats">;
 
 type UserBadgeRow = {
@@ -90,6 +117,27 @@ type RecentSubmissionRow = {
   multiplier: string;
   percent_of_optimal: string | null;
   placement: string | null;
+};
+
+type FriendSummaryRow = {
+  user_id: string;
+  username: string;
+  avatar_style: AvatarStyle;
+  avatar_bg: AvatarColor;
+  avatar_accent: AvatarColor;
+  avatar_border: AvatarColor;
+  created_at: string;
+};
+
+type FriendRequestRow = FriendSummaryRow & {
+  request_id: string;
+  requested_at: string;
+};
+
+type FriendRelationshipRow = {
+  requester_user_id: string;
+  addressee_user_id: string;
+  status: "pending" | "accepted" | "declined";
 };
 
 type UsernameValidationResult =
@@ -229,6 +277,18 @@ function sanitizeFeaturedBadges(value: unknown): BadgeKey[] {
 
   const unique = [...new Set(value.filter((entry) => typeof entry === "string"))];
   return unique.filter((entry): entry is BadgeKey => isBadgeKey(entry)).slice(0, 3);
+}
+
+function mapFriendSummary(row: FriendSummaryRow): FriendProfileSummary {
+  return {
+    user_id: row.user_id,
+    username: row.username,
+    avatar_style: row.avatar_style,
+    avatar_bg: row.avatar_bg,
+    avatar_accent: row.avatar_accent,
+    avatar_border: row.avatar_border,
+    created_at: row.created_at,
+  };
 }
 
 async function loadBadgesForUser(userId: string) {
@@ -371,6 +431,390 @@ async function loadRecentSubmissionsForUser(userId: string, limit = 6) {
       row.percent_of_optimal == null ? null : Number(row.percent_of_optimal),
     placement: row.placement == null ? null : Number(row.placement),
   }));
+}
+
+export async function getAcceptedFriendUserIds(userId: string) {
+  const result = await pool.query<{ user_id: string }>(
+    `
+    SELECT DISTINCT
+      CASE
+        WHEN requester_user_id = $1 THEN addressee_user_id::text
+        ELSE requester_user_id::text
+      END AS user_id
+    FROM user_friend_request
+    WHERE status = 'accepted'
+      AND ($1 IN (requester_user_id, addressee_user_id))
+    `,
+    [Number(userId)]
+  );
+
+  return result.rows.map((row) => row.user_id);
+}
+
+export async function getFriendOverviewForUser(userId: string): Promise<FriendOverview> {
+  const [friendsResult, incomingResult, outgoingResult] = await Promise.all([
+    pool.query<FriendSummaryRow>(
+      `
+      SELECT
+        au.user_id::text,
+        au.username,
+        au.avatar_style,
+        au.avatar_bg,
+        au.avatar_accent,
+        au.avatar_border,
+        au.created_at::text
+      FROM user_friend_request fr
+      JOIN app_user au
+        ON au.user_id = CASE
+          WHEN fr.requester_user_id = $1 THEN fr.addressee_user_id
+          ELSE fr.requester_user_id
+        END
+      WHERE fr.status = 'accepted'
+        AND ($1 IN (fr.requester_user_id, fr.addressee_user_id))
+        AND au.status = 'active'
+        AND au.username IS NOT NULL
+      ORDER BY LOWER(au.username) ASC
+      `,
+      [Number(userId)]
+    ),
+    pool.query<FriendRequestRow>(
+      `
+      SELECT
+        fr.request_id::text,
+        fr.created_at::text AS requested_at,
+        au.user_id::text,
+        au.username,
+        au.avatar_style,
+        au.avatar_bg,
+        au.avatar_accent,
+        au.avatar_border,
+        au.created_at::text
+      FROM user_friend_request fr
+      JOIN app_user au
+        ON au.user_id = fr.requester_user_id
+      WHERE fr.addressee_user_id = $1
+        AND fr.status = 'pending'
+        AND au.status = 'active'
+        AND au.username IS NOT NULL
+      ORDER BY fr.created_at DESC
+      `,
+      [Number(userId)]
+    ),
+    pool.query<FriendRequestRow>(
+      `
+      SELECT
+        fr.request_id::text,
+        fr.created_at::text AS requested_at,
+        au.user_id::text,
+        au.username,
+        au.avatar_style,
+        au.avatar_bg,
+        au.avatar_accent,
+        au.avatar_border,
+        au.created_at::text
+      FROM user_friend_request fr
+      JOIN app_user au
+        ON au.user_id = fr.addressee_user_id
+      WHERE fr.requester_user_id = $1
+        AND fr.status = 'pending'
+        AND au.status = 'active'
+        AND au.username IS NOT NULL
+      ORDER BY fr.created_at DESC
+      `,
+      [Number(userId)]
+    ),
+  ]);
+
+  return {
+    friends: friendsResult.rows.map(mapFriendSummary),
+    incoming_requests: incomingResult.rows.map((row) => ({
+      ...mapFriendSummary(row),
+      request_id: row.request_id,
+      direction: "incoming",
+      status: "pending",
+      requested_at: row.requested_at,
+    })),
+    outgoing_requests: outgoingResult.rows.map((row) => ({
+      ...mapFriendSummary(row),
+      request_id: row.request_id,
+      direction: "outgoing",
+      status: "pending",
+      requested_at: row.requested_at,
+    })),
+  };
+}
+
+async function getFriendRelationshipStatus(userId: string, targetUserId: string) {
+  const relationshipResult = await pool.query<FriendRelationshipRow>(
+    `
+    SELECT
+      requester_user_id::text,
+      addressee_user_id::text,
+      status
+    FROM user_friend_request
+    WHERE (requester_user_id = $1 AND addressee_user_id = $2)
+       OR (requester_user_id = $2 AND addressee_user_id = $1)
+    ORDER BY
+      CASE status
+        WHEN 'accepted' THEN 0
+        WHEN 'pending' THEN 1
+        ELSE 2
+      END,
+      created_at DESC
+    LIMIT 1
+    `,
+    [Number(userId), Number(targetUserId)]
+  );
+
+  const relationship = relationshipResult.rows[0];
+  if (!relationship) return "none" as const;
+  if (relationship.status === "accepted") return "friend" as const;
+  if (relationship.requester_user_id === String(userId)) return "outgoing" as const;
+  return "incoming" as const;
+}
+
+export async function findUserByExactUsername(
+  rawUsername: string,
+  currentUserId?: string | null
+): Promise<FriendSearchResult | null> {
+  const usernameNormalized = rawUsername.trim().toLowerCase();
+  if (!usernameNormalized) return null;
+
+  const result = await pool.query<FriendSummaryRow>(
+    `
+    SELECT
+      user_id::text,
+      username,
+      avatar_style,
+      avatar_bg,
+      avatar_accent,
+      avatar_border,
+      created_at::text
+    FROM app_user
+    WHERE username_normalized = $1
+      AND status = 'active'
+      AND username IS NOT NULL
+    LIMIT 1
+    `,
+    [usernameNormalized]
+  );
+
+  const user = result.rows[0];
+  if (!user) return null;
+
+  if (currentUserId && String(currentUserId) === user.user_id) {
+    return {
+      ...mapFriendSummary(user),
+      relationship_status: "self",
+    };
+  }
+
+  const relationshipStatus = currentUserId
+    ? await getFriendRelationshipStatus(String(currentUserId), user.user_id)
+    : "none";
+
+  return {
+    ...mapFriendSummary(user),
+    relationship_status: relationshipStatus,
+  };
+}
+
+export async function sendFriendRequest(userId: string, targetUserId: string) {
+  if (String(userId) === String(targetUserId)) {
+    return { ok: false as const, reason: "self" as const };
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const targetResult = await client.query<{ user_id: string }>(
+      `
+      SELECT user_id::text
+      FROM app_user
+      WHERE user_id = $1
+        AND status = 'active'
+        AND username IS NOT NULL
+      LIMIT 1
+      `,
+      [Number(targetUserId)]
+    );
+
+    if (targetResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return { ok: false as const, reason: "not_found" as const };
+    }
+
+    const relationshipResult = await client.query<FriendRelationshipRow>(
+      `
+      SELECT
+        requester_user_id::text,
+        addressee_user_id::text,
+        status
+      FROM user_friend_request
+      WHERE (requester_user_id = $1 AND addressee_user_id = $2)
+         OR (requester_user_id = $2 AND addressee_user_id = $1)
+      ORDER BY created_at DESC
+      `,
+      [Number(userId), Number(targetUserId)]
+    );
+
+    const accepted = relationshipResult.rows.find((row) => row.status === "accepted");
+    if (accepted) {
+      await client.query("ROLLBACK");
+      return { ok: false as const, reason: "already_friends" as const };
+    }
+
+    const incomingPending = relationshipResult.rows.find(
+      (row) =>
+        row.status === "pending" &&
+        row.requester_user_id === String(targetUserId) &&
+        row.addressee_user_id === String(userId)
+    );
+
+    if (incomingPending) {
+      await client.query(
+        `
+        UPDATE user_friend_request
+        SET status = 'accepted',
+            responded_at = NOW()
+        WHERE requester_user_id = $1
+          AND addressee_user_id = $2
+          AND status = 'pending'
+        `,
+        [Number(targetUserId), Number(userId)]
+      );
+      await client.query("COMMIT");
+      return { ok: true as const, relationship_status: "friend" as const };
+    }
+
+    const outgoingPending = relationshipResult.rows.find(
+      (row) =>
+        row.status === "pending" &&
+        row.requester_user_id === String(userId) &&
+        row.addressee_user_id === String(targetUserId)
+    );
+
+    if (outgoingPending) {
+      await client.query("ROLLBACK");
+      return { ok: false as const, reason: "already_pending" as const };
+    }
+
+    const existingSameDirection = relationshipResult.rows.find(
+      (row) =>
+        row.requester_user_id === String(userId) &&
+        row.addressee_user_id === String(targetUserId)
+    );
+
+    if (existingSameDirection) {
+      await client.query(
+        `
+        UPDATE user_friend_request
+        SET status = 'pending',
+            created_at = NOW(),
+            responded_at = NULL
+        WHERE requester_user_id = $1
+          AND addressee_user_id = $2
+        `,
+        [Number(userId), Number(targetUserId)]
+      );
+    } else {
+      await client.query(
+        `
+        INSERT INTO user_friend_request (
+          requester_user_id,
+          addressee_user_id,
+          status
+        )
+        VALUES ($1, $2, 'pending')
+        `,
+        [Number(userId), Number(targetUserId)]
+      );
+    }
+
+    await client.query("COMMIT");
+    return { ok: true as const, relationship_status: "outgoing" as const };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function respondToFriendRequest(input: {
+  userId: string;
+  targetUserId: string;
+  action: "accept" | "decline" | "cancel" | "remove";
+}) {
+  const requesterId =
+    input.action === "accept" || input.action === "decline"
+      ? Number(input.targetUserId)
+      : Number(input.userId);
+  const addresseeId =
+    input.action === "accept" || input.action === "decline"
+      ? Number(input.userId)
+      : Number(input.targetUserId);
+
+  if (input.action === "accept") {
+    const result = await pool.query(
+      `
+      UPDATE user_friend_request
+      SET status = 'accepted',
+          responded_at = NOW()
+      WHERE requester_user_id = $1
+        AND addressee_user_id = $2
+        AND status = 'pending'
+      `,
+      [requesterId, addresseeId]
+    );
+
+    return { ok: (result.rowCount ?? 0) > 0, relationship_status: "friend" as const };
+  }
+
+  if (input.action === "decline") {
+    const result = await pool.query(
+      `
+      UPDATE user_friend_request
+      SET status = 'declined',
+          responded_at = NOW()
+      WHERE requester_user_id = $1
+        AND addressee_user_id = $2
+        AND status = 'pending'
+      `,
+      [requesterId, addresseeId]
+    );
+
+    return { ok: (result.rowCount ?? 0) > 0, relationship_status: "none" as const };
+  }
+
+  if (input.action === "cancel") {
+    const result = await pool.query(
+      `
+      DELETE FROM user_friend_request
+      WHERE requester_user_id = $1
+        AND addressee_user_id = $2
+        AND status = 'pending'
+      `,
+      [Number(input.userId), Number(input.targetUserId)]
+    );
+
+    return { ok: (result.rowCount ?? 0) > 0, relationship_status: "none" as const };
+  }
+
+  const result = await pool.query(
+    `
+    DELETE FROM user_friend_request
+    WHERE status = 'accepted'
+      AND (
+        (requester_user_id = $1 AND addressee_user_id = $2)
+        OR (requester_user_id = $2 AND addressee_user_id = $1)
+      )
+    `,
+    [Number(input.userId), Number(input.targetUserId)]
+  );
+
+  return { ok: (result.rowCount ?? 0) > 0, relationship_status: "none" as const };
 }
 
 async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> {
