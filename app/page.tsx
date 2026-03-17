@@ -5909,7 +5909,7 @@ export default function HomePage() {
         }
 
         .home-recap-ticker {
-          animation: home-recap-scroll 22s linear infinite;
+          animation: home-recap-scroll 18s linear infinite;
         }
 
         .home-recap-ticker:hover {
