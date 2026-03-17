@@ -3864,13 +3864,13 @@ export default function HomePage() {
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
               {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
-                <div className="mx-auto mt-4 w-full max-w-5xl overflow-hidden rounded-[22px] border-[3px] border-white/35 bg-white/14 px-3 py-2 shadow-[0_14px_30px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-5">
-                  <div className="flex items-center gap-3">
-                    <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/85">
+                <div className="mx-auto mt-4 w-full max-w-5xl overflow-hidden rounded-[22px] border-[3px] border-white/35 bg-white/14 px-2 py-1.5 shadow-[0_14px_30px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-5 md:px-3 md:py-2">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] text-white/85 md:px-2.5 md:py-1 md:text-[9px] md:tracking-[0.1em]">
                       Yesterday&apos;s Top 10
                     </div>
                     <div className="min-w-0 flex-1 overflow-hidden">
-                      <div className="home-recap-ticker flex w-max items-center gap-2">
+                      <div className="home-recap-ticker flex w-max items-center gap-1.5 md:gap-2">
                         {homeRecapTickerEntries.map((winner, index) => {
                           const placementClasses = getRecapPlacementClasses(
                             winner.placement
@@ -3881,18 +3881,18 @@ export default function HomePage() {
                               key={`${winner.user_id}-${winner.placement}-${index}`}
                               type="button"
                               onClick={() => void openPublicProfile(winner.user_id)}
-                              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-left transition hover:-translate-y-0.5 ${placementClasses.shell}`}
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-left transition hover:-translate-y-0.5 md:gap-2 md:px-2.5 md:py-1.5 ${placementClasses.shell}`}
                             >
                               <span
-                                className={`text-[9px] font-black uppercase tracking-[0.08em] ${placementClasses.place}`}
+                                className={`text-[7px] font-black uppercase tracking-[0.06em] md:text-[9px] md:tracking-[0.08em] ${placementClasses.place}`}
                               >
                                 #{winner.placement}
                               </span>
-                              <span className="max-w-[120px] truncate font-[family-name:var(--font-display)] text-[10px]">
+                              <span className="max-w-[78px] truncate font-[family-name:var(--font-display)] text-[8px] md:max-w-[120px] md:text-[10px]">
                                 {winner.display_name}
                               </span>
                               <span
-                                className={`text-[9px] font-black uppercase tracking-[0.06em] ${placementClasses.score}`}
+                                className={`text-[7px] font-black uppercase tracking-[0.04em] md:text-[9px] md:tracking-[0.06em] ${placementClasses.score}`}
                               >
                                 {formatCompactScore(winner.final_score)}
                               </span>
