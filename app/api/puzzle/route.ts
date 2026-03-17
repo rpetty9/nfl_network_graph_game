@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { pool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ function formatDateValue(value: unknown): string | null {
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    const registeredUserId =
+      session?.user?.id && /^\d+$/.test(session.user.id) ? session.user.id : null;
     const requestedDate = request.nextUrl.searchParams.get("date");
     const puzzleResult = requestedDate
       ? await pool.query(
@@ -126,6 +130,19 @@ export async function GET(request: NextRequest) {
     const eligibilityFilter = eligibilityResult.rows[0] ?? null;
     const multiplier = multiplierResult.rows[0] ?? null;
     const relationshipRule = relationshipRuleResult.rows[0] ?? null;
+    const viewerHasSubmittedResult = registeredUserId
+      ? await pool.query<{ has_submitted: boolean }>(
+          `
+          SELECT EXISTS (
+            SELECT 1
+            FROM puzzle_submission
+            WHERE puzzle_id = $1
+              AND user_id = $2
+          ) AS has_submitted
+          `,
+          [puzzle.puzzle_id, Number(registeredUserId)]
+        )
+      : null;
     const availableDatesResult = await pool.query(`
       SELECT puzzle_date
       FROM daily_puzzle
@@ -224,6 +241,8 @@ export async function GET(request: NextRequest) {
       relationship_rule: relationshipRule,
       stat_pool: statPoolResult.rows,
       slot_rules: slotRulesResult.rows,
+      viewer_has_submitted:
+        viewerHasSubmittedResult?.rows[0]?.has_submitted ?? false,
       available_dates: availableDatesResult.rows
         .map((row) => formatDateValue(row.puzzle_date))
         .filter((dateValue): dateValue is string => Boolean(dateValue)),

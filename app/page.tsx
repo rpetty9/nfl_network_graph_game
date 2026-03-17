@@ -55,6 +55,7 @@ type PuzzleResponse = {
     bonus_pct: number;
   } | null;
   slot_rules?: SlotRule[];
+  viewer_has_submitted?: boolean;
   available_dates?: string[];
 };
 
@@ -863,6 +864,8 @@ export default function HomePage() {
   const [browserClientToken, setBrowserClientToken] = useState("");
   const [hasSubmittedForSelectedDate, setHasSubmittedForSelectedDate] =
     useState(false);
+  const [accountHasSubmittedForSelectedDate, setAccountHasSubmittedForSelectedDate] =
+    useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [accountChoiceOpen, setAccountChoiceOpen] = useState(false);
@@ -906,6 +909,7 @@ export default function HomePage() {
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
   const signedInUsername = session?.user?.username ?? null;
+  const isTrackedAccountUser = Boolean(session?.user?.id && signedInUsername);
   const needsUsername = Boolean(session?.user?.id && session.user.needsUsername);
   const sessionAvatarStyle = (session?.user?.avatarStyle ?? DEFAULT_AVATAR.style) as AvatarStyle;
   const sessionAvatarBg = (session?.user?.avatarBg ?? DEFAULT_AVATAR.bg) as AvatarColor;
@@ -983,9 +987,12 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    setHasSubmittedForSelectedDate(hasBrowserSubmittedForDate(selectedDate));
+    setHasSubmittedForSelectedDate(
+      isTrackedAccountUser ? false : hasBrowserSubmittedForDate(selectedDate)
+    );
+    setAccountHasSubmittedForSelectedDate(false);
     setSubmissionError(null);
-  }, [selectedDate]);
+  }, [isTrackedAccountUser, selectedDate]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -1073,6 +1080,9 @@ export default function HomePage() {
 
         setPuzzleData(puzzleJson);
         setPlayersData(playersJson);
+        setAccountHasSubmittedForSelectedDate(
+          Boolean(puzzleJson.viewer_has_submitted && isTrackedAccountUser)
+        );
         setOptimalLineup(null);
         setOptimalError(null);
         setOptimalLoading(false);
@@ -1112,7 +1122,7 @@ export default function HomePage() {
     loadData();
 
     return () => controller.abort();
-  }, [selectedDate]);
+  }, [selectedDate, session?.user?.id, signedInUsername, isTrackedAccountUser]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !selectedDate) return;
@@ -1995,11 +2005,14 @@ export default function HomePage() {
   const optimalPercent = optimalLineup?.optimal_final_score
     ? (finalScore / Number(optimalLineup.optimal_final_score)) * 100
     : null;
+  const isLockedForSelectedDate = isTrackedAccountUser
+    ? accountHasSubmittedForSelectedDate
+    : hasSubmittedForSelectedDate;
   const canSubmit =
     allFilled &&
     !duplicatePlayersExist &&
     !submitted &&
-    !hasSubmittedForSelectedDate;
+    !isLockedForSelectedDate;
 
   useEffect(() => {
     if (!isFullyConnected) {
@@ -2076,7 +2089,7 @@ export default function HomePage() {
         setLeaderboardError(null);
         setSubmissionError(null);
 
-        if (!browserClientToken) {
+        if (!isTrackedAccountUser && !browserClientToken) {
           throw new Error("Unable to verify this browser for submission.");
         }
 
@@ -2087,7 +2100,7 @@ export default function HomePage() {
           },
           body: JSON.stringify({
             date: selectedDate,
-            client_token: browserClientToken,
+            client_token: isTrackedAccountUser ? undefined : browserClientToken,
             lineup: nodes.map((node) => ({
               slot_number: node.node_id,
               player_id: Number(node.player_id),
@@ -2105,8 +2118,12 @@ export default function HomePage() {
               : "Failed to save submission";
 
           if (saveResponse.status === 409) {
-            markBrowserSubmittedForDate(selectedDate);
-            setHasSubmittedForSelectedDate(true);
+            if (isTrackedAccountUser) {
+              setAccountHasSubmittedForSelectedDate(true);
+            } else {
+              markBrowserSubmittedForDate(selectedDate);
+              setHasSubmittedForSelectedDate(true);
+            }
           }
 
           throw new Error(message);
@@ -2115,8 +2132,12 @@ export default function HomePage() {
         const saved: SubmissionResponse = await saveResponse.json();
         if (controller.signal.aborted) return;
         setSubmissionResult(saved);
-        markBrowserSubmittedForDate(selectedDate);
-        setHasSubmittedForSelectedDate(true);
+        if (isTrackedAccountUser) {
+          setAccountHasSubmittedForSelectedDate(true);
+        } else {
+          markBrowserSubmittedForDate(selectedDate);
+          setHasSubmittedForSelectedDate(true);
+        }
         if (session?.user?.id) {
           await updateSession();
           if (controller.signal.aborted) return;
@@ -2159,6 +2180,7 @@ export default function HomePage() {
     selectedDate,
     nodes,
     browserClientToken,
+    isTrackedAccountUser,
     session?.user?.id,
     updateSession,
   ]);
@@ -3380,16 +3402,18 @@ export default function HomePage() {
             </div>
 
               <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_14px_0_rgba(125,211,252,0.1),0_18px_40px_rgba(125,211,252,0.12)] backdrop-blur-sm">
-                {(hasSubmittedForSelectedDate || submissionError) && (
+                {(isLockedForSelectedDate || submissionError) && (
                   <div
                     className={`mb-4 rounded-[18px] border px-4 py-3 text-sm font-semibold ${
-                      hasSubmittedForSelectedDate
+                      isLockedForSelectedDate
                         ? "border-amber-200 bg-amber-50 text-amber-900"
                         : "border-rose-200 bg-rose-50 text-rose-900"
                     }`}
                   >
-                    {hasSubmittedForSelectedDate
-                      ? `This browser already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, but the leaderboard only accepts one entry per browser per date.`
+                    {isLockedForSelectedDate
+                      ? isTrackedAccountUser
+                        ? `Your account already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, but each account only gets one leaderboard entry per date.`
+                        : `This browser already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, but the leaderboard only accepts one entry per browser per date.`
                       : submissionError}
                   </div>
                 )}
