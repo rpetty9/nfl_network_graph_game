@@ -9,6 +9,9 @@ declare module "next-auth" {
       name?: string | null;
       image?: string | null;
       username: string | null;
+      avatarStyle: string;
+      avatarBg: string;
+      avatarAccent: string;
       needsUsername: boolean;
     };
   }
@@ -19,6 +22,9 @@ declare module "next-auth/jwt" {
     appUserId?: string;
     googleSubject?: string;
     username?: string | null;
+    avatarStyle?: string;
+    avatarBg?: string;
+    avatarAccent?: string;
     needsUsername?: boolean;
   }
 }

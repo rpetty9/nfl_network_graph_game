@@ -1,4 +1,11 @@
 import { pool } from "@/lib/db";
+import {
+  AVATAR_COLORS,
+  AVATAR_STYLES,
+  DEFAULT_AVATAR,
+  type AvatarColor,
+  type AvatarStyle,
+} from "@/lib/avatar";
 
 export type AppUser = {
   user_id: string;
@@ -7,6 +14,9 @@ export type AppUser = {
   email_normalized: string;
   username: string | null;
   username_normalized: string | null;
+  avatar_style: AvatarStyle;
+  avatar_bg: AvatarColor;
+  avatar_accent: AvatarColor;
   status: string;
 };
 
@@ -136,6 +146,9 @@ export async function getUserByGoogleSubject(googleSubject: string) {
       email_normalized,
       username,
       username_normalized,
+      avatar_style,
+      avatar_bg,
+      avatar_accent,
       status
     FROM app_user
     WHERE google_subject = $1
@@ -157,6 +170,9 @@ export async function getUserById(userId: string) {
       email_normalized,
       username,
       username_normalized,
+      avatar_style,
+      avatar_bg,
+      avatar_accent,
       status
     FROM app_user
     WHERE user_id = $1
@@ -179,9 +195,12 @@ export async function upsertGoogleUser(input: {
     INSERT INTO app_user (
       google_subject,
       email,
-      email_normalized
+      email_normalized,
+      avatar_style,
+      avatar_bg,
+      avatar_accent
     )
-    VALUES ($1, $2, $3)
+    VALUES ($1, $2, $3, $4, $5, $6)
     ON CONFLICT (google_subject)
     DO UPDATE SET
       email = EXCLUDED.email,
@@ -193,9 +212,19 @@ export async function upsertGoogleUser(input: {
       email_normalized,
       username,
       username_normalized,
+      avatar_style,
+      avatar_bg,
+      avatar_accent,
       status
     `,
-    [input.googleSubject, input.email.trim(), emailNormalized]
+    [
+      input.googleSubject,
+      input.email.trim(),
+      emailNormalized,
+      DEFAULT_AVATAR.style,
+      DEFAULT_AVATAR.bg,
+      DEFAULT_AVATAR.accent,
+    ]
   );
 
   return result.rows[0];
@@ -222,6 +251,9 @@ export async function setUsernameForUser(userId: string, rawUsername: string) {
       email_normalized,
       username,
       username_normalized,
+      avatar_style,
+      avatar_bg,
+      avatar_accent,
       status
     `,
     [userId, validation.username, validation.usernameNormalized]
@@ -229,6 +261,62 @@ export async function setUsernameForUser(userId: string, rawUsername: string) {
 
   if (result.rowCount === 0) {
     return { ok: false as const, reason: "blocked" as const };
+  }
+
+  return {
+    ok: true as const,
+    user: result.rows[0],
+  };
+}
+
+export function isAvatarStyle(value: string): value is AvatarStyle {
+  return AVATAR_STYLES.includes(value as AvatarStyle);
+}
+
+export function isAvatarColor(value: string): value is AvatarColor {
+  return AVATAR_COLORS.includes(value as AvatarColor);
+}
+
+export async function updateAvatarForUser(input: {
+  userId: string;
+  avatarStyle: string;
+  avatarBg: string;
+  avatarAccent: string;
+}) {
+  if (
+    !isAvatarStyle(input.avatarStyle) ||
+    !isAvatarColor(input.avatarBg) ||
+    !isAvatarColor(input.avatarAccent)
+  ) {
+    return { ok: false as const, reason: "invalid" as const };
+  }
+
+  const result = await pool.query<AppUser>(
+    `
+    UPDATE app_user
+    SET
+      avatar_style = $2,
+      avatar_bg = $3,
+      avatar_accent = $4
+    WHERE user_id = $1
+      AND status = 'active'
+    RETURNING
+      user_id::text,
+      google_subject,
+      email,
+      email_normalized,
+      username,
+      username_normalized,
+      avatar_style,
+      avatar_bg,
+      avatar_accent,
+      status
+    `,
+    [input.userId, input.avatarStyle, input.avatarBg, input.avatarAccent]
+  );
+
+  if (result.rowCount === 0) {
+    return { ok: false as const, reason: "invalid" as const };
   }
 
   return {

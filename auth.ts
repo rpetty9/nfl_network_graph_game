@@ -52,6 +52,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.appUserId = appUser.user_id;
           token.googleSubject = appUser.google_subject;
           token.username = appUser.username;
+          token.avatarStyle = appUser.avatar_style;
+          token.avatarBg = appUser.avatar_bg;
+          token.avatarAccent = appUser.avatar_accent;
           token.needsUsername = !appUser.username;
         }
 
@@ -62,6 +65,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const refreshedUser = await getUserById(String(token.appUserId));
         if (refreshedUser) {
           token.username = refreshedUser.username;
+          token.avatarStyle = refreshedUser.avatar_style;
+          token.avatarBg = refreshedUser.avatar_bg;
+          token.avatarAccent = refreshedUser.avatar_accent;
           token.needsUsername = !refreshedUser.username;
         }
         return token;
@@ -72,6 +78,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (appUser) {
           token.appUserId = appUser.user_id;
           token.username = appUser.username;
+          token.avatarStyle = appUser.avatar_style;
+          token.avatarBg = appUser.avatar_bg;
+          token.avatarAccent = appUser.avatar_accent;
           token.needsUsername = !appUser.username;
         }
       }
@@ -83,6 +92,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.appUserId ? String(token.appUserId) : "";
         session.user.username =
           typeof token.username === "string" ? token.username : null;
+        session.user.avatarStyle =
+          typeof token.avatarStyle === "string" ? token.avatarStyle : "helmet";
+        session.user.avatarBg =
+          typeof token.avatarBg === "string" ? token.avatarBg : "sky";
+        session.user.avatarAccent =
+          typeof token.avatarAccent === "string" ? token.avatarAccent : "amber";
         session.user.needsUsername = Boolean(token.needsUsername);
       }
 

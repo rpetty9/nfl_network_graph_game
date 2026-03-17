@@ -1,0 +1,8 @@
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS avatar_style TEXT NOT NULL DEFAULT 'helmet';
+
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS avatar_bg TEXT NOT NULL DEFAULT 'sky';
+
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS avatar_accent TEXT NOT NULL DEFAULT 'amber';

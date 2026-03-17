@@ -140,10 +140,25 @@ CREATE TABLE IF NOT EXISTS app_user (
   email_normalized TEXT NOT NULL,
   username TEXT,
   username_normalized TEXT,
+  avatar_style TEXT NOT NULL DEFAULT 'helmet',
+  avatar_bg TEXT NOT NULL DEFAULT 'sky',
+  avatar_accent TEXT NOT NULL DEFAULT 'amber',
   status TEXT NOT NULL DEFAULT 'active',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CHECK (status IN ('active', 'flagged', 'banned'))
+  CHECK (status IN ('active', 'flagged', 'banned')),
+  CHECK (avatar_style IN ('helmet', 'star', 'bolt', 'crest')),
+  CHECK (avatar_bg IN ('sky', 'emerald', 'amber', 'rose', 'slate', 'violet')),
+  CHECK (avatar_accent IN ('sky', 'emerald', 'amber', 'rose', 'slate', 'violet'))
 );
+
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS avatar_style TEXT NOT NULL DEFAULT 'helmet';
+
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS avatar_bg TEXT NOT NULL DEFAULT 'sky';
+
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS avatar_accent TEXT NOT NULL DEFAULT 'amber';
 
 CREATE TABLE IF NOT EXISTS puzzle_submission (
   submission_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

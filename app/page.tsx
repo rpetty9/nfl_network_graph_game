@@ -2,6 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import {
+  AVATAR_COLORS,
+  AVATAR_COLOR_CLASSES,
+  AVATAR_STYLES,
+  DEFAULT_AVATAR,
+  type AvatarColor,
+  type AvatarStyle,
+} from "@/lib/avatar";
 import { getLinkBonusPct, getLinkMultiplier } from "@/lib/scoring";
 
 type PuzzleResponse = {
@@ -385,6 +393,70 @@ function markBrowserSubmittedForDate(dateValue: string) {
   );
 }
 
+function renderAvatarGlyph(style: AvatarStyle) {
+  switch (style) {
+    case "star":
+      return (
+        <path d="m12 3 2.5 5.4 5.9.7-4.4 4 1.2 5.9L12 16l-5.2 3 1.2-5.9-4.4-4 5.9-.7Z" />
+      );
+    case "bolt":
+      return <path d="M13.5 2 6 13h4.6L9.8 22 18 10.6h-4.7L13.5 2Z" />;
+    case "crest":
+      return <path d="M12 3 6 5.4v5.7c0 4.2 2.4 7.3 6 9.9 3.6-2.6 6-5.7 6-9.9V5.4L12 3Z" />;
+    case "helmet":
+    default:
+      return (
+        <>
+          <path d="M7 12.5A5 5 0 0 1 12 7h1.8A4.2 4.2 0 0 1 18 11.2V15H9.2A2.2 2.2 0 0 1 7 12.8v-.3Z" />
+          <path d="M18 13h1.6v2H18" />
+          <path d="M10 15v1.8" />
+        </>
+      );
+  }
+}
+
+function ProfileAvatar({
+  style,
+  bg,
+  accent,
+  size = "md",
+}: {
+  style: AvatarStyle;
+  bg: AvatarColor;
+  accent: AvatarColor;
+  size?: "sm" | "md" | "lg";
+}) {
+  const bgPalette = AVATAR_COLOR_CLASSES[bg];
+  const accentPalette = AVATAR_COLOR_CLASSES[accent];
+  const sizeClass =
+    size === "sm"
+      ? "h-9 w-9"
+      : size === "lg"
+        ? "h-20 w-20"
+        : "h-12 w-12";
+  const svgClass =
+    size === "sm" ? "h-4 w-4" : size === "lg" ? "h-10 w-10" : "h-6 w-6";
+
+  return (
+    <div
+      className={`inline-flex ${sizeClass} items-center justify-center rounded-full bg-gradient-to-br ${bgPalette.bg} ring-4 ${bgPalette.ring} shadow-[0_10px_24px_rgba(15,23,42,0.16)]`}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className={`${svgClass} ${accentPalette.accent}`}
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {renderAvatarGlyph(style)}
+      </svg>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const todayIso = getCurrentLocalDateIso();
   const loadRequestRef = useRef(0);
@@ -411,9 +483,21 @@ export default function HomePage() {
     useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [usernameDraft, setUsernameDraft] = useState("");
   const [usernameSaving, setUsernameSaving] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [avatarStyleDraft, setAvatarStyleDraft] = useState<AvatarStyle>(
+    DEFAULT_AVATAR.style
+  );
+  const [avatarBgDraft, setAvatarBgDraft] = useState<AvatarColor>(
+    DEFAULT_AVATAR.bg
+  );
+  const [avatarAccentDraft, setAvatarAccentDraft] = useState<AvatarColor>(
+    DEFAULT_AVATAR.accent
+  );
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -431,6 +515,12 @@ export default function HomePage() {
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
+  const signedInUsername = session?.user?.username ?? null;
+  const needsUsername = Boolean(session?.user?.id && session.user.needsUsername);
+  const sessionAvatarStyle = (session?.user?.avatarStyle ?? DEFAULT_AVATAR.style) as AvatarStyle;
+  const sessionAvatarBg = (session?.user?.avatarBg ?? DEFAULT_AVATAR.bg) as AvatarColor;
+  const sessionAvatarAccent = (session?.user?.avatarAccent ??
+    DEFAULT_AVATAR.accent) as AvatarColor;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -468,6 +558,23 @@ export default function HomePage() {
     setHasSubmittedForSelectedDate(hasBrowserSubmittedForDate(selectedDate));
     setSubmissionError(null);
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setProfileOpen(false);
+      return;
+    }
+
+    setAvatarStyleDraft(sessionAvatarStyle);
+    setAvatarBgDraft(sessionAvatarBg);
+    setAvatarAccentDraft(sessionAvatarAccent);
+    setAvatarError(null);
+  }, [
+    session?.user?.id,
+    sessionAvatarStyle,
+    sessionAvatarBg,
+    sessionAvatarAccent,
+  ]);
 
   useEffect(() => {
     if (isSupportedPuzzleDate(selectedDate)) return;
@@ -642,8 +749,6 @@ export default function HomePage() {
   }, [nodes, selectedDate]);
 
   const players = playersData?.players ?? [];
-  const signedInUsername = session?.user?.username ?? null;
-  const needsUsername = Boolean(session?.user?.id && session.user.needsUsername);
 
   const playerMap = useMemo(() => {
     return new Map(players.map((player) => [String(player.player_id), player]));
@@ -1680,6 +1785,36 @@ export default function HomePage() {
     }
   }
 
+  async function handleSaveAvatar() {
+    try {
+      setAvatarSaving(true);
+      setAvatarError(null);
+
+      const response = await fetch("/api/profile/avatar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          avatar_style: avatarStyleDraft,
+          avatar_bg: avatarBgDraft,
+          avatar_accent: avatarAccentDraft,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to save avatar.");
+      }
+
+      await updateSession();
+      setProfileOpen(false);
+    } catch (error) {
+      setAvatarError((error as Error).message);
+    } finally {
+      setAvatarSaving(false);
+    }
+  }
+
   function handleReset() {
     setNodes(initialNodes.map((node) => ({ ...node })));
     setActiveNodeId(1);
@@ -1916,9 +2051,19 @@ export default function HomePage() {
                 </div>
               ) : signedInUsername ? (
                 <div className="flex items-center gap-2">
-                  <div className="inline-flex h-10 items-center rounded-full border-[2px] border-white/60 bg-white/18 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm">
-                    {signedInUsername}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen(true)}
+                    className="inline-flex h-10 items-center gap-2 rounded-full border-[2px] border-white/60 bg-white/18 px-2 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26"
+                  >
+                    <ProfileAvatar
+                      style={sessionAvatarStyle}
+                      bg={sessionAvatarBg}
+                      accent={sessionAvatarAccent}
+                      size="sm"
+                    />
+                    <span>{signedInUsername}</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => void signOut({ redirect: false })}
@@ -2775,6 +2920,138 @@ export default function HomePage() {
                     className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {usernameSaving ? "Saving..." : "Save Username"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {profileOpen && signedInUsername && (
+          <div className="fixed inset-0 z-[105] overflow-y-auto bg-slate-950/40 px-4 py-6">
+            <div className="flex min-h-full items-center justify-center">
+              <div className="w-full max-w-2xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                      Profile
+                    </p>
+                    <h2 className="mt-2 text-2xl font-black text-sky-900">
+                      Customize Your Avatar
+                    </h2>
+                    <p className="mt-2 text-sm font-semibold text-slate-600">
+                      {signedInUsername}
+                      {session?.user?.email ? ` • ${session.user.email}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen(false)}
+                    className="rounded-full border-[3px] border-sky-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-sky-700"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
+                  <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-5 text-center">
+                    <ProfileAvatar
+                      style={avatarStyleDraft}
+                      bg={avatarBgDraft}
+                      accent={avatarAccentDraft}
+                      size="lg"
+                    />
+                    <p className="mt-4 text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+                      Preview
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-900">
+                      {signedInUsername}
+                    </p>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                        Style
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {AVATAR_STYLES.map((style) => (
+                          <button
+                            key={style}
+                            type="button"
+                            onClick={() => setAvatarStyleDraft(style)}
+                            className={`rounded-full border px-3 py-2 text-xs font-black uppercase tracking-[0.08em] transition ${
+                              avatarStyleDraft === style
+                                ? "border-sky-300 bg-sky-100 text-sky-800"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50"
+                            }`}
+                          >
+                            {style}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                        Background Color
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {AVATAR_COLORS.map((color) => (
+                          <button
+                            key={`bg-${color}`}
+                            type="button"
+                            onClick={() => setAvatarBgDraft(color)}
+                            className={`rounded-full border px-3 py-2 text-xs font-black uppercase tracking-[0.08em] transition ${
+                              avatarBgDraft === color
+                                ? `${AVATAR_COLOR_CLASSES[color].chip} shadow-[0_8px_18px_rgba(56,189,248,0.12)]`
+                                : "border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50"
+                            }`}
+                          >
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                        Icon Color
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {AVATAR_COLORS.map((color) => (
+                          <button
+                            key={`accent-${color}`}
+                            type="button"
+                            onClick={() => setAvatarAccentDraft(color)}
+                            className={`rounded-full border px-3 py-2 text-xs font-black uppercase tracking-[0.08em] transition ${
+                              avatarAccentDraft === color
+                                ? `${AVATAR_COLOR_CLASSES[color].chip} shadow-[0_8px_18px_rgba(56,189,248,0.12)]`
+                                : "border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50"
+                            }`}
+                          >
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {avatarError && (
+                  <div className="mt-5 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900">
+                    {avatarError}
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveAvatar()}
+                    disabled={avatarSaving}
+                    className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {avatarSaving ? "Saving..." : "Save Avatar"}
                   </button>
                 </div>
               </div>
