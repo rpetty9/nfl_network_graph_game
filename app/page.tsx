@@ -4443,28 +4443,28 @@ export default function HomePage() {
                         <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                           Stats
                         </p>
-                        <div className="mt-4 grid gap-3">
-                          <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                        <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-3">
+                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
+                            <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
                               Puzzles Submitted
                             </p>
-                            <p className="mt-1 text-2xl font-black text-slate-900">
+                            <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
                               {userStats.puzzles_submitted}
                             </p>
                           </div>
-                          <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
+                            <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
                               Leaderboards Made
                             </p>
-                            <p className="mt-1 text-2xl font-black text-slate-900">
+                            <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
                               {userStats.leaderboard_finishes}
                             </p>
                           </div>
-                          <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
+                            <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
                               Links Created
                             </p>
-                            <p className="mt-1 text-2xl font-black text-slate-900">
+                            <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
                               {userStats.links_created}
                             </p>
                           </div>
@@ -4854,28 +4854,28 @@ export default function HomePage() {
                           <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                             Stats
                           </p>
-                          <div className="mt-4 grid gap-3">
-                            <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-3">
+                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
+                              <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
                                 Puzzles Submitted
                               </p>
-                              <p className="mt-1 text-2xl font-black text-slate-900">
+                              <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
                                 {publicProfile.stats.puzzles_submitted}
                               </p>
                             </div>
-                            <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
+                              <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
                                 Leaderboards Made
                               </p>
-                              <p className="mt-1 text-2xl font-black text-slate-900">
+                              <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
                                 {publicProfile.stats.leaderboard_finishes}
                               </p>
                             </div>
-                            <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
-                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
+                              <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
                                 Links Created
                               </p>
-                              <p className="mt-1 text-2xl font-black text-slate-900">
+                              <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
                                 {publicProfile.stats.links_created}
                               </p>
                             </div>
