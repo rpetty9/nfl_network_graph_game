@@ -42,19 +42,22 @@ export async function GET(request: NextRequest) {
     const submissionsResult = await pool.query(
       `
       SELECT
-        submission_id,
-        display_name,
-        base_score,
-        active_links,
-        multiplier,
-        final_score,
-        optimal_final_score,
-        percent_of_optimal,
-        submitted_at
-      FROM puzzle_submission
-      WHERE puzzle_id = $1
-        AND user_id IS NOT NULL
-      ORDER BY final_score DESC, submitted_at ASC
+        ps.submission_id,
+        ps.display_name,
+        ps.base_score,
+        ps.active_links,
+        ps.multiplier,
+        ps.final_score,
+        ps.optimal_final_score,
+        ps.percent_of_optimal,
+        ps.submitted_at,
+        COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
+      FROM puzzle_submission ps
+      JOIN app_user au
+        ON ps.user_id = au.user_id
+      WHERE ps.puzzle_id = $1
+        AND ps.user_id IS NOT NULL
+      ORDER BY ps.final_score DESC, ps.submitted_at ASC
       LIMIT $2
       `,
       [puzzle.puzzle_id, limit]

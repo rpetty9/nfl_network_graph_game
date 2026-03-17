@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import {
+  getBadgeDefinition,
   getPublicBadgeDefinitions,
   type BadgeDefinition,
   type BadgeIcon,
@@ -162,6 +163,7 @@ type LeaderboardEntry = {
   optimal_final_score: number | null;
   percent_of_optimal: number | null;
   submitted_at: string;
+  featured_badges?: BadgeKey[];
 };
 
 function formatBadgeAwardDate(value: string) {
@@ -932,6 +934,45 @@ function ProfileBadgeCard({
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
+  const badges = (badgeKeys ?? [])
+    .map((badgeKey) => getBadgeDefinition(badgeKey))
+    .filter((badge): badge is NonNullable<ReturnType<typeof getBadgeDefinition>> => Boolean(badge))
+    .slice(0, 3);
+
+  if (badges.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-1 flex items-center gap-1">
+      {badges.map((badge) => {
+        const tone = getBadgeToneClasses(badge.tone);
+        return (
+          <span
+            key={badge.key}
+            className={`inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/70 shadow-[0_6px_12px_rgba(15,23,42,0.08)] ${tone.icon}`}
+            title={badge.title}
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-3 w-3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <BadgeGlyph icon={badge.icon} />
+            </svg>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -3150,6 +3191,7 @@ export default function HomePage() {
                         <p className="mt-1 truncate text-sm font-bold text-slate-900">
                           {entry.display_name}
                         </p>
+                        <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
                         <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-amber-700/80">
                           {Number(entry.percent_of_optimal ?? 0).toFixed(1)}% of optimal •{" "}
                           {entry.active_links} links
@@ -4212,6 +4254,7 @@ export default function HomePage() {
                             <p className="mt-1 truncate text-sm font-bold text-slate-900">
                               {entry.display_name}
                             </p>
+                            <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
                           </div>
                           <div className="shrink-0 text-right">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
