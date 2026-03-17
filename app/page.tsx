@@ -553,7 +553,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isLegendaryManualBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : "mx-auto inline-flex rounded-full border border-amber-200/80 bg-[linear-gradient(180deg,rgba(17,24,39,0.9)_0%,rgba(120,53,15,0.88)_100%)] px-4 py-1 text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.28),0_6px_18px_rgba(17,24,39,0.28)] drop-shadow-[0_1px_0_rgba(0,0,0,0.55)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
+          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isLegendaryManualBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : "mx-auto inline-flex items-center rounded-[12px] border border-amber-200/70 bg-[linear-gradient(135deg,rgba(17,24,39,0.96)_0%,rgba(52,31,12,0.94)_34%,rgba(120,53,15,0.9)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-[#fff4c2] shadow-[0_0_0_1px_rgba(251,191,36,0.22),0_10px_24px_rgba(17,24,39,0.34),inset_0_1px_0_rgba(255,255,255,0.08)] drop-shadow-[0_1px_0_rgba(0,0,0,0.55)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
             {badge.title}
           </p>
         </div>
