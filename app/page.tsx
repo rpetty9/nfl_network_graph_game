@@ -1589,7 +1589,7 @@ export default function HomePage() {
   const selfRecentSubmissions = selfProfile?.recent_submissions ?? [];
   const homeRecapTickerEntries = useMemo(() => {
     if (!homeRecap?.winners?.length) return [];
-    return [...homeRecap.winners, ...homeRecap.winners];
+    return [...homeRecap.winners, ...homeRecap.winners, ...homeRecap.winners];
   }, [homeRecap]);
   const featuredBadgeKeys = useMemo(
     () =>
@@ -5921,7 +5921,7 @@ export default function HomePage() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%);
+            transform: translateX(-33.333%);
           }
         }
       `}</style>
