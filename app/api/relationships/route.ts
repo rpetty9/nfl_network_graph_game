@@ -140,6 +140,8 @@ export async function GET(request: NextRequest) {
         END AS same_college_flag,
         CASE
           WHEN p1.draft_year IS NOT NULL
+           AND COALESCE(p1.undrafted_flag, false) = false
+           AND COALESCE(p2.undrafted_flag, false) = false
            AND p1.draft_year = p2.draft_year
           THEN true
           ELSE false

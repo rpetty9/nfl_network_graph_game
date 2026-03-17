@@ -270,7 +270,7 @@ function getRelationshipTooltip(relationshipType: string, relationshipLabel: str
     case "same_college":
       return "A link activates if both players attended the same college at any point before entering the NFL.";
     case "same_draft_class":
-      return "A link activates if both players entered the NFL in the same draft year.";
+      return "A link activates only if both players were actually drafted in the same NFL draft year. Undrafted players do not count for this link, even if they entered the league in the same season.";
     case "same_draft_round":
       return "A link activates if both players were selected in the same draft round.";
     case "both_undrafted":

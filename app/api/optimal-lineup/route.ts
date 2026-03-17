@@ -57,7 +57,7 @@ type OptimalLineupResult = {
   final_score: number;
 };
 
-const OPTIMAL_CACHE_VERSION = "v2";
+const OPTIMAL_CACHE_VERSION = "v3";
 
 const SLOT_LIMITS: Record<string, number> = {
   any: 18,
@@ -502,6 +502,8 @@ export async function GET(request: NextRequest) {
                 END AS same_college_flag,
                 CASE
                   WHEN p1.draft_year IS NOT NULL
+                   AND COALESCE(p1.undrafted_flag, false) = false
+                   AND COALESCE(p2.undrafted_flag, false) = false
                    AND p1.draft_year = p2.draft_year
                   THEN true
                   ELSE false
