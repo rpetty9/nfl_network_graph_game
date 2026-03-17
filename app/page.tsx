@@ -1264,7 +1264,7 @@ function ProfileBadgeCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[24px] border px-3.5 py-3.5 ${tone.shell} ${tone.aura} ${
+      className={`group relative overflow-hidden rounded-[24px] border px-3.5 py-3.5 ${tone.shell} ${tone.aura} ${
         compact ? "min-w-[158px]" : ""
       }`}
     >
@@ -1277,17 +1277,17 @@ function ProfileBadgeCard({
           onClick={onAction}
           disabled={actionDisabled}
           aria-label={isPinned ? `Unfeature ${badge.title}` : `Feature ${badge.title}`}
-          className={`absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border transition ${
+          className={`absolute bottom-3 right-3 z-10 inline-flex h-6 w-6 items-center justify-center text-slate-950 transition ${
             isPinned
-              ? "border-sky-300 bg-sky-500 text-white shadow-[0_10px_22px_rgba(14,165,233,0.24)]"
-              : "border-white/70 bg-white/80 text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.08)] hover:-translate-y-0.5 hover:bg-white"
-          } disabled:cursor-not-allowed disabled:opacity-50`}
+              ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+              : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 hover:-translate-y-0.5"
+          } disabled:cursor-not-allowed disabled:opacity-30`}
         >
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
             className="h-4 w-4"
-            fill={isPinned ? "currentColor" : "none"}
+            fill="none"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
