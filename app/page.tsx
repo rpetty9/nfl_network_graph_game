@@ -4375,29 +4375,17 @@ export default function HomePage() {
                             Mix styles, background, icon, and border colors to build your look.
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#f8fdff_0%,#e0f2fe_100%)] px-3 py-2 shadow-[0_10px_24px_rgba(56,189,248,0.12)]">
-                            <div className="flex items-center gap-3">
-                              <ProfileAvatar
-                                style={avatarStyleDraft}
-                                bg={avatarBgDraft}
-                                accent={avatarAccentDraft}
-                                border={avatarBorderDraft}
-                                size="md"
-                              />
-                              <div className="text-left">
-                                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-sky-700">
-                                  Live Preview
-                                </p>
-                                <p className="mt-0.5 text-[11px] font-semibold text-slate-600">
-                                  Current draft
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            {avatarEditorConfig.title}
-                          </span>
+                        <div className="rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#f8fdff_0%,#e0f2fe_100%)] px-3 py-2 text-center shadow-[0_10px_24px_rgba(56,189,248,0.12)]">
+                          <ProfileAvatar
+                            style={avatarStyleDraft}
+                            bg={avatarBgDraft}
+                            accent={avatarAccentDraft}
+                            border={avatarBorderDraft}
+                            size="md"
+                          />
+                          <p className="mt-1.5 text-[9px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            Live Preview
+                          </p>
                         </div>
                       </div>
 
