@@ -1,7 +1,7 @@
 import process from "node:process";
 import { Client } from "pg";
 
-const VALID_BADGES = new Set(["creator", "founder"]);
+const VALID_BADGES = new Set(["creator", "founder", "bestestest"]);
 
 function readArg(name) {
   const direct = process.argv.find((arg) => arg.startsWith(`--${name}=`));

@@ -304,6 +304,8 @@ function FeaturedBadgeSlot({
 
   const tone = getBadgeToneClasses(badge.tone);
   const isCreatorBadge = badge.badgeKey === "creator";
+  const isBestestestBadge = badge.badgeKey === "bestestest";
+  const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
 
   return (
     <div className="group relative">
@@ -311,12 +313,14 @@ function FeaturedBadgeSlot({
         type="button"
         onClick={onToggle}
         className={`relative flex w-full items-center gap-3 overflow-hidden rounded-[20px] border px-4 py-3.5 text-center transition hover:-translate-y-0.5 ${
-          isCreatorBadge
+          isLegendaryManualBadge
             ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.98)_0%,rgba(250,204,21,0.44)_24%,rgba(245,158,11,0.34)_45%,rgba(120,53,15,0.48)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.55),0_0_30px_rgba(251,191,36,0.4),0_20px_48px_rgba(120,53,15,0.36)]"
             : tone.shell
         } ${
-          isCreatorBadge
-            ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_22%_16%,rgba(255,255,255,0.55),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,236,179,0.34),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.14)_0,rgba(255,215,0,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.28),transparent_62%)] after:blur-xl after:content-['']"
+          isLegendaryManualBadge
+            ? isBestestestBadge
+              ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.5),transparent_22%),radial-gradient(circle_at_80%_18%,rgba(244,114,182,0.28),transparent_22%),repeating-linear-gradient(135deg,rgba(236,72,153,0.14)_0,rgba(236,72,153,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(236,72,153,0.24),transparent_62%)] after:blur-xl after:content-['']"
+              : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_22%_16%,rgba(255,255,255,0.55),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,236,179,0.34),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.14)_0,rgba(255,215,0,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.28),transparent_62%)] after:blur-xl after:content-['']"
             : "shadow-[0_16px_30px_rgba(15,23,42,0.11)]"
         }`}
       >
@@ -324,7 +328,7 @@ function FeaturedBadgeSlot({
         <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.26),transparent_52%)]" />
         <div
           className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-white/50 ${
-            isCreatorBadge
+            isLegendaryManualBadge
               ? "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_68%,#78350f_100%)] text-amber-950 shadow-[0_0_22px_rgba(251,191,36,0.58)]"
               : tone.icon
           }`}
@@ -344,7 +348,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isCreatorBadge ? "mx-auto inline-flex rounded-full border border-amber-200/80 bg-[linear-gradient(180deg,rgba(17,24,39,0.9)_0%,rgba(120,53,15,0.88)_100%)] px-4 py-1 text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.28),0_6px_18px_rgba(17,24,39,0.28)] drop-shadow-[0_1px_0_rgba(0,0,0,0.55)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
+          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isLegendaryManualBadge ? isBestestestBadge ? "mx-auto inline-flex rounded-full border border-pink-200/70 bg-[linear-gradient(180deg,rgba(91,33,182,0.92)_0%,rgba(157,23,77,0.9)_100%)] px-4 py-1 text-amber-100 shadow-[0_0_0_1px_rgba(244,114,182,0.24),0_6px_18px_rgba(91,33,182,0.3)] drop-shadow-[0_1px_0_rgba(0,0,0,0.55)]" : "mx-auto inline-flex rounded-full border border-amber-200/80 bg-[linear-gradient(180deg,rgba(17,24,39,0.9)_0%,rgba(120,53,15,0.88)_100%)] px-4 py-1 text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.28),0_6px_18px_rgba(17,24,39,0.28)] drop-shadow-[0_1px_0_rgba(0,0,0,0.55)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
             {badge.title}
           </p>
         </div>
@@ -367,9 +371,11 @@ function FeaturedBadgeSlot({
         <p className="text-center text-xs font-black uppercase tracking-[0.08em] text-slate-900">
           {badge.title}
         </p>
-        <p className="mt-1 text-center text-sm font-semibold leading-5 text-slate-600">
-          {badge.description}
-        </p>
+        {badge.description ? (
+          <p className="mt-1 text-center text-sm font-semibold leading-5 text-slate-600">
+            {badge.description}
+          </p>
+        ) : null}
         <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
           Earned {formatBadgeAwardDate(badge.awardedAt)}
         </p>
@@ -1016,6 +1022,8 @@ function ProfileBadgeCard({
   actionDisabled?: boolean;
 }) {
   const isCreatorBadge = badge.badgeKey === "creator";
+  const isBestestestBadge = badge.badgeKey === "bestestest";
+  const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
   const tone = locked
     ? {
         shell:
@@ -1024,13 +1032,19 @@ function ProfileBadgeCard({
         meta: "text-slate-500",
         aura: "",
       }
-    : isCreatorBadge
+    : isLegendaryManualBadge
       ? {
           shell:
-            "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.44)_20%,rgba(245,158,11,0.3)_42%,rgba(120,53,15,0.42)_66%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.5),0_0_34px_rgba(251,191,36,0.26),0_24px_52px_rgba(120,53,15,0.38),inset_0_1px_0_rgba(255,255,255,0.28)]",
-          icon: "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_72%,#78350f_100%)] text-amber-950 shadow-[0_0_24px_rgba(251,191,36,0.56)]",
+            isBestestestBadge
+              ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.99)_0%,rgba(244,114,182,0.36)_20%,rgba(168,85,247,0.34)_44%,rgba(91,33,182,0.46)_68%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.42),0_0_34px_rgba(168,85,247,0.24),0_24px_52px_rgba(91,33,182,0.38),inset_0_1px_0_rgba(255,255,255,0.24)]"
+              : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.44)_20%,rgba(245,158,11,0.3)_42%,rgba(120,53,15,0.42)_66%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.5),0_0_34px_rgba(251,191,36,0.26),0_24px_52px_rgba(120,53,15,0.38),inset_0_1px_0_rgba(255,255,255,0.28)]",
+          icon: isBestestestBadge
+            ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_24px_rgba(244,114,182,0.46)]"
+            : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_72%,#78350f_100%)] text-amber-950 shadow-[0_0_24px_rgba(251,191,36,0.56)]",
           meta: "text-amber-100",
-          aura: "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(255,236,179,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.08)_0,rgba(255,215,0,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.26),transparent_60%)] after:blur-xl after:content-['']",
+          aura: isBestestestBadge
+            ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(244,114,182,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(244,114,182,0.1)_0,rgba(244,114,182,0.1)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(168,85,247,0.24),transparent_60%)] after:blur-xl after:content-['']"
+            : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(255,236,179,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.08)_0,rgba(255,215,0,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.26),transparent_60%)] after:blur-xl after:content-['']",
         }
       : {
           ...getBadgeToneClasses(badge.tone),
@@ -1070,7 +1084,7 @@ function ProfileBadgeCard({
           </p>
           <p
             className={`mt-1.5 text-xs font-semibold leading-5 ${
-              locked ? "text-slate-600" : isCreatorBadge ? "text-amber-50/90" : "text-slate-700"
+              locked ? "text-slate-600" : isLegendaryManualBadge ? "text-amber-50/90" : "text-slate-700"
             }`}
           >
             {badge.description}
@@ -1111,12 +1125,16 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
       {badges.map((badge) => {
         const tone = getBadgeToneClasses(badge.tone);
         const isCreatorBadge = badge.key === "creator";
+        const isBestestestBadge = badge.key === "bestestest";
+        const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
         return (
           <span
             key={badge.key}
             className={`relative inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/75 shadow-[0_8px_16px_rgba(15,23,42,0.12)] ${
-              isCreatorBadge
-                ? "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_62%,#78350f_82%,#111827_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.62),0_0_16px_rgba(251,191,36,0.62),0_12px_24px_rgba(120,53,15,0.36)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(251,191,36,0.58),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
+              isLegendaryManualBadge
+                ? isBestestestBadge
+                  ? "bg-[radial-gradient(circle_at_30%_28%,#fff1f2_0%,#f9a8d4_16%,#f472b6_38%,#a855f7_60%,#581c87_82%,#111827_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.58),0_0_16px_rgba(168,85,247,0.52),0_12px_24px_rgba(91,33,182,0.38)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(244,114,182,0.52),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
+                  : "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_62%,#78350f_82%,#111827_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.62),0_0_16px_rgba(251,191,36,0.62),0_12px_24px_rgba(120,53,15,0.36)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(251,191,36,0.58),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
                 : tone.icon
             }`}
             title={badge.title}

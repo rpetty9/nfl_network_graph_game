@@ -31,7 +31,8 @@ export type BadgeKey =
   | "top_10_finish_5"
   | "ten_links_submission"
   | "creator"
-  | "founder";
+  | "founder"
+  | "bestestest";
 
 export type BadgeDefinition = {
   key: BadgeKey;
@@ -186,10 +187,20 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     icon: "flag",
     manualOnly: true,
   },
+  bestestest: {
+    key: "bestestest",
+    title: "The Bestestest",
+    description: "",
+    unlockHint: "Awarded manually by the app creator.",
+    tone: "amber",
+    icon: "crown",
+    manualOnly: true,
+  },
 };
 
 export const BADGE_ORDER: BadgeKey[] = [
   "creator",
+  "bestestest",
   "founder",
   "streak_7",
   "streak_3",
