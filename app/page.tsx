@@ -314,7 +314,9 @@ function FeaturedBadgeSlot({
         onClick={onToggle}
         className={`relative flex w-full items-center gap-3 overflow-hidden rounded-[20px] border px-4 py-3.5 text-center transition hover:-translate-y-0.5 ${
           isLegendaryManualBadge
-            ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.98)_0%,rgba(250,204,21,0.44)_24%,rgba(245,158,11,0.34)_45%,rgba(120,53,15,0.48)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.55),0_0_30px_rgba(251,191,36,0.4),0_20px_48px_rgba(120,53,15,0.36)]"
+            ? isBestestestBadge
+              ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.98)_0%,rgba(244,114,182,0.3)_24%,rgba(168,85,247,0.34)_46%,rgba(91,33,182,0.5)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.45),0_0_30px_rgba(168,85,247,0.34),0_20px_48px_rgba(91,33,182,0.34)]"
+              : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.98)_0%,rgba(250,204,21,0.44)_24%,rgba(245,158,11,0.34)_45%,rgba(120,53,15,0.48)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.55),0_0_30px_rgba(251,191,36,0.4),0_20px_48px_rgba(120,53,15,0.36)]"
             : tone.shell
         } ${
           isLegendaryManualBadge
@@ -329,7 +331,9 @@ function FeaturedBadgeSlot({
         <div
           className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-white/50 ${
             isLegendaryManualBadge
-              ? "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_68%,#78350f_100%)] text-amber-950 shadow-[0_0_22px_rgba(251,191,36,0.58)]"
+              ? isBestestestBadge
+                ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_22px_rgba(244,114,182,0.42)]"
+                : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_68%,#78350f_100%)] text-amber-950 shadow-[0_0_22px_rgba(251,191,36,0.58)]"
               : tone.icon
           }`}
         >
