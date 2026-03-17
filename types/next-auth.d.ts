@@ -14,6 +14,7 @@ declare module "next-auth" {
       avatarStyle: string;
       avatarBg: string;
       avatarAccent: string;
+      avatarBorder: string;
       featuredBadges: string[];
       badges: UserBadge[];
       stats: {
@@ -35,6 +36,7 @@ declare module "next-auth/jwt" {
     avatarStyle?: string;
     avatarBg?: string;
     avatarAccent?: string;
+    avatarBorder?: string;
     featuredBadges?: string[];
     badges?: UserBadge[];
     stats?: {

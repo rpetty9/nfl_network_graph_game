@@ -27,6 +27,7 @@ export type AppUser = {
   avatar_style: AvatarStyle;
   avatar_bg: AvatarColor;
   avatar_accent: AvatarColor;
+  avatar_border: AvatarColor;
   featured_badges: BadgeKey[];
   status: string;
   badges: UserBadge[];
@@ -173,6 +174,7 @@ const USER_SELECT_COLUMNS = `
   avatar_style,
   avatar_bg,
   avatar_accent,
+  avatar_border,
   COALESCE(featured_badges, ARRAY[]::text[]) AS featured_badges,
   status
 `;
@@ -316,9 +318,10 @@ export async function upsertGoogleUser(input: {
       email_normalized,
       avatar_style,
       avatar_bg,
-      avatar_accent
+      avatar_accent,
+      avatar_border
     )
-    VALUES ($1, $2, $3, $4, $5, $6)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     ON CONFLICT (google_subject)
     DO UPDATE SET
       email = EXCLUDED.email,
@@ -333,6 +336,7 @@ export async function upsertGoogleUser(input: {
       DEFAULT_AVATAR.style,
       DEFAULT_AVATAR.bg,
       DEFAULT_AVATAR.accent,
+      DEFAULT_AVATAR.border,
     ]
   );
 
@@ -382,11 +386,13 @@ export async function updateAvatarForUser(input: {
   avatarStyle: string;
   avatarBg: string;
   avatarAccent: string;
+  avatarBorder: string;
 }) {
   if (
     !isAvatarStyle(input.avatarStyle) ||
     !isAvatarColor(input.avatarBg) ||
-    !isAvatarColor(input.avatarAccent)
+    !isAvatarColor(input.avatarAccent) ||
+    !isAvatarColor(input.avatarBorder)
   ) {
     return { ok: false as const, reason: "invalid" as const };
   }
@@ -397,13 +403,20 @@ export async function updateAvatarForUser(input: {
     SET
       avatar_style = $2,
       avatar_bg = $3,
-      avatar_accent = $4
+      avatar_accent = $4,
+      avatar_border = $5
     WHERE user_id = $1
       AND status = 'active'
     RETURNING
       ${USER_SELECT_COLUMNS}
     `,
-    [input.userId, input.avatarStyle, input.avatarBg, input.avatarAccent]
+    [
+      input.userId,
+      input.avatarStyle,
+      input.avatarBg,
+      input.avatarAccent,
+      input.avatarBorder,
+    ]
   );
 
   if (result.rowCount === 0) {

@@ -20,12 +20,15 @@ export async function POST(request: NextRequest) {
     const avatarBg = typeof body?.avatar_bg === "string" ? body.avatar_bg : "";
     const avatarAccent =
       typeof body?.avatar_accent === "string" ? body.avatar_accent : "";
+    const avatarBorder =
+      typeof body?.avatar_border === "string" ? body.avatar_border : "";
 
     const result = await updateAvatarForUser({
       userId,
       avatarStyle,
       avatarBg,
       avatarAccent,
+      avatarBorder,
     });
 
     if (!result.ok) {
@@ -39,6 +42,7 @@ export async function POST(request: NextRequest) {
       avatar_style: result.user.avatar_style,
       avatar_bg: result.user.avatar_bg,
       avatar_accent: result.user.avatar_accent,
+      avatar_border: result.user.avatar_border,
     });
   } catch (error) {
     console.error("Avatar route failed:", error);
