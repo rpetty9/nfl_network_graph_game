@@ -3849,8 +3849,8 @@ export default function HomePage() {
                   <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)]">
                     Five Wide
                   </h1>
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm">
-                    <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_0_3px_rgba(244,114,182,0.18)]" />
+                  <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border-[2px] border-white/70 bg-white/20 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-[0_6px_14px_rgba(15,23,42,0.14)] backdrop-blur-sm">
+                    <span className="h-2 w-2 rounded-full bg-pink-400 shadow-[0_0_0_2px_rgba(244,114,182,0.18)]" />
                     Alpha
                   </span>
                 </div>
@@ -3884,8 +3884,8 @@ export default function HomePage() {
                 <h1 className="text-5xl font-black tracking-[0.08em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)]">
                   Five Wide
                 </h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm">
-                  <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_0_3px_rgba(244,114,182,0.18)]" />
+                <span className="inline-flex items-center gap-1 rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-white shadow-[0_6px_14px_rgba(15,23,42,0.14)] backdrop-blur-sm">
+                  <span className="h-2 w-2 rounded-full bg-pink-400 shadow-[0_0_0_2px_rgba(244,114,182,0.18)]" />
                   Alpha
                 </span>
               </div>
