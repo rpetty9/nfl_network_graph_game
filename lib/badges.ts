@@ -16,11 +16,17 @@ export type BadgeIcon =
   | "crown";
 
 export type BadgeKey =
+  | "account_created"
+  | "avatar_customized"
   | "first_submission"
   | "submissions_10"
   | "submissions_25"
   | "submissions_50"
   | "submissions_100"
+  | "links_25"
+  | "links_100"
+  | "streak_3"
+  | "streak_7"
   | "top_10_finish"
   | "top_10_finish_5"
   | "ten_links_submission"
@@ -50,6 +56,22 @@ export type UserBadge = {
 };
 
 export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
+  account_created: {
+    key: "account_created",
+    title: "Signed Up",
+    description: "Created a Five Wide account.",
+    unlockHint: "Create an account.",
+    tone: "sky",
+    icon: "shield",
+  },
+  avatar_customized: {
+    key: "avatar_customized",
+    title: "Fresh Paint",
+    description: "Customized your avatar for the first time.",
+    unlockHint: "Update your avatar.",
+    tone: "rose",
+    icon: "spark",
+  },
   first_submission: {
     key: "first_submission",
     title: "First Snap",
@@ -89,6 +111,38 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     unlockHint: "Submit 100 different daily puzzles.",
     tone: "violet",
     icon: "stack",
+  },
+  links_25: {
+    key: "links_25",
+    title: "Link Builder",
+    description: "Created 25 active links across your submissions.",
+    unlockHint: "Create 25 total active links.",
+    tone: "emerald",
+    icon: "link",
+  },
+  links_100: {
+    key: "links_100",
+    title: "Chain Reaction",
+    description: "Created 100 active links across your submissions.",
+    unlockHint: "Create 100 total active links.",
+    tone: "amber",
+    icon: "link",
+  },
+  streak_3: {
+    key: "streak_3",
+    title: "Three-Peat",
+    description: "Submitted puzzles on 3 consecutive days.",
+    unlockHint: "Build a 3-day submission streak.",
+    tone: "violet",
+    icon: "flag",
+  },
+  streak_7: {
+    key: "streak_7",
+    title: "Weeklong Run",
+    description: "Submitted puzzles on 7 consecutive days.",
+    unlockHint: "Build a 7-day submission streak.",
+    tone: "rose",
+    icon: "flag",
   },
   top_10_finish: {
     key: "top_10_finish",
@@ -137,14 +191,20 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
 export const BADGE_ORDER: BadgeKey[] = [
   "creator",
   "founder",
+  "streak_7",
+  "streak_3",
   "top_10_finish_5",
   "top_10_finish",
   "ten_links_submission",
+  "links_100",
+  "links_25",
   "submissions_100",
   "submissions_50",
   "submissions_25",
   "submissions_10",
   "first_submission",
+  "avatar_customized",
+  "account_created",
 ];
 
 export const BADGE_KEYS = Object.keys(BADGE_DEFINITIONS) as BadgeKey[];
@@ -155,6 +215,16 @@ export const SUBMISSION_COUNT_BADGES: Array<{ count: number; key: BadgeKey }> = 
   { count: 25, key: "submissions_25" },
   { count: 50, key: "submissions_50" },
   { count: 100, key: "submissions_100" },
+];
+
+export const LINK_COUNT_BADGES: Array<{ count: number; key: BadgeKey }> = [
+  { count: 25, key: "links_25" },
+  { count: 100, key: "links_100" },
+];
+
+export const STREAK_BADGES: Array<{ count: number; key: BadgeKey }> = [
+  { count: 3, key: "streak_3" },
+  { count: 7, key: "streak_7" },
 ];
 
 export function isBadgeKey(value: string): value is BadgeKey {

@@ -128,12 +128,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           typeof token.stats === "object" &&
           typeof token.stats.puzzles_submitted === "number" &&
           typeof token.stats.leaderboard_finishes === "number" &&
-          typeof token.stats.links_created === "number"
+          typeof token.stats.links_created === "number" &&
+          typeof token.stats.longest_submission_streak === "number"
             ? token.stats
             : {
                 puzzles_submitted: 0,
                 leaderboard_finishes: 0,
                 links_created: 0,
+                longest_submission_streak: 0,
               };
         session.user.needsUsername = Boolean(token.needsUsername);
       }

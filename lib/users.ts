@@ -8,6 +8,8 @@ import {
 } from "@/lib/avatar";
 import {
   BADGE_ORDER,
+  LINK_COUNT_BADGES,
+  STREAK_BADGES,
   SUBMISSION_COUNT_BADGES,
   getBadgeDefinition,
   hydrateBadge,
@@ -35,6 +37,7 @@ export type AppUser = {
     puzzles_submitted: number;
     leaderboard_finishes: number;
     links_created: number;
+    longest_submission_streak: number;
   };
 };
 
@@ -223,7 +226,11 @@ async function loadBadgesForUser(userId: string) {
 }
 
 async function loadStatsForUser(userId: string) {
-  const [submissionStatsResult, leaderboardStatsResult] = await Promise.all([
+  const [
+    submissionStatsResult,
+    leaderboardStatsResult,
+    streakStatsResult,
+  ] = await Promise.all([
     pool.query<{
       puzzles_submitted: string;
       links_created: string;
@@ -245,6 +252,31 @@ async function loadStatsForUser(userId: string) {
       `,
       [Number(userId)]
     ),
+    pool.query<{ longest_submission_streak: string }>(
+      `
+      WITH distinct_dates AS (
+        SELECT DISTINCT dp.puzzle_date::date AS puzzle_date
+        FROM puzzle_submission ps
+        JOIN daily_puzzle dp
+          ON dp.puzzle_id = ps.puzzle_id
+        WHERE ps.user_id = $1
+      ),
+      grouped_dates AS (
+        SELECT
+          puzzle_date,
+          puzzle_date - (ROW_NUMBER() OVER (ORDER BY puzzle_date))::int AS streak_group
+        FROM distinct_dates
+      ),
+      streak_lengths AS (
+        SELECT COUNT(*)::int AS streak_length
+        FROM grouped_dates
+        GROUP BY streak_group
+      )
+      SELECT COALESCE(MAX(streak_length), 0)::text AS longest_submission_streak
+      FROM streak_lengths
+      `,
+      [Number(userId)]
+    ),
   ]);
 
   return {
@@ -255,6 +287,9 @@ async function loadStatsForUser(userId: string) {
       leaderboardStatsResult.rows[0]?.leaderboard_finishes ?? "0"
     ),
     links_created: Number(submissionStatsResult.rows[0]?.links_created ?? "0"),
+    longest_submission_streak: Number(
+      streakStatsResult.rows[0]?.longest_submission_streak ?? "0"
+    ),
   };
 }
 
@@ -340,7 +375,15 @@ export async function upsertGoogleUser(input: {
     ]
   );
 
-  return withUserBadges(result.rows[0]);
+  const user = result.rows[0];
+  if (!user) return null;
+
+  await grantBadgesToUser({
+    userId: user.user_id,
+    badgeKeys: ["account_created"],
+  });
+
+  return getUserById(user.user_id);
 }
 
 export async function setUsernameForUser(userId: string, rawUsername: string) {
@@ -423,9 +466,14 @@ export async function updateAvatarForUser(input: {
     return { ok: false as const, reason: "invalid" as const };
   }
 
+  await grantBadgesToUser({
+    userId: input.userId,
+    badgeKeys: ["avatar_customized"],
+  });
+
   return {
     ok: true as const,
-    user: (await withUserBadges(result.rows[0])) as AppUser,
+    user: (await getUserById(input.userId)) as AppUser,
   };
 }
 
@@ -540,21 +588,23 @@ export async function awardBadgesForSubmission(input: {
   activeLinks: number;
 }) {
   const badgeKeys = new Set<BadgeKey>();
-
-  const submissionCountResult = await pool.query<{ submission_count: string }>(
-    `
-    SELECT COUNT(*)::text AS submission_count
-    FROM puzzle_submission
-    WHERE user_id = $1
-    `,
-    [Number(input.userId)]
-  );
-  const submissionCount = Number(
-    submissionCountResult.rows[0]?.submission_count ?? "0"
-  );
+  const stats = await loadStatsForUser(input.userId);
+  const submissionCount = stats.puzzles_submitted;
 
   SUBMISSION_COUNT_BADGES.forEach(({ count, key }) => {
     if (submissionCount >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  LINK_COUNT_BADGES.forEach(({ count, key }) => {
+    if (stats.links_created >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  STREAK_BADGES.forEach(({ count, key }) => {
+    if (stats.longest_submission_streak >= count) {
       badgeKeys.add(key);
     }
   });

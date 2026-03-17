@@ -21,6 +21,7 @@ declare module "next-auth" {
         puzzles_submitted: number;
         leaderboard_finishes: number;
         links_created: number;
+        longest_submission_streak: number;
       };
       needsUsername: boolean;
     };
@@ -43,6 +44,7 @@ declare module "next-auth/jwt" {
       puzzles_submitted: number;
       leaderboard_finishes: number;
       links_created: number;
+      longest_submission_streak: number;
     };
     needsUsername?: boolean;
   }

@@ -201,9 +201,14 @@ function getBadgeProgressLabel(
     puzzles_submitted: number;
     leaderboard_finishes: number;
     links_created: number;
+    longest_submission_streak: number;
   }
 ) {
   switch (badge.key) {
+    case "account_created":
+      return "1/1";
+    case "avatar_customized":
+      return "Update avatar";
     case "first_submission":
       return `${Math.min(stats.puzzles_submitted, 1)}/1`;
     case "submissions_10":
@@ -218,6 +223,14 @@ function getBadgeProgressLabel(
       return `${Math.min(stats.leaderboard_finishes, 1)}/1`;
     case "top_10_finish_5":
       return `${Math.min(stats.leaderboard_finishes, 5)}/5`;
+    case "links_25":
+      return `${Math.min(stats.links_created, 25)}/25`;
+    case "links_100":
+      return `${Math.min(stats.links_created, 100)}/100`;
+    case "streak_3":
+      return `${Math.min(stats.longest_submission_streak, 3)}/3`;
+    case "streak_7":
+      return `${Math.min(stats.longest_submission_streak, 7)}/7`;
     default:
       return badge.unlockHint;
   }
@@ -1086,6 +1099,7 @@ export default function HomePage() {
     puzzles_submitted: 0,
     leaderboard_finishes: 0,
     links_created: 0,
+    longest_submission_streak: 0,
   };
   const featuredBadgeKeys = useMemo(
     () =>
