@@ -291,9 +291,10 @@ function FeaturedBadgeSlot({
         <button
           type="button"
           onClick={onRemove}
-          className="absolute right-2 top-2 z-20 rounded-full border border-white/70 bg-white/85 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.12)] transition hover:bg-white"
+          aria-label={`Remove ${badge.title} from featured badges`}
+          className="absolute right-2 top-2 z-20 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/70 bg-white/85 text-xs font-black text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.12)] transition hover:bg-white"
         >
-          Remove
+          x
         </button>
       ) : null}
       <div
@@ -2821,7 +2822,7 @@ export default function HomePage() {
               </svg>
             </button>
             <div className="relative z-10">
-              <div className="mt-5 flex items-center justify-center gap-2 md:mt-8 md:gap-3">
+              <div className="mt-9 flex items-center justify-center gap-2 md:mt-8 md:gap-3">
                 <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl md:tracking-[0.08em]">
                   Five Wide
                 </h1>
