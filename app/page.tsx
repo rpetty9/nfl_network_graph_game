@@ -179,8 +179,32 @@ function formatProfileCreatedDate(value: string | null) {
   });
 }
 
-function getBadgeProgressLabel(badge: BadgeDefinition) {
-  return badge.unlockHint;
+function getBadgeProgressLabel(
+  badge: BadgeDefinition,
+  stats: {
+    puzzles_submitted: number;
+    leaderboard_finishes: number;
+    links_created: number;
+  }
+) {
+  switch (badge.key) {
+    case "first_submission":
+      return `${Math.min(stats.puzzles_submitted, 1)}/1`;
+    case "submissions_10":
+      return `${Math.min(stats.puzzles_submitted, 10)}/10`;
+    case "submissions_25":
+      return `${Math.min(stats.puzzles_submitted, 25)}/25`;
+    case "submissions_50":
+      return `${Math.min(stats.puzzles_submitted, 50)}/50`;
+    case "submissions_100":
+      return `${Math.min(stats.puzzles_submitted, 100)}/100`;
+    case "top_10_finish":
+      return `${Math.min(stats.leaderboard_finishes, 1)}/1`;
+    case "top_10_finish_5":
+      return `${Math.min(stats.leaderboard_finishes, 5)}/5`;
+    default:
+      return badge.unlockHint;
+  }
 }
 
 function clampPageIndex(pageIndex: number, totalItems: number, pageSize: number) {
@@ -221,14 +245,22 @@ function FeaturedBadgeSlot({
       <button
         type="button"
         onClick={onToggle}
-        className={`flex w-full items-center gap-3 rounded-[18px] border px-4 py-3 text-left transition hover:-translate-y-0.5 ${tone.shell} ${
+        className={`flex w-full items-center gap-3 rounded-[18px] border px-4 py-3 text-center transition hover:-translate-y-0.5 ${
           isCreatorBadge
-            ? "shadow-[0_18px_40px_rgba(245,158,11,0.18)]"
+            ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.98)_0%,rgba(253,224,71,0.45)_32%,rgba(245,158,11,0.26)_62%,rgba(120,53,15,0.22)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.45),0_0_26px_rgba(251,191,36,0.35),0_18px_42px_rgba(245,158,11,0.28)]"
+            : tone.shell
+        } ${
+          isCreatorBadge
+            ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.42),transparent_34%),radial-gradient(circle_at_80%_18%,rgba(255,236,179,0.28),transparent_24%)] before:content-['']"
             : "shadow-[0_10px_22px_rgba(15,23,42,0.08)]"
         }`}
       >
         <div
-          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-white/50 ${tone.icon}`}
+          className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-white/50 ${
+            isCreatorBadge
+              ? "bg-[linear-gradient(145deg,#fff7cc,#facc15_50%,#f59e0b_78%,#b45309)] text-amber-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]"
+              : tone.icon
+          }`}
         >
           <svg
             aria-hidden="true"
@@ -243,11 +275,11 @@ function FeaturedBadgeSlot({
             <BadgeGlyph icon={badge.icon} />
           </svg>
         </div>
-        <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">
+        <div className="min-w-0 flex-1">
+          <p className="text-center text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">
             Featured Badge
           </p>
-          <p className="mt-1 truncate text-sm font-black uppercase tracking-[0.08em] text-slate-900">
+          <p className="mt-1 text-center text-sm font-black uppercase tracking-[0.08em] text-slate-900">
             {badge.title}
           </p>
         </div>
@@ -257,13 +289,13 @@ function FeaturedBadgeSlot({
           active ? "pointer-events-auto opacity-100 translate-y-0" : "opacity-0 translate-y-1 md:block hidden"
         }`}
       >
-        <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-900">
+        <p className="text-center text-xs font-black uppercase tracking-[0.08em] text-slate-900">
           {badge.title}
         </p>
-        <p className="mt-1 text-sm font-semibold leading-5 text-slate-600">
+        <p className="mt-1 text-center text-sm font-semibold leading-5 text-slate-600">
           {badge.description}
         </p>
-        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+        <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
           Earned {formatBadgeAwardDate(badge.awardedAt)}
         </p>
       </div>
@@ -772,10 +804,10 @@ function ProfileBadgeCard({
     : isCreatorBadge
       ? {
           shell:
-            "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(254,243,199,0.98)_0%,rgba(251,191,36,0.22)_38%,rgba(120,53,15,0.14)_100%)] text-amber-950 shadow-[0_18px_40px_rgba(245,158,11,0.22),inset_0_1px_0_rgba(255,255,255,0.65)]",
-          icon: "bg-[linear-gradient(145deg,#fef3c7,#f59e0b_58%,#b45309)] text-amber-950",
+            "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.99)_0%,rgba(253,224,71,0.48)_28%,rgba(245,158,11,0.24)_54%,rgba(120,53,15,0.18)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.38),0_0_26px_rgba(251,191,36,0.24),0_20px_46px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,255,255,0.72)]",
+          icon: "bg-[linear-gradient(145deg,#fff7cc,#facc15_50%,#f59e0b_72%,#b45309)] text-amber-950 shadow-[0_0_20px_rgba(251,191,36,0.42)]",
           meta: "text-amber-800",
-          aura: "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.34),transparent_52%)] before:content-['']",
+          aura: "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.38),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(255,236,179,0.24),transparent_24%)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.2),transparent_60%)] after:blur-xl after:content-['']",
         }
       : {
           ...getBadgeToneClasses(badge.tone),
@@ -2662,7 +2694,8 @@ export default function HomePage() {
                 <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl md:tracking-[0.08em]">
                   Five Wide
                 </h1>
-                <span className="inline-flex items-center rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
+                  <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_0_3px_rgba(244,114,182,0.18)]" />
                   Beta
                 </span>
               </div>
@@ -3775,7 +3808,10 @@ export default function HomePage() {
                                 awardedAt: "",
                               }}
                               locked
-                              helperText={getBadgeProgressLabel(badgeDefinition)}
+                              helperText={getBadgeProgressLabel(
+                                badgeDefinition,
+                                userStats
+                              )}
                             />
                           );
                         })}
