@@ -4734,7 +4734,7 @@ export default function HomePage() {
                           </p>
 
                           <p
-                            className={`mt-2 text-[1.8rem] font-black leading-[1.06] tracking-[0.01em] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
+                            className={`mt-2 text-[1.3rem] font-black leading-[1.08] tracking-[0.01em] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
                               isFullyConnected ? "text-emerald-900" : "text-sky-900"
                             }`}
                           >
@@ -4751,7 +4751,7 @@ export default function HomePage() {
                                   onClick={() =>
                                     setRelationshipTooltipOpen((current) => !current)
                                   }
-                                  className="rounded-full px-2 py-1 text-inherit transition hover:bg-white/35"
+                                  className="rounded-full px-1.5 py-0.5 text-inherit transition hover:bg-white/35 sm:px-2 sm:py-1"
                                   aria-label={`How ${relationshipLabel} links work`}
                                 >
                                   {relationshipLabel}
