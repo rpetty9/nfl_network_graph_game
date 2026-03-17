@@ -2056,12 +2056,15 @@ export default function HomePage() {
         year: "numeric",
       })
     : "Daily Puzzle";
+  const activePuzzleDate = String(
+    puzzleData?.puzzle?.puzzle_date ?? selectedDate
+  ).slice(0, 10);
   const leaderboardHeading =
     leaderboardTab === "all-time"
       ? "All-Time Standings"
       : leaderboardTab === "yesterday" && homeRecap?.puzzle_date
         ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Yesterday's Top 10`
-        : `${formatPuzzleDateLabel(selectedDate)} Leaderboard`;
+        : `${formatPuzzleDateLabel(activePuzzleDate)} Leaderboard`;
   function formatPuzzleDateLabel(dateValue: string) {
     const [year, month, day] = dateValue.split("-").map(Number);
     if (!year || !month || !day) return dateValue;
@@ -3077,7 +3080,7 @@ export default function HomePage() {
 
     async function loadLeaderboardForSubmission() {
       const leaderboardResponse = await fetch(
-        `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
+        `/api/leaderboard?date=${encodeURIComponent(activePuzzleDate)}&limit=10`,
         {
           cache: "no-store",
           signal: controller.signal,
@@ -3204,7 +3207,7 @@ export default function HomePage() {
         setLeaderboardError(null);
 
         const leaderboardResponse = await fetch(
-          `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
+          `/api/leaderboard?date=${encodeURIComponent(activePuzzleDate)}&limit=10`,
           {
             cache: "no-store",
             signal: controller.signal,
@@ -3233,7 +3236,7 @@ export default function HomePage() {
 
     loadLeaderboard();
     return () => controller.abort();
-  }, [leaderboardOpen, selectedDate, submitted]);
+  }, [activePuzzleDate, leaderboardOpen, submitted]);
 
   useEffect(() => {
     if (!leaderboardOpen || leaderboardTab !== "all-time") return;
@@ -3782,7 +3785,7 @@ export default function HomePage() {
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               className="absolute right-5 top-5 z-20 hidden h-11 w-11 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28 md:inline-flex"
-              aria-label={`Open leaderboard for ${formatPuzzleDateLabel(selectedDate)}`}
+              aria-label={`Open leaderboard for ${formatPuzzleDateLabel(activePuzzleDate)}`}
             >
               <svg
                 aria-hidden="true"
@@ -3859,7 +3862,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => setLeaderboardOpen(true)}
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28"
-                    aria-label={`Open leaderboard for ${formatPuzzleDateLabel(selectedDate)}`}
+                    aria-label={`Open leaderboard for ${formatPuzzleDateLabel(activePuzzleDate)}`}
                   >
                     <svg
                       aria-hidden="true"
@@ -4274,7 +4277,7 @@ export default function HomePage() {
 
             <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-6 text-left shadow-[0_8px_22px_rgba(251,191,36,0.1)]">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
-                {formatPuzzleDateLabel(selectedDate)} Leaderboard
+                {formatPuzzleDateLabel(activePuzzleDate)} Leaderboard
               </p>
               {leaderboardError ? (
                 <div className="mt-4 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
