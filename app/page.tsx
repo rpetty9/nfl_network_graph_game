@@ -4304,7 +4304,7 @@ export default function HomePage() {
           <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/35 px-4 py-6">
             <div className="flex min-h-full items-start justify-center">
               <div className="w-full max-w-lg rounded-[30px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
-                <div className="sticky top-0 z-10 -mx-1 -mt-1 mb-2 flex items-start justify-between gap-4 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] px-1 pt-1">
+                <div className="mb-2 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
                       Trophy Board
@@ -4316,7 +4316,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setLeaderboardOpen(false)}
-                    className="rounded-full border-[3px] border-amber-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-amber-700"
+                    className="shrink-0 rounded-full border-[3px] border-amber-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-amber-700"
                   >
                     Close
                   </button>
