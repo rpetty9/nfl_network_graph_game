@@ -4691,29 +4691,26 @@ export default function HomePage() {
                             {isFullyConnected ? (
                               "Fully Linked"
                             ) : (
-                              <span className="inline-flex items-center justify-center gap-2">
-                                <span>{relationshipLabel}</span>
-                                <span
-                                  className="relative inline-flex"
-                                  onMouseEnter={() => setRelationshipTooltipOpen(true)}
-                                  onMouseLeave={() => setRelationshipTooltipOpen(false)}
+                              <span
+                                className="relative inline-flex items-center justify-center"
+                                onMouseEnter={() => setRelationshipTooltipOpen(true)}
+                                onMouseLeave={() => setRelationshipTooltipOpen(false)}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRelationshipTooltipOpen((current) => !current)
+                                  }
+                                  className="rounded-full px-2 py-1 text-inherit transition hover:bg-white/35"
+                                  aria-label={`How ${relationshipLabel} links work`}
                                 >
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setRelationshipTooltipOpen((current) => !current)
-                                    }
-                                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border-[2px] border-sky-200 bg-white/90 text-[11px] font-black text-sky-700 shadow-[0_8px_18px_rgba(14,165,233,0.12)] transition hover:-translate-y-0.5 hover:bg-sky-50"
-                                    aria-label={`How ${relationshipLabel} links work`}
-                                  >
-                                    ?
-                                  </button>
-                                  {relationshipTooltipOpen ? (
-                                    <span className="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-[18px] border-[3px] border-sky-200 bg-white px-3 py-3 text-left text-[11px] font-semibold normal-case leading-5 tracking-normal text-slate-700 shadow-[0_18px_34px_rgba(14,165,233,0.16)] sm:w-64">
-                                      {relationshipTooltipText}
-                                    </span>
-                                  ) : null}
-                                </span>
+                                  {relationshipLabel}
+                                </button>
+                                {relationshipTooltipOpen ? (
+                                  <span className="absolute left-1/2 top-full z-20 mt-3 w-72 -translate-x-1/2 rounded-[20px] border-[3px] border-sky-200 bg-white px-4 py-4 text-left text-[13px] font-semibold normal-case leading-6 tracking-normal text-slate-700 shadow-[0_18px_34px_rgba(14,165,233,0.16)] sm:w-80 sm:text-sm">
+                                    {relationshipTooltipText}
+                                  </span>
+                                ) : null}
                               </span>
                             )}
                           </p>
