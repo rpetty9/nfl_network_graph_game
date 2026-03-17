@@ -291,11 +291,11 @@ function FeaturedBadgeSlot({
         onClick={onToggle}
         className={`relative flex w-full items-center gap-3 overflow-hidden rounded-[20px] border px-4 py-3.5 text-center transition hover:-translate-y-0.5 ${
           isCreatorBadge
-            ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.99)_0%,rgba(253,224,71,0.45)_32%,rgba(245,158,11,0.26)_62%,rgba(120,53,15,0.22)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.45),0_0_26px_rgba(251,191,36,0.35),0_18px_42px_rgba(245,158,11,0.28)]"
+            ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.98)_0%,rgba(250,204,21,0.44)_24%,rgba(245,158,11,0.34)_45%,rgba(120,53,15,0.48)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.55),0_0_30px_rgba(251,191,36,0.4),0_20px_48px_rgba(120,53,15,0.36)]"
             : tone.shell
         } ${
           isCreatorBadge
-            ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.42),transparent_34%),radial-gradient(circle_at_80%_18%,rgba(255,236,179,0.28),transparent_24%)] before:content-['']"
+            ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_22%_16%,rgba(255,255,255,0.55),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,236,179,0.34),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.14)_0,rgba(255,215,0,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.28),transparent_62%)] after:blur-xl after:content-['']"
             : "shadow-[0_16px_30px_rgba(15,23,42,0.11)]"
         }`}
       >
@@ -304,7 +304,7 @@ function FeaturedBadgeSlot({
         <div
           className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-white/50 ${
             isCreatorBadge
-              ? "bg-[linear-gradient(145deg,#fff7cc,#facc15_50%,#f59e0b_78%,#b45309)] text-amber-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]"
+              ? "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_68%,#78350f_100%)] text-amber-950 shadow-[0_0_22px_rgba(251,191,36,0.58)]"
               : tone.icon
           }`}
         >
@@ -323,7 +323,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-center text-sm font-black uppercase tracking-[0.1em] text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]">
+          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] drop-shadow-[0_1px_0_rgba(255,255,255,0.45)] ${isCreatorBadge ? "text-amber-50 drop-shadow-[0_1px_0_rgba(120,53,15,0.6)]" : "text-slate-950"}`}>
             {badge.title}
           </p>
         </div>
@@ -1006,10 +1006,10 @@ function ProfileBadgeCard({
     : isCreatorBadge
       ? {
           shell:
-            "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.99)_0%,rgba(253,224,71,0.48)_28%,rgba(245,158,11,0.24)_54%,rgba(120,53,15,0.18)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.38),0_0_26px_rgba(251,191,36,0.24),0_20px_46px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,255,255,0.72)]",
-          icon: "bg-[linear-gradient(145deg,#fff7cc,#facc15_50%,#f59e0b_72%,#b45309)] text-amber-950 shadow-[0_0_20px_rgba(251,191,36,0.42)]",
-          meta: "text-amber-800",
-          aura: "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.38),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(255,236,179,0.24),transparent_24%)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.2),transparent_60%)] after:blur-xl after:content-['']",
+            "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.44)_20%,rgba(245,158,11,0.3)_42%,rgba(120,53,15,0.42)_66%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.5),0_0_34px_rgba(251,191,36,0.26),0_24px_52px_rgba(120,53,15,0.38),inset_0_1px_0_rgba(255,255,255,0.28)]",
+          icon: "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_72%,#78350f_100%)] text-amber-950 shadow-[0_0_24px_rgba(251,191,36,0.56)]",
+          meta: "text-amber-100",
+          aura: "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(255,236,179,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.08)_0,rgba(255,215,0,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.26),transparent_60%)] after:blur-xl after:content-['']",
         }
       : {
           ...getBadgeToneClasses(badge.tone),
@@ -1049,7 +1049,7 @@ function ProfileBadgeCard({
           </p>
           <p
             className={`mt-1.5 text-xs font-semibold leading-5 ${
-              locked ? "text-slate-600" : isCreatorBadge ? "text-amber-900/85" : "text-slate-700"
+              locked ? "text-slate-600" : isCreatorBadge ? "text-amber-50/90" : "text-slate-700"
             }`}
           >
             {badge.description}
@@ -1095,7 +1095,7 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
             key={badge.key}
             className={`relative inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/75 shadow-[0_8px_16px_rgba(15,23,42,0.12)] ${
               isCreatorBadge
-                ? "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_28%,#facc15_56%,#f59e0b_78%,#b45309_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.52),0_0_14px_rgba(251,191,36,0.55),0_10px_20px_rgba(245,158,11,0.3)] before:absolute before:-inset-1 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(251,191,36,0.48),transparent_68%)] before:blur-[6px] before:content-['']"
+                ? "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_62%,#78350f_82%,#111827_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.62),0_0_16px_rgba(251,191,36,0.62),0_12px_24px_rgba(120,53,15,0.36)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(251,191,36,0.58),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
                 : tone.icon
             }`}
             title={badge.title}
