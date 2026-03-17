@@ -6,11 +6,38 @@ export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = request.nextUrl.searchParams.get("scope");
     const requestedDate = request.nextUrl.searchParams.get("date");
     const limit = Math.min(
       Math.max(Number(request.nextUrl.searchParams.get("limit") ?? 10), 1),
       25
     );
+
+    if (scope === "all-time") {
+      const allTimeResult = await pool.query(
+        `
+        SELECT
+          au.user_id,
+          au.username AS display_name,
+          COUNT(*)::int AS top_10_finishes,
+          MIN(dlf.placement)::int AS best_finish,
+          MAX(dlf.awarded_at) AS latest_finish_at,
+          COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
+        FROM daily_leaderboard_finish dlf
+        JOIN app_user au
+          ON dlf.user_id = au.user_id
+        GROUP BY au.user_id, au.username, au.featured_badges
+        ORDER BY COUNT(*) DESC, MIN(dlf.placement) ASC, MAX(dlf.awarded_at) DESC, au.username ASC
+        LIMIT $1
+        `,
+        [limit]
+      );
+
+      return NextResponse.json({
+        leaderboard: allTimeResult.rows,
+        scope: "all-time",
+      });
+    }
 
     const puzzleResult = requestedDate
       ? await pool.query(
@@ -66,6 +93,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       puzzle_date: String(puzzle.puzzle_date).slice(0, 10),
       leaderboard: submissionsResult.rows,
+      scope: "daily",
     });
   } catch (error) {
     console.error("Leaderboard route failed:", error);

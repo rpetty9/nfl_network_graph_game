@@ -166,6 +166,15 @@ type LeaderboardEntry = {
   featured_badges?: BadgeKey[];
 };
 
+type AllTimeLeaderboardEntry = {
+  user_id: number;
+  display_name: string;
+  top_10_finishes: number;
+  best_finish: number;
+  latest_finish_at: string;
+  featured_badges?: BadgeKey[];
+};
+
 type ActiveLinkDetail = {
   pairKey: string;
   playerA: PlayerOption;
@@ -1075,6 +1084,14 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "all-time">("daily");
+  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<AllTimeLeaderboardEntry[]>(
+    []
+  );
+  const [allTimeLeaderboardLoading, setAllTimeLeaderboardLoading] = useState(false);
+  const [allTimeLeaderboardError, setAllTimeLeaderboardError] = useState<string | null>(
+    null
+  );
   const [savedSubmissionLoading, setSavedSubmissionLoading] = useState(false);
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
@@ -2534,6 +2551,46 @@ export default function HomePage() {
     loadLeaderboard();
     return () => controller.abort();
   }, [leaderboardOpen, selectedDate, submitted]);
+
+  useEffect(() => {
+    if (!leaderboardOpen || leaderboardTab !== "all-time") return;
+    if (allTimeLeaderboard.length > 0) return;
+
+    const controller = new AbortController();
+
+    async function loadAllTimeLeaderboard() {
+      try {
+        setAllTimeLeaderboardLoading(true);
+        setAllTimeLeaderboardError(null);
+
+        const leaderboardResponse = await fetch(`/api/leaderboard?scope=all-time&limit=25`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!leaderboardResponse.ok) {
+          const body = await leaderboardResponse.text();
+          throw new Error(body || "Failed to load all-time leaderboard");
+        }
+
+        const leaderboardJson: { leaderboard: AllTimeLeaderboardEntry[] } =
+          await leaderboardResponse.json();
+        if (controller.signal.aborted) return;
+        setAllTimeLeaderboard(leaderboardJson.leaderboard ?? []);
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+        console.error(error);
+        setAllTimeLeaderboardError((error as Error).message);
+      } finally {
+        if (!controller.signal.aborted) {
+          setAllTimeLeaderboardLoading(false);
+        }
+      }
+    }
+
+    void loadAllTimeLeaderboard();
+    return () => controller.abort();
+  }, [leaderboardOpen, leaderboardTab, allTimeLeaderboard.length]);
 
   function handleSubmit() {
     if (!canSubmit) return;
@@ -4333,8 +4390,33 @@ export default function HomePage() {
                   </button>
                 </div>
 
+                <div className="mt-4 inline-flex rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
+                  <button
+                    type="button"
+                    onClick={() => setLeaderboardTab("daily")}
+                    className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition ${
+                      leaderboardTab === "daily"
+                        ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
+                        : "text-amber-700"
+                    }`}
+                  >
+                    Daily Puzzle
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeaderboardTab("all-time")}
+                    className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition ${
+                      leaderboardTab === "all-time"
+                        ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
+                        : "text-amber-700"
+                    }`}
+                  >
+                    All Time
+                  </button>
+                </div>
+
                 <div className="mt-5 max-h-[70vh] overflow-y-auto pr-1">
-                  {leaderboardError ? (
+                  {leaderboardTab === "daily" ? leaderboardError ? (
                     <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
                       {leaderboardError}
                     </div>
@@ -4375,6 +4457,48 @@ export default function HomePage() {
                   ) : (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
                       No leaderboard entries yet for this puzzle.
+                    </div>
+                  ) : allTimeLeaderboardError ? (
+                    <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                      {allTimeLeaderboardError}
+                    </div>
+                  ) : allTimeLeaderboardLoading && allTimeLeaderboard.length === 0 ? (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      Loading all-time leaderboard...
+                    </div>
+                  ) : allTimeLeaderboard.length > 0 ? (
+                    <div className="space-y-3">
+                      {allTimeLeaderboard.map((entry, index) => (
+                        <div
+                          key={entry.user_id}
+                          className="flex items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
+                              #{index + 1}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                              {entry.display_name}
+                            </p>
+                            <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
+                            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-amber-700/80">
+                              Best finish #{entry.best_finish}
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                              Top 10s
+                            </p>
+                            <p className="mt-1 text-lg font-black text-amber-700">
+                              {entry.top_10_finishes.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      No all-time finishes yet.
                     </div>
                   )}
                 </div>
