@@ -4057,8 +4057,8 @@ export default function HomePage() {
                 {isLockedForSelectedDate && (
                   <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-sky-800/80 sm:text-sm">
                     {isTrackedAccountUser
-                      ? `You already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each account only gets one official score per day.`
-                      : `This browser already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but guest play only gets one official score per day.`}
+                      ? `You already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each user only gets one official score per day.`
+                      : `This browser already submitted a lineup for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each guest only gets one official score per day.`}
                   </p>
                 )}
               </div>
