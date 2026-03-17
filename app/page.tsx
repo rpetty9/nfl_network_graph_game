@@ -4756,7 +4756,7 @@ export default function HomePage() {
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Multiplier:</span>{" "}
-                  The multiplier is based on your active links. More links means a bigger boost on top of your base score.
+                  The multiplier is based on your active links. More links means a bigger boost on top of your base score, and a fully connected 10-link lineup now caps at a clean <span className="font-semibold text-sky-900">2.00x</span>.
                 </p>
                 <p>
                   Example: with the current curve, {activeLinkCount} active links gives you a{" "}
