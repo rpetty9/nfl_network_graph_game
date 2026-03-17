@@ -2753,7 +2753,7 @@ export default function HomePage() {
 
   function renderHeadshot(
     player?: PlayerOption,
-    sizeClass = "h-12 w-12 rounded-[16px] sm:h-20 sm:w-20 sm:rounded-[22px]"
+    sizeClass = "h-10 w-10 rounded-[14px] sm:h-20 sm:w-20 sm:rounded-[22px]"
   ) {
     if (player?.headshot_url) {
       return (
@@ -2796,9 +2796,9 @@ export default function HomePage() {
     return (
       <div
         key={`${slotLabel ?? "player"}-${player.player_id}`}
-        className={`flex items-center justify-between gap-4 rounded-[18px] border-[3px] bg-white/90 px-4 py-3 ${accentClasses.border}`}
+        className={`flex items-center justify-between gap-2 rounded-[18px] border-[3px] bg-white/90 px-3 py-3 sm:gap-4 sm:px-4 ${accentClasses.border}`}
       >
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="shrink-0">{renderHeadshot(player)}</div>
           <div className="min-w-0">
             {slotLabel ? (
@@ -2814,6 +2814,17 @@ export default function HomePage() {
               {player.theme_start_season ?? player.career_start_season ?? "N/A"}–
               {player.theme_end_season ?? player.career_end_season ?? "N/A"}
             </p>
+            <div className="mt-1 sm:hidden">
+              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                Fantasy Pts
+              </p>
+              <p className={`text-sm font-black ${accentClasses.value}`}>
+                {Number(player.fantasy_points).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+            </div>
             {linkPartners && linkPartners.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {linkPartners.map((name) => (
@@ -2828,7 +2839,7 @@ export default function HomePage() {
             ) : null}
           </div>
         </div>
-        <div className="shrink-0 text-right">
+        <div className="hidden shrink-0 text-right sm:block">
           <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
             Fantasy Pts
           </p>
