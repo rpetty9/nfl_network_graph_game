@@ -1566,6 +1566,87 @@ function FiveWideWordmarkConcept() {
   );
 }
 
+function NeonChallengeLogoConcept() {
+  return (
+    <div className="flex w-full max-w-[320px] flex-col items-center text-center">
+      <div className="relative flex h-40 w-40 items-center justify-center">
+        <div className="absolute inset-0 rounded-[38px] bg-[radial-gradient(circle,rgba(168,85,247,0.22),transparent_60%)] blur-2xl" />
+        <div className="absolute inset-3 rounded-[32px] border-[3px] border-cyan-300/90 bg-[linear-gradient(180deg,#1e1b4b_0%,#111827_100%)] shadow-[0_0_28px_rgba(34,211,238,0.42),0_0_48px_rgba(192,38,211,0.28)]" />
+        <svg viewBox="0 0 160 160" className="relative z-10 h-36 w-36 overflow-visible">
+          <path
+            d="M80 14 126 36v36c0 34-16 58-46 74C50 130 34 106 34 72V36l46-22Z"
+            fill="url(#neonShield)"
+            stroke="#e879f9"
+            strokeWidth="4"
+          />
+          <path d="M80 36v72" stroke="#67e8f9" strokeWidth="3.5" strokeDasharray="6 7" opacity="0.9" />
+          <path d="M42 66 66 48" stroke="#67e8f9" strokeWidth="4" strokeLinecap="round" />
+          <path d="M118 66 94 48" stroke="#67e8f9" strokeWidth="4" strokeLinecap="round" />
+          <path d="M54 98 74 76" stroke="#e879f9" strokeWidth="4" strokeLinecap="round" />
+          <path d="M106 98 86 76" stroke="#e879f9" strokeWidth="4" strokeLinecap="round" />
+          <ellipse
+            cx="80"
+            cy="74"
+            rx="24"
+            ry="15"
+            fill="#22d3ee"
+            stroke="#bae6fd"
+            strokeWidth="3"
+            transform="rotate(-24 80 74)"
+          />
+          <path
+            d="M67 64c6 5.5 20 18 25 28"
+            stroke="#082f49"
+            strokeWidth="3"
+            strokeLinecap="round"
+            transform="rotate(-24 80 74)"
+          />
+          <path
+            d="M72 57h16"
+            stroke="#082f49"
+            strokeWidth="3"
+            strokeLinecap="round"
+            transform="rotate(-24 80 74)"
+          />
+          {[46, 66, 80, 94, 114].map((x, index) => (
+            <path
+              key={x}
+              d={`M${x} ${index % 2 === 0 ? 34 : 28}c5 7 10 13 15 17`}
+              stroke={index % 2 === 0 ? "#67e8f9" : "#e879f9"}
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              fill="none"
+            />
+          ))}
+          <text
+            x="80"
+            y="120"
+            textAnchor="middle"
+            className="font-[family-name:var(--font-display)]"
+            fontSize="28"
+            fill="#f8fafc"
+          >
+            5W
+          </text>
+          <defs>
+            <linearGradient id="neonShield" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="#312e81" />
+              <stop offset="45%" stopColor="#1d4ed8" />
+              <stop offset="100%" stopColor="#111827" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <p className="mt-3 font-[family-name:var(--font-display)] text-[28px] leading-none text-slate-900">
+        Five Wide
+      </p>
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-fuchsia-700">
+        Neon Challenge Crest
+      </p>
+    </div>
+  );
+}
+
 function RecentSubmissionList({
   submissions,
   emptyMessage,
@@ -5153,11 +5234,11 @@ export default function HomePage() {
               </h2>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-base">
                 A wider range this time: lettermarks, monograms, a minimal field badge,
-                and one formation-first option so you can react to the overall direction.
+                one formation-first option, and now a more neon esports-style crest too.
               </p>
             </div>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               <LogoConceptCard
                 title="Concept 1"
                 note="Most literal to the game: five spread receivers, a central link point, and route structure like a real playsheet."
@@ -5187,6 +5268,12 @@ export default function HomePage() {
                 note="A straightforward 5 plus W wordmark treatment, more brand-first and less emblem-heavy."
               >
                 <FiveWideWordmarkConcept />
+              </LogoConceptCard>
+              <LogoConceptCard
+                title="Concept 6"
+                note="Inspired by that esports neon crest direction: louder, more electric, and much more like a game-brand badge."
+              >
+                <NeonChallengeLogoConcept />
               </LogoConceptCard>
             </div>
           </div>
