@@ -5575,11 +5575,11 @@ export default function HomePage() {
                   ×
                 </button>
 
-                <div className="mt-4 inline-flex flex-wrap rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
+                <div className="mt-4 inline-flex max-w-full flex-nowrap rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
                   <button
                     type="button"
                     onClick={() => setLeaderboardTab("daily")}
-                    className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition ${
+                    className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
                       leaderboardTab === "daily"
                         ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
                         : "text-amber-700"
@@ -5591,19 +5591,19 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={() => setLeaderboardTab("yesterday")}
-                      className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition ${
+                      className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
                         leaderboardTab === "yesterday"
                           ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
                           : "text-amber-700"
                       }`}
                     >
-                      Yesterday&apos;s Top 10
+                      Yesterday
                     </button>
                   ) : null}
                   <button
                     type="button"
                     onClick={() => setLeaderboardTab("all-time")}
-                    className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition ${
+                    className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
                       leaderboardTab === "all-time"
                         ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
                         : "text-amber-700"
