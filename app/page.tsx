@@ -3896,20 +3896,20 @@ export default function HomePage() {
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
               {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
-                <div className="-mx-1.5 mt-2 w-[calc(100%+12px)] overflow-hidden rounded-[18px] border-[2px] border-white/35 bg-white/14 px-1.5 py-1 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:-mx-6 md:mt-2.5 md:w-[calc(100%+48px)] md:px-2 md:py-1.5">
-                  <div className="flex items-center gap-1.5 md:gap-2">
+                <div className="-mx-1.5 mt-2 w-[calc(100%+12px)] overflow-hidden rounded-[16px] border-[2px] border-white/35 bg-white/14 px-1 py-0.5 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:-mx-6 md:mt-2.5 md:w-[calc(100%+48px)] md:px-1.5 md:py-1">
+                  <div className="flex items-center gap-1 md:gap-1.5">
                     <button
                       type="button"
                       onClick={() => {
                         setLeaderboardTab("yesterday");
                         setLeaderboardOpen(true);
                       }}
-                      className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[4px] font-black uppercase tracking-[0.05em] text-white/85 transition hover:bg-white/22 md:px-2 md:py-0.5 md:text-[5px] md:tracking-[0.06em]"
+                      className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1 py-[2px] text-[3px] font-black uppercase tracking-[0.04em] text-white/85 transition hover:bg-white/22 md:px-1.5 md:py-[3px] md:text-[4px] md:tracking-[0.05em]"
                     >
                       Yesterday&apos;s Top 10
                     </button>
                     <div className="min-w-0 flex-1 overflow-hidden">
-                      <div className="home-recap-ticker flex w-max items-center gap-1.5 md:gap-2">
+                      <div className="home-recap-ticker flex w-max items-center gap-1 md:gap-1.5">
                         {homeRecapTickerEntries.map((winner, index) => {
                           const placementClasses = getRecapPlacementClasses(
                             winner.placement
@@ -3920,18 +3920,18 @@ export default function HomePage() {
                               key={`${winner.user_id}-${winner.placement}-${index}`}
                               type="button"
                               onClick={() => void openPublicProfile(winner.user_id)}
-                              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-left transition hover:-translate-y-0.5 md:gap-1.5 md:px-2 md:py-1 ${placementClasses.shell}`}
+                              className={`inline-flex items-center gap-0.5 rounded-full border px-1 py-[2px] text-left transition hover:-translate-y-0.5 md:gap-1 md:px-1.5 md:py-[3px] ${placementClasses.shell}`}
                             >
                               <span
-                              className={`text-[4px] font-black uppercase tracking-[0.03em] md:text-[5px] md:tracking-[0.04em] ${placementClasses.place}`}
+                              className={`text-[3px] font-black uppercase tracking-[0.02em] md:text-[4px] md:tracking-[0.03em] ${placementClasses.place}`}
                               >
                                 #{winner.placement}
                               </span>
-                              <span className="font-[family-name:var(--font-display)] whitespace-nowrap text-[4.5px] md:text-[5.5px]">
+                              <span className="font-[family-name:var(--font-display)] whitespace-nowrap text-[3.5px] md:text-[4.5px]">
                                 {winner.display_name}
                               </span>
                               <span
-                                className={`text-[4px] font-black uppercase tracking-[0.02em] md:text-[5px] md:tracking-[0.03em] ${placementClasses.score}`}
+                                className={`text-[3px] font-black uppercase tracking-[0.02em] md:text-[4px] md:tracking-[0.03em] ${placementClasses.score}`}
                               >
                                 {formatCompactScore(winner.final_score)}
                               </span>
