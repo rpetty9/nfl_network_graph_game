@@ -1045,7 +1045,7 @@ function ProfileBadgeCard({
           icon: isBestestestBadge
             ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_24px_rgba(244,114,182,0.46)]"
             : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_72%,#78350f_100%)] text-amber-950 shadow-[0_0_24px_rgba(251,191,36,0.56)]",
-          meta: "text-amber-100",
+          meta: isBestestestBadge ? "text-amber-100" : "text-amber-950/90",
           aura: isBestestestBadge
             ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(244,114,182,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(244,114,182,0.1)_0,rgba(244,114,182,0.1)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(168,85,247,0.24),transparent_60%)] after:blur-xl after:content-['']"
             : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(255,236,179,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.08)_0,rgba(255,215,0,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.26),transparent_60%)] after:blur-xl after:content-['']",
@@ -1083,12 +1083,24 @@ function ProfileBadgeCard({
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.13em] drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]">
+          <p
+            className={`text-xs font-black uppercase tracking-[0.13em] ${
+              isCreatorBadge
+                ? "text-amber-950 drop-shadow-[0_1px_0_rgba(255,248,220,0.6)]"
+                : "drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"
+            }`}
+          >
             {badge.title}
           </p>
           <p
             className={`mt-1.5 text-xs font-semibold leading-5 ${
-              locked ? "text-slate-600" : isLegendaryManualBadge ? "text-amber-50/90" : "text-slate-700"
+              locked
+                ? "text-slate-600"
+                : isCreatorBadge
+                  ? "text-amber-950/90"
+                  : isLegendaryManualBadge
+                    ? "text-amber-50/90"
+                    : "text-slate-700"
             }`}
           >
             {badge.description}
