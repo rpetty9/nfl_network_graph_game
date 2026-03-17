@@ -2696,7 +2696,7 @@ export default function HomePage() {
 
   function renderHeadshot(
     player?: PlayerOption,
-    sizeClass = "h-20 w-20 rounded-[22px]"
+    sizeClass = "h-12 w-12 rounded-[16px] sm:h-20 sm:w-20 sm:rounded-[22px]"
   ) {
     if (player?.headshot_url) {
       return (
@@ -2719,7 +2719,7 @@ export default function HomePage() {
 
     return (
       <div
-        className={`flex ${sizeClass} items-center justify-center bg-[linear-gradient(135deg,#dbeafe_0%,#bfdbfe_45%,#93c5fd_100%)] text-lg font-bold text-slate-800 ring-2 ring-white/70`}
+        className={`flex ${sizeClass} items-center justify-center bg-[linear-gradient(135deg,#dbeafe_0%,#bfdbfe_45%,#93c5fd_100%)] text-sm font-bold text-slate-800 ring-2 ring-white/70 sm:text-lg`}
       >
         {initials}
       </div>
