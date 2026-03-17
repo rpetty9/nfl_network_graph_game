@@ -395,6 +395,27 @@ function markBrowserSubmittedForDate(dateValue: string) {
 
 function renderAvatarGlyph(style: AvatarStyle) {
   switch (style) {
+    case "crown":
+      return <path d="M4 17h16l-1.4-8-4.3 3.1L12 6 9.7 12.1 5.4 9 4 17Z" />;
+    case "diamond":
+      return <path d="M12 3 4.5 10.5 12 21l7.5-10.5L12 3Z" />;
+    case "comet":
+      return (
+        <>
+          <path d="M7 14a5 5 0 1 0 10 0 5 5 0 0 0-10 0Z" />
+          <path d="M5 11 2.5 8.5" />
+          <path d="M7 9 4.5 6.5" />
+        </>
+      );
+    case "target":
+      return (
+        <>
+          <path d="M12 5a7 7 0 1 0 7 7" />
+          <path d="M12 9a3 3 0 1 0 3 3" />
+          <path d="M15 9h6" />
+          <path d="M18 6v6" />
+        </>
+      );
     case "star":
       return (
         <path d="m12 3 2.5 5.4 5.9.7-4.4 4 1.2 5.9L12 16l-5.2 3 1.2-5.9-4.4-4 5.9-.7Z" />
