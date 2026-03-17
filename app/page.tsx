@@ -3013,18 +3013,19 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setProfileOpen(true)}
-                    className="relative hidden h-10 items-center rounded-full border-[2px] border-white/60 bg-white/18 pl-9 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26 md:inline-flex"
+                    className="group relative hidden h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/60 bg-white/18 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26 md:inline-flex"
+                    aria-label={`Open profile for ${signedInUsername}`}
                   >
-                    <span className="absolute -left-2 top-1/2 -translate-y-1/2">
-                      <ProfileAvatar
-                        style={sessionAvatarStyle}
-                        bg={sessionAvatarBg}
-                        accent={sessionAvatarAccent}
-                        border={sessionAvatarBorder}
-                        size="sm"
-                      />
+                    <ProfileAvatar
+                      style={sessionAvatarStyle}
+                      bg={sessionAvatarBg}
+                      accent={sessionAvatarAccent}
+                      border={sessionAvatarBorder}
+                      size="sm"
+                    />
+                    <span className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 whitespace-nowrap rounded-full border-[2px] border-white/60 bg-white/22 px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] text-white opacity-0 shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition duration-150 group-hover:opacity-100">
+                      {signedInUsername}
                     </span>
-                    <span>{signedInUsername}</span>
                   </button>
                 </>
               ) : needsUsername ? (
@@ -3089,7 +3090,7 @@ export default function HomePage() {
               </svg>
             </button>
             <div className="relative z-10">
-              <div className="mt-9 flex items-center justify-center gap-2 md:mt-8 md:gap-3">
+              <div className="mt-9 flex items-center justify-center gap-2 md:mt-3 md:gap-3">
                 <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl md:tracking-[0.08em]">
                   Five Wide
                 </h1>
