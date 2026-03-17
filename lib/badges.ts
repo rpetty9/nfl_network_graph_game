@@ -117,7 +117,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
   creator: {
     key: "creator",
     title: "Creator",
-    description: "Built Five Wide from the ground up and calls the shots.",
+    description: "Built Five Wide from the ground up.",
     unlockHint: "Awarded manually by the app creator.",
     tone: "amber",
     icon: "crown",
