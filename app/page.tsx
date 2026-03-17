@@ -4991,14 +4991,12 @@ export default function HomePage() {
             </div>
 
             <div className="mt-6 rounded-[28px] border-[3px] border-sky-200 bg-[linear-gradient(180deg,#f8fdff_0%,#eef6ff_100%)] p-4 shadow-[0_12px_28px_rgba(125,211,252,0.12)] md:p-6">
-              <div className="mx-auto w-full max-w-[760px] overflow-hidden rounded-[24px] border-[2px] border-sky-100 bg-white/70">
-                <div className="relative aspect-[1.72/1] overflow-hidden">
-                  <img
-                    src="/logo.png"
-                    alt="Five Wide logo reference"
-                    className="absolute left-1/2 top-1/2 w-[122%] max-w-none -translate-x-1/2 -translate-y-[52%]"
-                  />
-                </div>
+              <div className="mx-auto flex w-full max-w-[720px] items-center justify-center rounded-[24px] border-[2px] border-sky-100 bg-white p-4 md:p-6">
+                <img
+                  src="/logo.png"
+                  alt="Five Wide logo reference"
+                  className="w-full max-w-[560px] object-contain"
+                />
               </div>
             </div>
           </div>
