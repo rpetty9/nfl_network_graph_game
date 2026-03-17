@@ -1533,7 +1533,7 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
-  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "all-time">("daily");
+  const [leaderboardTab, setLeaderboardTab] = useState<"daily" | "yesterday" | "all-time">("daily");
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<AllTimeLeaderboardEntry[]>(
     []
   );
@@ -2056,6 +2056,12 @@ export default function HomePage() {
         year: "numeric",
       })
     : "Daily Puzzle";
+  const leaderboardHeading =
+    leaderboardTab === "all-time"
+      ? "All-Time Standings"
+      : leaderboardTab === "yesterday" && homeRecap?.puzzle_date
+        ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Yesterday's Top 10`
+        : `${formatPuzzleDateLabel(selectedDate)} Leaderboard`;
   function formatPuzzleDateLabel(dateValue: string) {
     const [year, month, day] = dateValue.split("-").map(Number);
     if (!year || !month || !day) return dateValue;
@@ -3692,7 +3698,7 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.3)_0%,rgba(191,219,254,0.16)_26%,transparent_68%)]" />
       <div className="relative mx-auto max-w-[1380px]">
         <div className="mx-auto max-w-[1080px] overflow-hidden rounded-[38px] border-[4px] border-sky-300 bg-white/84 shadow-[0_10px_0_rgba(56,189,248,0.08),0_14px_36px_rgba(125,211,252,0.12)] backdrop-blur-sm">
-          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-3 py-2.5 text-center md:px-8 md:py-7">
+          <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-3 py-2.5 text-center md:px-8 md:pb-1.5 md:pt-7">
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
             <div className="absolute left-5 top-5 z-20 hidden md:block">
@@ -3883,11 +3889,11 @@ export default function HomePage() {
                   Alpha
                 </span>
               </div>
-              <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
+              <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-4 md:max-w-4xl md:text-base">
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
               {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
-                <div className="-mx-1.5 mt-px w-[calc(100%+12px)] overflow-hidden rounded-[18px] border-[2px] border-white/35 bg-white/14 px-1.5 py-1 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:-mx-4 md:w-[calc(100%+32px)] md:px-2 md:py-1.5">
+                <div className="-mx-1.5 mt-px w-[calc(100%+12px)] overflow-hidden rounded-[18px] border-[2px] border-white/35 bg-white/14 px-1.5 py-1 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:-mx-6 md:mt-0 md:w-[calc(100%+48px)] md:px-2 md:py-1.5">
                   <div className="flex items-center gap-1.5 md:gap-2">
                     <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.06em] text-white/85 md:px-2 md:py-0.5 md:text-[7px] md:tracking-[0.08em]">
                       Yesterday&apos;s Top 10
@@ -5546,10 +5552,10 @@ export default function HomePage() {
                 <div className="mb-2 pr-12">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
-                      Trophy Board
+                      Leaderboard
                     </p>
                     <h2 className="mt-2 text-xl font-black leading-tight tracking-normal text-amber-900 sm:text-2xl">
-                      {formatPuzzleDateLabel(selectedDate)} Leaderboard
+                      {leaderboardHeading}
                     </h2>
                   </div>
                 </div>
@@ -5562,7 +5568,7 @@ export default function HomePage() {
                   ×
                 </button>
 
-                <div className="mt-4 inline-flex rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
+                <div className="mt-4 inline-flex flex-wrap rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
                   <button
                     type="button"
                     onClick={() => setLeaderboardTab("daily")}
@@ -5574,6 +5580,19 @@ export default function HomePage() {
                   >
                     Daily Puzzle
                   </button>
+                  {homeRecap?.winners?.length ? (
+                    <button
+                      type="button"
+                      onClick={() => setLeaderboardTab("yesterday")}
+                      className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] transition ${
+                        leaderboardTab === "yesterday"
+                          ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
+                          : "text-amber-700"
+                      }`}
+                    >
+                      Yesterday&apos;s Top 10
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => setLeaderboardTab("all-time")}
@@ -5631,6 +5650,46 @@ export default function HomePage() {
                   ) : (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
                       No leaderboard entries yet for this puzzle.
+                    </div>
+                  ) : leaderboardTab === "yesterday" ? homeRecapLoading ? (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      Loading yesterday&apos;s top 10...
+                    </div>
+                  ) : homeRecap && homeRecap.winners.length > 0 ? (
+                    <div className="space-y-3">
+                      {homeRecap.winners.map((entry) => (
+                        <button
+                          type="button"
+                          key={`${entry.user_id}-${entry.placement}`}
+                          onClick={() => void openPublicProfile(entry.user_id)}
+                          className="flex w-full flex-col items-start gap-2 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
+                        >
+                          <div className="min-w-0 w-full sm:w-auto">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
+                              #{entry.placement}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                              {entry.display_name}
+                            </p>
+                            <LeaderboardBadgeIcons badgeKeys={entry.featured_badges ?? []} />
+                          </div>
+                          <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                              Total Points
+                            </p>
+                            <p className="mt-1 text-base font-black text-amber-700 sm:text-lg">
+                              {Number(entry.final_score).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      No finalized top 10 yet.
                     </div>
                   ) : allTimeLeaderboardError ? (
                     <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
