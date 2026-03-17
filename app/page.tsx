@@ -1072,7 +1072,7 @@ export default function HomePage() {
         };
       case "icon":
         return {
-          title: "Icon Color",
+          title: "Color",
           options: AVATAR_COLORS,
           selected: avatarAccentDraft,
           pageSize: 6,
@@ -1087,7 +1087,7 @@ export default function HomePage() {
       case "style":
       default:
         return {
-          title: "Style",
+          title: "Icon",
           options: AVATAR_STYLES,
           selected: avatarStyleDraft,
           pageSize: 6,
@@ -3906,9 +3906,9 @@ export default function HomePage() {
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         {[
-                          ["style", "Style"],
+                          ["style", "Icon"],
                           ["background", "Background"],
-                          ["icon", "Icon"],
+                          ["icon", "Color"],
                           ["border", "Border"],
                         ].map(([tabKey, label]) => (
                           <button

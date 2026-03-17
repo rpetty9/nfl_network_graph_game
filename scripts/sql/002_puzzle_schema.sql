@@ -148,9 +148,9 @@ CREATE TABLE IF NOT EXISTS app_user (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (status IN ('active', 'flagged', 'banned')),
   CHECK (avatar_style IN ('helmet', 'star', 'bolt', 'crest', 'crown', 'diamond', 'comet', 'target', 'orbit', 'flame', 'moon', 'prism')),
-  CHECK (avatar_bg IN ('sky', 'emerald', 'amber', 'rose', 'slate', 'violet')),
-  CHECK (avatar_accent IN ('sky', 'emerald', 'amber', 'rose', 'slate', 'violet')),
-  CHECK (avatar_border IN ('sky', 'emerald', 'amber', 'rose', 'slate', 'violet'))
+  CHECK (avatar_bg IN ('sky', 'teal', 'emerald', 'lime', 'amber', 'orange', 'red', 'rose', 'pink', 'slate', 'indigo', 'violet')),
+  CHECK (avatar_accent IN ('sky', 'teal', 'emerald', 'lime', 'amber', 'orange', 'red', 'rose', 'pink', 'slate', 'indigo', 'violet')),
+  CHECK (avatar_border IN ('sky', 'teal', 'emerald', 'lime', 'amber', 'orange', 'red', 'rose', 'pink', 'slate', 'indigo', 'violet'))
 );
 
 ALTER TABLE app_user
