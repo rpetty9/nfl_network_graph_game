@@ -166,6 +166,12 @@ type LeaderboardEntry = {
   featured_badges?: BadgeKey[];
 };
 
+type ActiveLinkDetail = {
+  pairKey: string;
+  playerA: PlayerOption;
+  playerB: PlayerOption;
+};
+
 function formatBadgeAwardDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -2172,6 +2178,36 @@ export default function HomePage() {
   const activeLinkCount = nodePairs.filter(
     ([a, b]) => getLinkTone(a, b) === "active"
   ).length;
+  const activeLinkDetails = useMemo(() => {
+    const details: ActiveLinkDetail[] = [];
+    const nodeById = new Map(nodes.map((node) => [node.node_id, node]));
+
+    nodePairs.forEach(([a, b]) => {
+      const nodeA = nodeById.get(a);
+      const nodeB = nodeById.get(b);
+      if (!nodeA?.player_id || !nodeB?.player_id) {
+        return;
+      }
+
+      if (!relationshipPasses(relationshipType, nodeA.player_id, nodeB.player_id)) {
+        return;
+      }
+
+      const playerA = playerMap.get(nodeA.player_id);
+      const playerB = playerMap.get(nodeB.player_id);
+      if (!playerA || !playerB) {
+        return;
+      }
+
+      details.push({
+        pairKey: getPairKey(playerA.player_id, playerB.player_id),
+        playerA,
+        playerB,
+      });
+    });
+
+    return details;
+  }, [nodes, pairMap, playerMap, relationshipType]);
   const activeSlotRule = getSlotRule(activeNodeId);
 
   const totalPossibleLinks = nodePairs.length;
@@ -2621,6 +2657,12 @@ export default function HomePage() {
     setSubmissionError(null);
   }
 
+  function handleCloseSubmittedView() {
+    setSubmitted(false);
+    setSubmissionError(null);
+    setMobileNavigatorOpen(true);
+  }
+
   function renderHeadshot(
     player?: PlayerOption,
     sizeClass = "h-20 w-20 rounded-[22px]"
@@ -2952,7 +2994,15 @@ export default function HomePage() {
         </div>
 
         {submitted ? (
-          <div className="mx-auto mt-8 max-w-[1080px] rounded-[34px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-10 text-center shadow-[0_18px_0_rgba(52,211,153,0.12),0_24px_60px_rgba(52,211,153,0.12)] backdrop-blur-sm">
+          <div className="relative mx-auto mt-8 max-w-[1080px] rounded-[34px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-10 text-center shadow-[0_18px_0_rgba(52,211,153,0.12),0_24px_60px_rgba(52,211,153,0.12)] backdrop-blur-sm">
+            <button
+              type="button"
+              onClick={handleCloseSubmittedView}
+              aria-label="Close submitted lineup view"
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-emerald-200 bg-white/90 text-xl font-black text-emerald-700 shadow-[0_8px_18px_rgba(16,185,129,0.12)] transition hover:-translate-y-0.5 hover:bg-emerald-50"
+            >
+              ×
+            </button>
             <p className="text-sm font-black uppercase tracking-[0.12em] text-emerald-700">
               Lineup Submitted
             </p>
@@ -3024,6 +3074,50 @@ export default function HomePage() {
                       : "Unavailable"}
                 </p>
               </div>
+            </div>
+
+            <div className="mx-auto mt-6 max-w-3xl rounded-[24px] border-[3px] border-emerald-100 bg-white/80 p-5 text-left">
+              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                Active Link Details
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">
+                {relationshipLabel} link
+                {activeLinkDetails.length === 1 ? "" : "s"} that counted toward your multiplier.
+              </p>
+              {activeLinkDetails.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {activeLinkDetails.map((detail) => (
+                    <div
+                      key={detail.pairKey}
+                      className="flex items-center justify-between gap-3 rounded-[18px] border-[3px] border-emerald-100 bg-emerald-50/70 px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-slate-900">
+                          {detail.playerA.player_name}
+                        </p>
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/80">
+                          {detail.playerA.primary_position ?? "N/A"}
+                        </p>
+                      </div>
+                      <div className="shrink-0 rounded-full border-[2px] border-emerald-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-emerald-700">
+                        {relationshipLabel}
+                      </div>
+                      <div className="min-w-0 text-right">
+                        <p className="truncate text-sm font-black text-slate-900">
+                          {detail.playerB.player_name}
+                        </p>
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/80">
+                          {detail.playerB.primary_position ?? "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-[18px] border-[3px] border-emerald-100 bg-emerald-50/60 px-4 py-4 text-sm font-semibold text-slate-600">
+                  No active links connected in this lineup.
+                </div>
+              )}
             </div>
 
             {optimalError && (
