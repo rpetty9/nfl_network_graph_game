@@ -1145,8 +1145,16 @@ export default function HomePage() {
       }
     });
 
-    return visibleDefinitions;
-  }, [userBadges]);
+    return visibleDefinitions.sort((a, b) => {
+      const aEarned = earnedBadgeMap.has(a.key);
+      const bEarned = earnedBadgeMap.has(b.key);
+      if (aEarned !== bEarned) {
+        return aEarned ? -1 : 1;
+      }
+
+      return 0;
+    });
+  }, [earnedBadgeMap, userBadges]);
   const galleryPageSize = 4;
   const pagedGalleryBadges = publicBadgeDefinitions.slice(
     galleryPage * galleryPageSize,
@@ -4456,24 +4464,25 @@ export default function HomePage() {
         {leaderboardOpen && (
           <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/35 px-4 py-6">
             <div className="flex min-h-full items-start justify-center">
-              <div className="w-full max-w-lg rounded-[30px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
-                <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="relative w-full max-w-lg rounded-[30px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+                <div className="mb-2 pr-12">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
                       Trophy Board
                     </p>
-                    <h2 className="mt-2 text-2xl font-black tracking-normal text-amber-900">
+                    <h2 className="mt-2 text-xl font-black leading-tight tracking-normal text-amber-900 sm:text-2xl">
                       {formatPuzzleDateLabel(selectedDate)} Leaderboard
                     </h2>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setLeaderboardOpen(false)}
-                    className="shrink-0 rounded-full border-[3px] border-amber-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-amber-700"
-                  >
-                    Close
-                  </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardOpen(false)}
+                  className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-amber-200 bg-white text-lg font-black leading-none text-amber-700 shadow-[0_8px_18px_rgba(245,158,11,0.12)]"
+                  aria-label="Close leaderboard"
+                >
+                  ×
+                </button>
 
                 <div className="mt-4 inline-flex rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
                   <button
