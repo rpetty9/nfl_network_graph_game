@@ -3065,7 +3065,7 @@ export default function HomePage() {
           <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-4 py-5 text-center md:px-10 md:py-8">
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
-            <div className="absolute left-3 top-3 z-20 md:left-5 md:top-5">
+            <div className="absolute left-5 top-5 z-20 hidden md:block">
               {sessionStatus === "loading" ? (
                 <div className="inline-flex h-10 items-center rounded-full border-[2px] border-white/55 bg-white/15 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white/90 backdrop-blur-sm">
                   Loading
@@ -3145,7 +3145,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setLeaderboardOpen(true)}
-              className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28 md:right-5 md:top-5 md:h-11 md:w-11"
+              className="absolute right-5 top-5 z-20 hidden h-11 w-11 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28 md:inline-flex"
               aria-label={`Open leaderboard for ${formatPuzzleDateLabel(selectedDate)}`}
             >
               <svg
@@ -3166,11 +3166,89 @@ export default function HomePage() {
               </svg>
             </button>
             <div className="relative z-10">
-              <div className="mt-9 flex items-center justify-center gap-2 md:mt-3 md:gap-3">
-                <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl md:tracking-[0.08em]">
+              <div className="mx-auto mt-1 grid max-w-[360px] grid-cols-[40px_1fr_40px] items-start gap-3 md:hidden">
+                <div className="flex justify-start">
+                  {sessionStatus === "loading" ? (
+                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/55 bg-white/15 text-[10px] font-black uppercase tracking-[0.08em] text-white/90 backdrop-blur-sm">
+                      ...
+                    </div>
+                  ) : signedInUsername ? (
+                    <button
+                      type="button"
+                      onClick={() => setProfileOpen(true)}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/60 bg-white/18 backdrop-blur-sm transition hover:bg-white/26"
+                      aria-label="Open profile"
+                    >
+                      <ProfileAvatar
+                        style={sessionAvatarStyle}
+                        bg={sessionAvatarBg}
+                        accent={sessionAvatarAccent}
+                        border={sessionAvatarBorder}
+                        size="sm"
+                      />
+                    </button>
+                  ) : needsUsername ? (
+                    <button
+                      type="button"
+                      onClick={() => setProfileOpen(true)}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white backdrop-blur-sm"
+                      aria-label="Finish profile"
+                    >
+                      <ProfileAvatar
+                        style={sessionAvatarStyle}
+                        bg={sessionAvatarBg}
+                        accent={sessionAvatarAccent}
+                        border={sessionAvatarBorder}
+                        size="sm"
+                      />
+                    </button>
+                  ) : (
+                    <GuestProfileButton
+                      onClick={() => setAccountChoiceOpen(true)}
+                      ariaLabel="Open account options"
+                    />
+                  )}
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)]">
+                    Five Wide
+                  </h1>
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm">
+                    <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_0_3px_rgba(244,114,182,0.18)]" />
+                    Beta
+                  </span>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setLeaderboardOpen(true)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28"
+                    aria-label={`Open leaderboard for ${formatPuzzleDateLabel(selectedDate)}`}
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 21h8" />
+                      <path d="M12 17v4" />
+                      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+                      <path d="M17 6h2a2 2 0 0 1-2 2" />
+                      <path d="M7 6H5a2 2 0 0 0 2 2" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="hidden items-center justify-center gap-3 md:mt-3 md:flex">
+                <h1 className="text-5xl font-black tracking-[0.08em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)]">
                   Five Wide
                 </h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full border-[2px] border-white/70 bg-white/20 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm">
                   <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_0_3px_rgba(244,114,182,0.18)]" />
                   Beta
                 </span>
