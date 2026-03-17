@@ -478,6 +478,37 @@ function ProfileAvatar({
   );
 }
 
+function GuestProfileButton({
+  onClick,
+  ariaLabel,
+}: {
+  onClick: () => void;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-[1.02] hover:bg-white/28"
+      aria-label={ariaLabel}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" />
+        <path d="M5 20a7 7 0 0 1 14 0" />
+      </svg>
+    </button>
+  );
+}
+
 export default function HomePage() {
   const todayIso = getCurrentLocalDateIso();
   const loadRequestRef = useRef(0);
@@ -2071,31 +2102,69 @@ export default function HomePage() {
                   Loading
                 </div>
               ) : signedInUsername ? (
-                <button
-                  type="button"
-                  onClick={() => setProfileOpen(true)}
-                  className="inline-flex h-10 items-center gap-2 rounded-full border-[2px] border-white/60 bg-white/18 px-2 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26"
-                >
-                  <ProfileAvatar
-                    style={sessionAvatarStyle}
-                    bg={sessionAvatarBg}
-                    accent={sessionAvatarAccent}
-                    size="sm"
-                  />
-                  <span>{signedInUsername}</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen(true)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/60 bg-white/18 backdrop-blur-sm transition hover:bg-white/26 md:hidden"
+                    aria-label="Open profile"
+                  >
+                    <ProfileAvatar
+                      style={sessionAvatarStyle}
+                      bg={sessionAvatarBg}
+                      accent={sessionAvatarAccent}
+                      size="sm"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen(true)}
+                    className="hidden h-10 items-center gap-2 rounded-full border-[2px] border-white/60 bg-white/18 px-2 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26 md:inline-flex"
+                  >
+                    <ProfileAvatar
+                      style={sessionAvatarStyle}
+                      bg={sessionAvatarBg}
+                      accent={sessionAvatarAccent}
+                      size="sm"
+                    />
+                    <span>{signedInUsername}</span>
+                  </button>
+                </>
               ) : needsUsername ? (
-                <div className="inline-flex h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm">
-                  Finish Profile
-                </div>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setProfileOpen(true)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white backdrop-blur-sm md:hidden"
+                    aria-label="Finish profile"
+                  >
+                    <ProfileAvatar
+                      style={sessionAvatarStyle}
+                      bg={sessionAvatarBg}
+                      accent={sessionAvatarAccent}
+                      size="sm"
+                    />
+                  </button>
+                  <div className="hidden h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm md:inline-flex">
+                    Finish Profile
+                  </div>
+                </>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => void signIn("google")}
-                  className="inline-flex h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-[1.02] hover:bg-white/28"
-                >
-                  Sign In
-                </button>
+                <>
+                  <div className="md:hidden">
+                    <GuestProfileButton
+                      onClick={() => void signIn("google")}
+                      ariaLabel="Sign in"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void signIn("google")}
+                    className="hidden h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-[1.02] hover:bg-white/28 md:inline-flex"
+                  >
+                    Sign In
+                  </button>
+                </>
               )}
             </div>
             <button
