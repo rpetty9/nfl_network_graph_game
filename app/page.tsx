@@ -535,6 +535,7 @@ export default function HomePage() {
     useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [accountChoiceOpen, setAccountChoiceOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [usernameDraft, setUsernameDraft] = useState("");
   const [usernameSaving, setUsernameSaving] = useState(false);
@@ -627,6 +628,12 @@ export default function HomePage() {
     sessionAvatarBg,
     sessionAvatarAccent,
   ]);
+
+  useEffect(() => {
+    if (signedInUsername || needsUsername) {
+      setAccountChoiceOpen(false);
+    }
+  }, [needsUsername, signedInUsername]);
 
   useEffect(() => {
     if (isSupportedPuzzleDate(selectedDate)) return;
@@ -2155,13 +2162,13 @@ export default function HomePage() {
                 <>
                   <div className="md:hidden">
                     <GuestProfileButton
-                      onClick={() => void signIn("google")}
-                      ariaLabel="Sign in"
+                      onClick={() => setAccountChoiceOpen(true)}
+                      ariaLabel="Open account options"
                     />
                   </div>
                   <button
                     type="button"
-                    onClick={() => void signIn("google")}
+                    onClick={() => setAccountChoiceOpen(true)}
                     className="hidden h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-[1.02] hover:bg-white/28 md:inline-flex"
                   >
                     Sign In
@@ -2950,6 +2957,51 @@ export default function HomePage() {
                 </div>
               </div>
           </>
+        )}
+
+        {accountChoiceOpen && !signedInUsername && !needsUsername && (
+          <div className="fixed inset-0 z-[108] overflow-y-auto bg-slate-950/45 px-4 py-6">
+            <div className="flex min-h-full items-center justify-center">
+              <div className="w-full max-w-md rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                      Save Your Profile
+                    </p>
+                    <h2 className="mt-2 text-2xl font-black text-sky-900">
+                      Play Guest Or Sign In
+                    </h2>
+                    <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                      Keep playing as a guest, or sign in with Google to save your username, avatar, and tracked scores.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAccountChoiceOpen(false)}
+                    className="rounded-full border-[3px] border-sky-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-sky-700"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setAccountChoiceOpen(false)}
+                    className="rounded-2xl border-[3px] border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Continue As Guest
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void signIn("google")}
+                    className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] transition hover:-translate-y-0.5 hover:brightness-105"
+                  >
+                    Continue With Google
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {needsUsername && (
