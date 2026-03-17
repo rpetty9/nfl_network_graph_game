@@ -4531,14 +4531,7 @@ export default function HomePage() {
                   </div>
                 )}
 
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void signOut({ redirect: false })}
-                    className="rounded-2xl border-[3px] border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Sign Out
-                  </button>
+                <div className="mt-6 flex flex-col items-start gap-3">
                   <button
                     type="button"
                     onClick={() => void handleSaveProfile()}
@@ -4546,6 +4539,13 @@ export default function HomePage() {
                     className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {avatarSaving || badgeSaving ? "Saving..." : "Save Profile"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void signOut({ redirect: false })}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+                  >
+                    Sign Out
                   </button>
                 </div>
               </div>
