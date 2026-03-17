@@ -312,7 +312,7 @@ function FeaturedBadgeSlot({
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
-            className="relative h-5 w-5"
+            className="relative h-5 w-5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.22)]"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -611,73 +611,107 @@ function markBrowserSubmittedForDate(dateValue: string) {
 function renderAvatarGlyph(style: AvatarStyle) {
   switch (style) {
     case "crown":
-      return <path d="M4 17h16l-1.4-8-4.3 3.1L12 6 9.7 12.1 5.4 9 4 17Z" />;
+      return (
+        <>
+          <path d="M4.5 17.5h15l-1.3-7.8-4 3-2.2-5.4-2.2 5.4-4-3-1.3 7.8Z" />
+          <path d="M6.8 17.5h10.4" />
+          <circle cx="7.6" cy="8.8" r="0.95" />
+          <circle cx="12" cy="6.6" r="1" />
+          <circle cx="16.4" cy="8.8" r="0.95" />
+        </>
+      );
     case "diamond":
-      return <path d="M12 3 4.5 10.5 12 21l7.5-10.5L12 3Z" />;
+      return (
+        <>
+          <path d="M12 3.5 4.8 10.4 12 20.5l7.2-10.1L12 3.5Z" />
+          <path d="M8.2 6.9h7.6" />
+          <path d="M4.8 10.4h14.4" />
+          <path d="M12 3.5v17" />
+        </>
+      );
     case "comet":
       return (
         <>
-          <path d="M7 14a5 5 0 1 0 10 0 5 5 0 0 0-10 0Z" />
-          <path d="M5 11 2.5 8.5" />
-          <path d="M7 9 4.5 6.5" />
+          <path d="M8.2 13.8a4.9 4.9 0 1 0 9.8 0 4.9 4.9 0 0 0-9.8 0Z" />
+          <path d="M8.6 11.5 3.1 8.6" />
+          <path d="M10 8.8 4 5.7" />
+          <path d="M7.4 14.3 2.7 14" />
         </>
       );
     case "target":
       return (
         <>
-          <path d="M12 5a7 7 0 1 0 7 7" />
-          <path d="M12 9a3 3 0 1 0 3 3" />
-          <path d="M15 9h6" />
-          <path d="M18 6v6" />
+          <circle cx="10.5" cy="13.5" r="6.5" />
+          <circle cx="10.5" cy="13.5" r="3.2" />
+          <circle cx="10.5" cy="13.5" r="1" />
+          <path d="M14.8 9.2 21 3" />
+          <path d="M16.3 3H21v4.7" />
         </>
       );
     case "orbit":
       return (
         <>
           <circle cx="12" cy="12" r="2.2" />
-          <path d="M4.5 12c1.8-4.6 4.6-7 7.5-7s5.7 2.4 7.5 7c-1.8 4.6-4.6 7-7.5 7s-5.7-2.4-7.5-7Z" />
-          <path d="M8 6.8c3.7-.7 7 .6 8.6 3.2 1.6 2.6 1.1 6-.9 9" />
+          <path d="M4.5 12c1.8-4.7 4.7-7.2 7.5-7.2s5.7 2.5 7.5 7.2c-1.8 4.7-4.7 7.2-7.5 7.2s-5.7-2.5-7.5-7.2Z" />
+          <path d="M8 6.7c3.8-.8 7.4.6 9 3.4 1.5 2.7.9 6.4-1.2 9.1" />
+          <circle cx="17.3" cy="8.8" r="1" />
         </>
       );
     case "flame":
       return (
         <>
-          <path d="M12.4 3.5c2.3 2.8 3.9 5 3.9 7.7A4.3 4.3 0 0 1 12 15.5a4.6 4.6 0 0 1-4.6-4.7c0-1.9.9-3.9 2.7-6.1.1 1.8 1 3.1 2.3 4.1.5-2 .4-3.8 0-5.3Z" />
-          <path d="M12 13.4c1.2 1.1 1.8 2.1 1.8 3.4A2.8 2.8 0 0 1 11 19.5a2.9 2.9 0 0 1-2.8-2.9c0-1 .5-2.1 1.6-3.3.3 1 .9 1.6 2.2 2.1Z" />
+          <path d="M12.5 3.4c2.4 2.9 4.1 5.2 4.1 8a4.5 4.5 0 0 1-4.6 4.5 4.8 4.8 0 0 1-4.9-4.9c0-2 .9-4 2.8-6.3.1 1.8 1 3.2 2.4 4.2.5-2.1.4-4-.1-5.5Z" />
+          <path d="M11.8 13.2c1.5 1 2.3 2.2 2.3 3.6a3.1 3.1 0 0 1-6.2 0c0-1.2.7-2.3 1.8-3.6.5 1 1.2 1.6 2.1 2.1Z" />
         </>
       );
     case "moon":
       return (
         <>
-          <path d="M15.5 4.5a7.5 7.5 0 1 0 4 13.8 6.6 6.6 0 0 1-4.7 1.2A7.5 7.5 0 0 1 15.5 4.5Z" />
+          <path d="M15.9 4.4a7.8 7.8 0 1 0 4 14.2 7.1 7.1 0 0 1-5 1.3 7.8 7.8 0 0 1 1-15.5Z" />
           <path d="M8.5 6.5h.01" />
-          <path d="M6 9h.01" />
+          <path d="M6 9.1h.01" />
+          <path d="M7.5 11.7h.01" />
         </>
       );
     case "prism":
       return (
         <>
-          <path d="M12 3 5 8v8l7 5 7-5V8l-7-5Z" />
-          <path d="M5 8h14" />
-          <path d="M12 3v18" />
-          <path d="M5 16h14" />
+          <path d="M12 3.5 5 7.8v8.4l7 4.3 7-4.3V7.8l-7-4.3Z" />
+          <path d="M5 7.8 12 12l7-4.2" />
+          <path d="M12 12v8.5" />
+          <path d="M8.5 5.6 15.5 9.8" />
         </>
       );
     case "star":
       return (
-        <path d="m12 3 2.5 5.4 5.9.7-4.4 4 1.2 5.9L12 16l-5.2 3 1.2-5.9-4.4-4 5.9-.7Z" />
+        <>
+          <path d="m12 3.1 2.4 5.1 5.6.6-4.2 3.8 1.1 5.6L12 15.4l-4.9 2.8 1.1-5.6L4 8.8l5.6-.6Z" />
+          <path d="m12 6.8 1 2.2 2.4.3-1.8 1.6.5 2.4-2.1-1.2-2.1 1.2.5-2.4-1.8-1.6 2.4-.3Z" />
+        </>
       );
     case "bolt":
-      return <path d="M13.5 2 6 13h4.6L9.8 22 18 10.6h-4.7L13.5 2Z" />;
+      return (
+        <>
+          <path d="M13.8 2.5 6.4 13.1h4.5L10 21.5l7.6-10.4h-4.5l.7-8.6Z" />
+          <path d="M11.2 12.9h2.5" />
+        </>
+      );
     case "crest":
-      return <path d="M12 3 6 5.4v5.7c0 4.2 2.4 7.3 6 9.9 3.6-2.6 6-5.7 6-9.9V5.4L12 3Z" />;
+      return (
+        <>
+          <path d="M12 3.3 6 5.6v5.6c0 4.1 2.3 7.3 6 9.5 3.7-2.2 6-5.4 6-9.5V5.6L12 3.3Z" />
+          <path d="M12 7.2v9.7" />
+          <path d="M8.5 10.2h7" />
+        </>
+      );
     case "helmet":
     default:
       return (
         <>
-          <path d="M7 12.5A5 5 0 0 1 12 7h1.8A4.2 4.2 0 0 1 18 11.2V15H9.2A2.2 2.2 0 0 1 7 12.8v-.3Z" />
-          <path d="M18 13h1.6v2H18" />
-          <path d="M10 15v1.8" />
+          <path d="M6.8 12.7A5.4 5.4 0 0 1 12.2 7h1.5A4.5 4.5 0 0 1 18.2 11.5V15H9.4a2.6 2.6 0 0 1-2.6-2.3Z" />
+          <path d="M18.2 12.8h2v2.2h-2" />
+          <path d="M10.1 15v2" />
+          <path d="M9.6 10.1h4.3" />
         </>
       );
   }
@@ -724,7 +758,7 @@ function ProfileAvatar({
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
-          className={svgClass}
+          className={`${svgClass} drop-shadow-[0_1px_1px_rgba(255,255,255,0.18)]`}
           fill={accentPalette.iconHex}
           stroke={accentPalette.iconHex}
           strokeWidth="1.6"
@@ -822,56 +856,71 @@ function BadgeGlyph({ icon }: { icon: BadgeIcon }) {
     case "stack":
       return (
         <>
-          <rect x="5" y="6" width="14" height="4" rx="1.5" />
-          <rect x="5" y="10" width="14" height="4" rx="1.5" />
-          <rect x="5" y="14" width="14" height="4" rx="1.5" />
+          <rect x="5" y="5.5" width="14" height="3.3" rx="1.2" />
+          <rect x="4.5" y="10.1" width="15" height="3.3" rx="1.2" />
+          <rect x="5" y="14.7" width="14" height="3.3" rx="1.2" />
+          <path d="M7.5 7.1h1.8" />
+          <path d="M7 11.7h2.5" />
+          <path d="M7.5 16.3h1.8" />
         </>
       );
     case "trophy":
       return (
         <>
-          <path d="M8 4h8v3a4 4 0 0 1-8 0V4Z" />
-          <path d="M12 11v4" />
+          <path d="M8 4.5h8v2.8a4 4 0 0 1-8 0V4.5Z" />
+          <path d="M12 11.1v3.9" />
           <path d="M9 19h6" />
-          <path d="M16 6h2a2 2 0 0 1-2 2" />
-          <path d="M8 6H6a2 2 0 0 0 2 2" />
+          <path d="M16 6h2a2 2 0 0 1-2.1 2.2" />
+          <path d="M8 6H6A2 2 0 0 0 8.1 8.2" />
+          <path d="M9.3 15.3h5.4" />
         </>
       );
     case "link":
       return (
         <>
-          <path d="M9 8H7a4 4 0 1 0 0 8h2" />
-          <path d="M15 8h2a4 4 0 1 1 0 8h-2" />
-          <path d="M8 12h8" />
+          <path d="M9.1 8.1H7.2a4.1 4.1 0 0 0 0 8.2h1.9" />
+          <path d="M14.9 8.1h1.9a4.1 4.1 0 1 1 0 8.2h-1.9" />
+          <path d="M8.4 12h7.2" />
+          <path d="M10.2 9.8 8.4 12l1.8 2.2" />
+          <path d="M13.8 9.8 15.6 12l-1.8 2.2" />
         </>
       );
     case "shield":
       return (
         <>
-          <path d="M12 3l7 3v5c0 4.2-2.4 7.8-7 10-4.6-2.2-7-5.8-7-10V6l7-3Z" />
-          <path d="M9.5 12.5l1.8 1.8 3.4-3.8" />
+          <path d="M12 3.4 19 6.3v4.9c0 4.2-2.4 7.9-7 10-4.6-2.1-7-5.8-7-10V6.3l7-2.9Z" />
+          <path d="M12 6.6v9.6" />
+          <path d="M8.8 10.2h6.4" />
+          <path d="M9.4 13.1 11.2 15l3.7-4.1" />
         </>
       );
     case "flag":
       return (
         <>
           <path d="M7 20V4" />
-          <path d="M7 5h8l-1.6 2.5L15 10H7" />
+          <path d="M7 5h8.4l-1.9 2.6L15.8 10H7" />
+          <path d="M7 5.1 15.2 10" />
+          <path d="M10.2 20h4.5" />
         </>
       );
     case "crown":
       return (
         <>
-          <path d="M5 17h14l-1.2-8-3.8 3-2-5-2 5-3.8-3L5 17Z" />
+          <path d="M5 17.4h14l-1.2-7.9-3.8 2.9-2-5-2 5-3.8-2.9L5 17.4Z" />
           <path d="M7 20h10" />
-          <path d="M8 17h8" />
+          <path d="M8 17.4h8" />
+          <circle cx="7.7" cy="9" r="0.75" />
+          <circle cx="12" cy="7" r="0.75" />
+          <circle cx="16.3" cy="9" r="0.75" />
         </>
       );
     case "spark":
     default:
       return (
         <>
-          <path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z" />
+          <path d="m12 3 1.9 4.9L19 10l-5.1 2L12 17l-1.9-5L5 10l5.1-2Z" />
+          <path d="m18.4 4.8.7 1.7 1.7.7-1.7.6-.7 1.8-.7-1.8-1.7-.6 1.7-.7.7-1.7Z" />
+          <path d="m6.4 14.9.5 1.1 1.1.5-1.1.4-.5 1.2-.5-1.2-1.1-.4 1.1-.5.5-1.1Z" />
         </>
       );
   }
@@ -1007,7 +1056,7 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"
-              className="relative h-3.5 w-3.5"
+              className="relative h-3.5 w-3.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.22)]"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.9"
