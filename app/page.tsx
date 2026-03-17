@@ -4566,33 +4566,6 @@ export default function HomePage() {
                           {publicBadgeDefinitions.length}
                         </span>
                       </div>
-                      {publicBadgeDefinitions.length > galleryPageSize ? (
-                        <div className="mt-3 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
-                          <button
-                            type="button"
-                            onClick={() => setGalleryPage((current) => Math.max(0, current - 1))}
-                            disabled={galleryPage === 0}
-                            className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                          >
-                            Prev
-                          </button>
-                          <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            {galleryPage + 1}/{galleryPageCount}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setGalleryPage((current) =>
-                                Math.min(galleryPageCount - 1, current + 1)
-                              )
-                            }
-                            disabled={galleryPage >= galleryPageCount - 1}
-                            className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      ) : null}
                       <div className="mt-4 grid gap-3 md:grid-cols-2">
                         {pagedGalleryBadges.map((badgeDefinition) => {
                           const earnedBadge = earnedBadgeMap.get(badgeDefinition.key);
@@ -4626,6 +4599,35 @@ export default function HomePage() {
                           );
                         })}
                       </div>
+                      {publicBadgeDefinitions.length > galleryPageSize ? (
+                        <div className="mt-4 flex justify-center">
+                          <div className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
+                            <button
+                              type="button"
+                              onClick={() => setGalleryPage((current) => Math.max(0, current - 1))}
+                              disabled={galleryPage === 0}
+                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                            >
+                              Prev
+                            </button>
+                            <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              {galleryPage + 1}/{galleryPageCount}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setGalleryPage((current) =>
+                                  Math.min(galleryPageCount - 1, current + 1)
+                                )
+                              }
+                              disabled={galleryPage >= galleryPageCount - 1}
+                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>
