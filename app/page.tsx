@@ -5179,283 +5179,6 @@ export default function HomePage() {
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
-                              Friends
-                            </p>
-                            <p className="mt-1 text-sm font-semibold text-slate-600">
-                              Add exact usernames and build a private rivalry list.
-                            </p>
-                          </div>
-                          <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                            {friendOverview?.friends.length ?? 0}
-                          </span>
-                        </div>
-                        <div className="mt-4 flex gap-2">
-                          <input
-                            type="text"
-                            value={friendSearchDraft}
-                            onChange={(e) => setFriendSearchDraft(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                void handleFriendSearch();
-                              }
-                            }}
-                            placeholder="Exact username"
-                            className="min-w-0 flex-1 rounded-[16px] border-[3px] border-sky-100 bg-white px-3 py-2 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-300"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleFriendSearch()}
-                            disabled={friendSearchLoading}
-                            className="rounded-[16px] border-[3px] border-sky-200 bg-sky-50 px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
-                          >
-                            {friendSearchLoading ? "..." : "Find"}
-                          </button>
-                        </div>
-                        {friendSearchResult ? (
-                          <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/70 p-3">
-                            <div className="flex items-center gap-3">
-                              <ProfileAvatar
-                                style={friendSearchResult.avatar_style}
-                                bg={friendSearchResult.avatar_bg}
-                                accent={friendSearchResult.avatar_accent}
-                                border={friendSearchResult.avatar_border}
-                                size="sm"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-black text-slate-900">
-                                  {friendSearchResult.username}
-                                </p>
-                                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                                  Joined {formatProfileCreatedDate(friendSearchResult.created_at)}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {friendSearchResult.relationship_status === "none" ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void handleFriendAction("send", friendSearchResult.user_id)
-                                  }
-                                  disabled={
-                                    friendActionLoadingId ===
-                                    `send:${friendSearchResult.user_id}`
-                                  }
-                                  className="rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-white"
-                                >
-                                  Add Friend
-                                </button>
-                              ) : friendSearchResult.relationship_status === "incoming" ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      void handleFriendAction("accept", friendSearchResult.user_id)
-                                    }
-                                    disabled={
-                                      friendActionLoadingId ===
-                                      `accept:${friendSearchResult.user_id}`
-                                    }
-                                    className="rounded-full border-[3px] border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-emerald-700"
-                                  >
-                                    Accept
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      void handleFriendAction("decline", friendSearchResult.user_id)
-                                    }
-                                    disabled={
-                                      friendActionLoadingId ===
-                                      `decline:${friendSearchResult.user_id}`
-                                    }
-                                    className="rounded-full border-[3px] border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-600"
-                                  >
-                                    Decline
-                                  </button>
-                                </>
-                              ) : friendSearchResult.relationship_status === "outgoing" ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void handleFriendAction("cancel", friendSearchResult.user_id)
-                                  }
-                                  disabled={
-                                    friendActionLoadingId ===
-                                    `cancel:${friendSearchResult.user_id}`
-                                  }
-                                  className="rounded-full border-[3px] border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-600"
-                                >
-                                  Pending
-                                </button>
-                              ) : friendSearchResult.relationship_status === "friend" ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void handleFriendAction("remove", friendSearchResult.user_id)
-                                  }
-                                  disabled={
-                                    friendActionLoadingId ===
-                                    `remove:${friendSearchResult.user_id}`
-                                  }
-                                  className="rounded-full border-[3px] border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-amber-700"
-                                >
-                                  Friends
-                                </button>
-                              ) : (
-                                <span className="rounded-full border-[3px] border-sky-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                                  That&apos;s you
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ) : null}
-                        {friendSearchMessage ? (
-                          <p className="mt-3 text-xs font-semibold text-slate-600">
-                            {friendSearchMessage}
-                          </p>
-                        ) : null}
-                        {friendActionError || friendOverviewError ? (
-                          <div className="mt-3 rounded-[16px] border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
-                            {friendActionError ?? friendOverviewError}
-                          </div>
-                        ) : null}
-                        <div className="mt-4 space-y-3">
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                              Your Friends
-                            </p>
-                            <div className="mt-2 space-y-2">
-                              {friendOverviewLoading && !friendOverview ? (
-                                <div className="rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-4 text-center text-xs font-semibold text-slate-600">
-                                  Loading friends...
-                                </div>
-                              ) : friendOverview?.friends.length ? (
-                                friendOverview.friends.map((friend) => (
-                                  <div
-                                    key={`friend-${friend.user_id}`}
-                                    className="flex items-center gap-3 rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-2"
-                                  >
-                                    <ProfileAvatar
-                                      style={friend.avatar_style}
-                                      bg={friend.avatar_bg}
-                                      accent={friend.avatar_accent}
-                                      border={friend.avatar_border}
-                                      size="sm"
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-sm font-black text-slate-900">
-                                        {friend.username}
-                                      </p>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => void handleFriendAction("remove", friend.user_id)}
-                                      disabled={friendActionLoadingId === `remove:${friend.user_id}`}
-                                      className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
-                                    >
-                                      Remove
-                                    </button>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="rounded-[16px] border-[3px] border-dashed border-sky-200 bg-sky-50/60 px-3 py-4 text-center text-xs font-semibold text-slate-500">
-                                  No friends added yet.
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {friendOverview?.incoming_requests.length ? (
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                                Incoming Requests
-                              </p>
-                              <div className="mt-2 space-y-2">
-                                {friendOverview.incoming_requests.map((friend) => (
-                                  <div
-                                    key={`incoming-${friend.request_id}`}
-                                    className="rounded-[16px] border-[3px] border-emerald-100 bg-emerald-50/70 px-3 py-2"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <ProfileAvatar
-                                        style={friend.avatar_style}
-                                        bg={friend.avatar_bg}
-                                        accent={friend.avatar_accent}
-                                        border={friend.avatar_border}
-                                        size="sm"
-                                      />
-                                      <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-black text-slate-900">
-                                          {friend.username}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="mt-2 flex gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => void handleFriendAction("accept", friend.user_id)}
-                                        disabled={friendActionLoadingId === `accept:${friend.user_id}`}
-                                        className="rounded-full border-[2px] border-emerald-300 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700"
-                                      >
-                                        Accept
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => void handleFriendAction("decline", friend.user_id)}
-                                        disabled={friendActionLoadingId === `decline:${friend.user_id}`}
-                                        className="rounded-full border-[2px] border-slate-200 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
-                                      >
-                                        Decline
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-                          {friendOverview?.outgoing_requests.length ? (
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                                Sent Requests
-                              </p>
-                              <div className="mt-2 space-y-2">
-                                {friendOverview.outgoing_requests.map((friend) => (
-                                  <div
-                                    key={`outgoing-${friend.request_id}`}
-                                    className="flex items-center gap-3 rounded-[16px] border-[3px] border-slate-100 bg-slate-50/70 px-3 py-2"
-                                  >
-                                    <ProfileAvatar
-                                      style={friend.avatar_style}
-                                      bg={friend.avatar_bg}
-                                      accent={friend.avatar_accent}
-                                      border={friend.avatar_border}
-                                      size="sm"
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-sm font-black text-slate-900">
-                                        {friend.username}
-                                      </p>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => void handleFriendAction("cancel", friend.user_id)}
-                                      disabled={friendActionLoadingId === `cancel:${friend.user_id}`}
-                                      className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                               Recent Runs
                             </p>
                             <p className="mt-1 text-sm font-semibold text-slate-600">
@@ -5486,6 +5209,280 @@ export default function HomePage() {
                     </div>
 
                     <div className="space-y-5">
+                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                            Friends
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-slate-600">
+                            Add exact usernames and build a private rivalry list.
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          {friendOverview?.friends.length ?? 0}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <input
+                          type="text"
+                          value={friendSearchDraft}
+                          onChange={(e) => setFriendSearchDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              void handleFriendSearch();
+                            }
+                          }}
+                          placeholder="Exact username"
+                          className="min-w-0 flex-1 rounded-[16px] border-[3px] border-sky-100 bg-white px-3 py-2 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleFriendSearch()}
+                          disabled={friendSearchLoading}
+                          className="rounded-[16px] border-[3px] border-sky-200 bg-sky-50 px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
+                        >
+                          {friendSearchLoading ? "..." : "Find"}
+                        </button>
+                      </div>
+                      {friendSearchResult ? (
+                        <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/70 p-3">
+                          <div className="flex items-center gap-3">
+                            <ProfileAvatar
+                              style={friendSearchResult.avatar_style}
+                              bg={friendSearchResult.avatar_bg}
+                              accent={friendSearchResult.avatar_accent}
+                              border={friendSearchResult.avatar_border}
+                              size="sm"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-black text-slate-900">
+                                {friendSearchResult.username}
+                              </p>
+                              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                Joined {formatProfileCreatedDate(friendSearchResult.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {friendSearchResult.relationship_status === "none" ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void handleFriendAction("send", friendSearchResult.user_id)
+                                }
+                                disabled={
+                                  friendActionLoadingId === `send:${friendSearchResult.user_id}`
+                                }
+                                className="rounded-full border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-white"
+                              >
+                                Add Friend
+                              </button>
+                            ) : friendSearchResult.relationship_status === "incoming" ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleFriendAction("accept", friendSearchResult.user_id)
+                                  }
+                                  disabled={
+                                    friendActionLoadingId ===
+                                    `accept:${friendSearchResult.user_id}`
+                                  }
+                                  className="rounded-full border-[3px] border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleFriendAction("decline", friendSearchResult.user_id)
+                                  }
+                                  disabled={
+                                    friendActionLoadingId ===
+                                    `decline:${friendSearchResult.user_id}`
+                                  }
+                                  className="rounded-full border-[3px] border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                >
+                                  Decline
+                                </button>
+                              </>
+                            ) : friendSearchResult.relationship_status === "outgoing" ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void handleFriendAction("cancel", friendSearchResult.user_id)
+                                }
+                                disabled={
+                                  friendActionLoadingId === `cancel:${friendSearchResult.user_id}`
+                                }
+                                className="rounded-full border-[3px] border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-600"
+                              >
+                                Pending
+                              </button>
+                            ) : friendSearchResult.relationship_status === "friend" ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void handleFriendAction("remove", friendSearchResult.user_id)
+                                }
+                                disabled={
+                                  friendActionLoadingId === `remove:${friendSearchResult.user_id}`
+                                }
+                                className="rounded-full border-[3px] border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-amber-700"
+                              >
+                                Friends
+                              </button>
+                            ) : (
+                              <span className="rounded-full border-[3px] border-sky-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                That&apos;s you
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                      {friendSearchMessage ? (
+                        <p className="mt-3 text-xs font-semibold text-slate-600">
+                          {friendSearchMessage}
+                        </p>
+                      ) : null}
+                      {friendActionError || friendOverviewError ? (
+                        <div className="mt-3 rounded-[16px] border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
+                          {friendActionError ?? friendOverviewError}
+                        </div>
+                      ) : null}
+                      <div className="mt-4 space-y-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            Your Friends
+                          </p>
+                          <div className="mt-2 space-y-2">
+                            {friendOverviewLoading && !friendOverview ? (
+                              <div className="rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-4 text-center text-xs font-semibold text-slate-600">
+                                Loading friends...
+                              </div>
+                            ) : friendOverview?.friends.length ? (
+                              friendOverview.friends.map((friend) => (
+                                <div
+                                  key={`friend-${friend.user_id}`}
+                                  className="flex items-center gap-3 rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-2"
+                                >
+                                  <ProfileAvatar
+                                    style={friend.avatar_style}
+                                    bg={friend.avatar_bg}
+                                    accent={friend.avatar_accent}
+                                    border={friend.avatar_border}
+                                    size="sm"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-black text-slate-900">
+                                      {friend.username}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleFriendAction("remove", friend.user_id)}
+                                    disabled={friendActionLoadingId === `remove:${friend.user_id}`}
+                                    className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="rounded-[16px] border-[3px] border-dashed border-sky-200 bg-sky-50/60 px-3 py-4 text-center text-xs font-semibold text-slate-500">
+                                No friends added yet.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {friendOverview?.incoming_requests.length ? (
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Incoming Requests
+                            </p>
+                            <div className="mt-2 space-y-2">
+                              {friendOverview.incoming_requests.map((friend) => (
+                                <div
+                                  key={`incoming-${friend.request_id}`}
+                                  className="rounded-[16px] border-[3px] border-emerald-100 bg-emerald-50/70 px-3 py-2"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <ProfileAvatar
+                                      style={friend.avatar_style}
+                                      bg={friend.avatar_bg}
+                                      accent={friend.avatar_accent}
+                                      border={friend.avatar_border}
+                                      size="sm"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm font-black text-slate-900">
+                                        {friend.username}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-2 flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleFriendAction("accept", friend.user_id)}
+                                      disabled={friendActionLoadingId === `accept:${friend.user_id}`}
+                                      className="rounded-full border-[2px] border-emerald-300 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                                    >
+                                      Accept
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleFriendAction("decline", friend.user_id)}
+                                      disabled={friendActionLoadingId === `decline:${friend.user_id}`}
+                                      className="rounded-full border-[2px] border-slate-200 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                    >
+                                      Decline
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                        {friendOverview?.outgoing_requests.length ? (
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Sent Requests
+                            </p>
+                            <div className="mt-2 space-y-2">
+                              {friendOverview.outgoing_requests.map((friend) => (
+                                <div
+                                  key={`outgoing-${friend.request_id}`}
+                                  className="flex items-center gap-3 rounded-[16px] border-[3px] border-slate-100 bg-slate-50/70 px-3 py-2"
+                                >
+                                  <ProfileAvatar
+                                    style={friend.avatar_style}
+                                    bg={friend.avatar_bg}
+                                    accent={friend.avatar_accent}
+                                    border={friend.avatar_border}
+                                    size="sm"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-black text-slate-900">
+                                      {friend.username}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleFriendAction("cancel", friend.user_id)}
+                                    disabled={friendActionLoadingId === `cancel:${friend.user_id}`}
+                                    className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
                     <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
