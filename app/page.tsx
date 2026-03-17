@@ -2119,14 +2119,16 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setProfileOpen(true)}
-                    className="hidden h-10 items-center gap-2 rounded-full border-[2px] border-white/60 bg-white/18 px-2 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26 md:inline-flex"
+                    className="relative hidden h-10 items-center rounded-full border-[2px] border-white/60 bg-white/18 pl-9 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26 md:inline-flex"
                   >
-                    <ProfileAvatar
-                      style={sessionAvatarStyle}
-                      bg={sessionAvatarBg}
-                      accent={sessionAvatarAccent}
-                      size="sm"
-                    />
+                    <span className="absolute -left-2 top-1/2 -translate-y-1/2">
+                      <ProfileAvatar
+                        style={sessionAvatarStyle}
+                        bg={sessionAvatarBg}
+                        accent={sessionAvatarAccent}
+                        size="sm"
+                      />
+                    </span>
                     <span>{signedInUsername}</span>
                   </button>
                 </>
