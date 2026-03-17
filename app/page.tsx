@@ -336,8 +336,12 @@ function normalizeUrlDateParam(rawDate: string): string | null {
   return null;
 }
 
-function isSupportedPuzzleDate(dateValue: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(dateValue) && dateValue >= "2026-03-15";
+function isPlayablePuzzleDate(dateValue: string, maxDate: string): boolean {
+  return (
+    /^\d{4}-\d{2}-\d{2}$/.test(dateValue) &&
+    dateValue >= "2026-03-15" &&
+    dateValue <= maxDate
+  );
 }
 
 function getDateFromLocation(location: Location): string | null {
@@ -717,7 +721,9 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState(() => {
     if (typeof window === "undefined") return todayIso;
     const normalized = getDateFromLocation(window.location);
-    return normalized && isSupportedPuzzleDate(normalized) ? normalized : todayIso;
+    return normalized && isPlayablePuzzleDate(normalized, todayIso)
+      ? normalized
+      : todayIso;
   });
   const [nodes, setNodes] = useState<NodeState[]>([]);
   const [initialNodes, setInitialNodes] = useState<NodeState[]>([]);
@@ -808,7 +814,10 @@ export default function HomePage() {
 
     const urlDate = getDateFromLocation(window.location);
 
-    if ((!urlDate || !isSupportedPuzzleDate(urlDate)) && window.location.pathname !== "/") {
+    if (
+      (!urlDate || !isPlayablePuzzleDate(urlDate, todayIso)) &&
+      window.location.pathname !== "/"
+    ) {
       window.history.replaceState({}, "", "/");
       return;
     }
@@ -855,7 +864,7 @@ export default function HomePage() {
   }, [needsUsername, signedInUsername]);
 
   useEffect(() => {
-    if (isSupportedPuzzleDate(selectedDate)) return;
+    if (isPlayablePuzzleDate(selectedDate, todayIso)) return;
     setSelectedDate(todayIso);
 
     if (typeof window !== "undefined") {
@@ -957,7 +966,7 @@ export default function HomePage() {
     const handlePopState = () => {
       const urlDate = getDateFromLocation(window.location);
       const nextDate =
-        urlDate && isSupportedPuzzleDate(urlDate) ? urlDate : todayIso;
+        urlDate && isPlayablePuzzleDate(urlDate, todayIso) ? urlDate : todayIso;
       if (nextDate !== selectedDate) {
         setSelectedDate(nextDate);
       }
@@ -1076,15 +1085,17 @@ export default function HomePage() {
   const availableDates = puzzleData?.available_dates ?? [];
   const sortedAvailableDates = [...availableDates].sort();
   const minPuzzleDate = sortedAvailableDates[0] ?? "2026-03-15";
+  const maxPuzzleDate = todayIso;
   const dateOptions = availableDates
     .filter(
       (dateValue) =>
-        isSupportedPuzzleDate(dateValue) && dateValue >= minPuzzleDate
+        isPlayablePuzzleDate(dateValue, maxPuzzleDate) &&
+        dateValue >= minPuzzleDate
     )
     .sort();
   const renderedDateOptions =
     selectedDate &&
-    isSupportedPuzzleDate(selectedDate) &&
+    isPlayablePuzzleDate(selectedDate, maxPuzzleDate) &&
     !dateOptions.includes(selectedDate)
       ? [selectedDate, ...dateOptions]
       : dateOptions;
@@ -2478,9 +2489,14 @@ export default function HomePage() {
               </svg>
             </button>
             <div className="relative z-10">
-              <h1 className="mt-2 text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:mt-6 md:text-5xl md:tracking-[0.08em]">
-                Five Wide
-              </h1>
+              <div className="mt-2 flex items-center justify-center gap-2 md:mt-6 md:gap-3">
+                <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl md:tracking-[0.08em]">
+                  Five Wide
+                </h1>
+                <span className="inline-flex items-center rounded-full border-[2px] border-white/70 bg-white/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
+                  Beta
+                </span>
+              </div>
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
                 Pick 5 players, total their fantasy points for the time period, then boost the score with active links.
               </p>

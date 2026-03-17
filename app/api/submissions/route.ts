@@ -171,6 +171,7 @@ async function loadPuzzleContext(requestedDate: string | null) {
         FROM daily_puzzle
         WHERE puzzle_date = $1
           AND sport = 'nfl'
+          AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
         LIMIT 1
         `,
         [requestedDate]
@@ -180,6 +181,7 @@ async function loadPuzzleContext(requestedDate: string | null) {
         FROM daily_puzzle
         WHERE published_flag = true
           AND sport = 'nfl'
+          AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
         ORDER BY puzzle_date DESC
         LIMIT 1
       `);
