@@ -1866,6 +1866,29 @@ export default function HomePage() {
           <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-4 py-5 text-center md:px-10 md:py-8">
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
+            <button
+              type="button"
+              onClick={() => setLeaderboardOpen(true)}
+              className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28 md:right-5 md:top-5 md:h-11 md:w-11"
+              aria-label={`Open leaderboard for ${formatPuzzleDateLabel(selectedDate)}`}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4 md:h-5 md:w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M8 21h8" />
+                <path d="M12 17v4" />
+                <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+                <path d="M17 6h2a2 2 0 0 1-2 2" />
+                <path d="M7 6H5a2 2 0 0 0 2 2" />
+              </svg>
+            </button>
             <div className="relative z-10">
               <h1 className="mt-2 text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:mt-6 md:text-5xl md:tracking-[0.08em]">
                 Five Wide
@@ -2284,13 +2307,6 @@ export default function HomePage() {
               </div>
 
               <div className="absolute right-3 top-3 z-40 flex w-[24%] min-w-[110px] max-w-[132px] flex-col gap-2 sm:hidden">
-                <button
-                  type="button"
-                  onClick={() => setLeaderboardOpen(true)}
-                  className="inline-flex items-center justify-center rounded-full border-[2px] border-amber-200 bg-white/92 px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.08em] text-amber-700 shadow-[0_6px_16px_rgba(251,191,36,0.16)]"
-                >
-                  Trophy
-                </button>
                 <div className="group relative inline-flex min-w-0 flex-col items-center justify-center gap-1 rounded-[18px] border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1.5 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)]">
                   <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700">
                     Time Period
@@ -2329,15 +2345,6 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex min-w-0 flex-col items-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setLeaderboardOpen(true)}
-                    className="inline-flex items-center gap-2 self-end rounded-full border-[2px] border-amber-200 bg-white/92 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-amber-700 shadow-[0_6px_16px_rgba(251,191,36,0.16)] transition hover:-translate-y-0.5 hover:bg-amber-50"
-                  >
-                    <span aria-hidden="true">Trophy</span>
-                    <span>Leaderboard</span>
-                  </button>
-
                   <div className="group relative inline-flex min-w-0 items-center justify-center gap-1.5 self-end rounded-full border-[2px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#ecfeff_100%)] px-2 py-1 text-center shadow-[0_6px_18px_rgba(56,189,248,0.16)] sm:gap-2 sm:px-5 sm:py-1.5">
                     <span className="rounded-full bg-sky-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-sky-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
                       Time Period
