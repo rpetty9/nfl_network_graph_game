@@ -170,6 +170,11 @@ function getBadgeProgressLabel(badge: BadgeDefinition) {
   return badge.unlockHint;
 }
 
+function clampPageIndex(pageIndex: number, totalItems: number, pageSize: number) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  return Math.min(Math.max(pageIndex, 0), totalPages - 1);
+}
+
 type NodeState = {
   node_id: number;
   player_id: string;
@@ -648,7 +653,10 @@ function ProfileBadgeCard({
   onAction,
   actionDisabled = false,
 }: {
-  badge: Pick<UserBadge, "title" | "description" | "tone" | "icon" | "awardedAt">;
+  badge: Pick<
+    UserBadge,
+    "badgeKey" | "title" | "description" | "tone" | "icon" | "awardedAt"
+  >;
   compact?: boolean;
   locked?: boolean;
   helperText?: string;
@@ -656,28 +664,43 @@ function ProfileBadgeCard({
   onAction?: (() => void) | null;
   actionDisabled?: boolean;
 }) {
+  const isCreatorBadge = badge.badgeKey === "creator";
   const tone = locked
     ? {
-        shell: "border-slate-200 bg-slate-100/90 text-slate-600",
-        icon: "bg-slate-400 text-white",
+        shell:
+          "border-slate-200 bg-[linear-gradient(145deg,rgba(241,245,249,0.96),rgba(226,232,240,0.95))] text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+        icon: "bg-[linear-gradient(145deg,#94a3b8,#64748b)] text-white",
         meta: "text-slate-500",
+        aura: "",
       }
-    : getBadgeToneClasses(badge.tone);
+    : isCreatorBadge
+      ? {
+          shell:
+            "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(254,243,199,0.98)_0%,rgba(251,191,36,0.22)_38%,rgba(120,53,15,0.14)_100%)] text-amber-950 shadow-[0_18px_40px_rgba(245,158,11,0.22),inset_0_1px_0_rgba(255,255,255,0.65)]",
+          icon: "bg-[linear-gradient(145deg,#fef3c7,#f59e0b_58%,#b45309)] text-amber-950",
+          meta: "text-amber-800",
+          aura: "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.34),transparent_52%)] before:content-['']",
+        }
+      : {
+          ...getBadgeToneClasses(badge.tone),
+          aura: "",
+        };
 
   return (
     <div
-      className={`rounded-[18px] border px-3 py-3 ${tone.shell} ${
+      className={`relative overflow-hidden rounded-[22px] border px-3 py-3 ${tone.shell} ${tone.aura} ${
         compact ? "min-w-[150px]" : ""
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="absolute inset-x-4 top-0 h-px bg-white/60" />
+      <div className="relative flex items-start gap-3">
         <div
-          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone.icon}`}
+          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-white/45 shadow-[0_10px_18px_rgba(15,23,42,0.14)] ${tone.icon}`}
         >
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
-            className="h-4 w-4"
+            className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -688,10 +711,14 @@ function ProfileBadgeCard({
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.08em]">
+          <p className="text-xs font-black uppercase tracking-[0.12em]">
             {badge.title}
           </p>
-          <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+          <p
+            className={`mt-1 text-xs font-semibold leading-5 ${
+              locked ? "text-slate-600" : isCreatorBadge ? "text-amber-900/85" : "text-slate-600"
+            }`}
+          >
             {badge.description}
           </p>
           <p className={`mt-2 text-[10px] font-black uppercase tracking-[0.08em] ${tone.meta}`}>
@@ -762,6 +789,8 @@ export default function HomePage() {
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [badgeSaving, setBadgeSaving] = useState(false);
   const [badgeError, setBadgeError] = useState<string | null>(null);
+  const [earnedBadgesPage, setEarnedBadgesPage] = useState(0);
+  const [galleryPage, setGalleryPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -800,6 +829,24 @@ export default function HomePage() {
   const earnedBadgeMap = useMemo(
     () => new Map(userBadges.map((badge) => [badge.badgeKey, badge])),
     [userBadges]
+  );
+  const earnedBadgesPageSize = 4;
+  const galleryPageSize = 4;
+  const pagedEarnedBadges = userBadges.slice(
+    earnedBadgesPage * earnedBadgesPageSize,
+    (earnedBadgesPage + 1) * earnedBadgesPageSize
+  );
+  const pagedGalleryBadges = publicBadgeDefinitions.slice(
+    galleryPage * galleryPageSize,
+    (galleryPage + 1) * galleryPageSize
+  );
+  const earnedBadgePageCount = Math.max(
+    1,
+    Math.ceil(userBadges.length / earnedBadgesPageSize)
+  );
+  const galleryPageCount = Math.max(
+    1,
+    Math.ceil(publicBadgeDefinitions.length / galleryPageSize)
   );
   const featuredBadges = featuredBadgeDraft
     .map((badgeKey) => earnedBadgeMap.get(badgeKey))
@@ -870,6 +917,18 @@ export default function HomePage() {
       setAccountChoiceOpen(false);
     }
   }, [needsUsername, signedInUsername]);
+
+  useEffect(() => {
+    setEarnedBadgesPage((current) =>
+      clampPageIndex(current, userBadges.length, earnedBadgesPageSize)
+    );
+  }, [earnedBadgesPageSize, userBadges.length]);
+
+  useEffect(() => {
+    setGalleryPage((current) =>
+      clampPageIndex(current, publicBadgeDefinitions.length, galleryPageSize)
+    );
+  }, [galleryPageSize, publicBadgeDefinitions.length]);
 
   useEffect(() => {
     if (isPlayablePuzzleDate(selectedDate, todayIso)) return;
@@ -3449,13 +3508,46 @@ export default function HomePage() {
                         <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                           Earned Badges
                         </p>
-                        <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                          {userBadges.length}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            {userBadges.length}
+                          </span>
+                          {userBadges.length > earnedBadgesPageSize ? (
+                            <div className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEarnedBadgesPage((current) =>
+                                    Math.max(0, current - 1)
+                                  )
+                                }
+                                disabled={earnedBadgesPage === 0}
+                                className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                              >
+                                Prev
+                              </button>
+                              <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                {earnedBadgesPage + 1}/{earnedBadgePageCount}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEarnedBadgesPage((current) =>
+                                    Math.min(earnedBadgePageCount - 1, current + 1)
+                                  )
+                                }
+                                disabled={earnedBadgesPage >= earnedBadgePageCount - 1}
+                                className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                              >
+                                Next
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                       {userBadges.length > 0 ? (
                         <div className="mt-4 space-y-3">
-                          {userBadges.map((badge) => (
+                          {pagedEarnedBadges.map((badge) => (
                             <ProfileBadgeCard
                               key={badge.badgeKey}
                               badge={badge}
@@ -3562,8 +3654,35 @@ export default function HomePage() {
                           {publicBadgeDefinitions.length}
                         </span>
                       </div>
+                      {publicBadgeDefinitions.length > galleryPageSize ? (
+                        <div className="mt-3 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
+                          <button
+                            type="button"
+                            onClick={() => setGalleryPage((current) => Math.max(0, current - 1))}
+                            disabled={galleryPage === 0}
+                            className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                          >
+                            Prev
+                          </button>
+                          <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            {galleryPage + 1}/{galleryPageCount}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setGalleryPage((current) =>
+                                Math.min(galleryPageCount - 1, current + 1)
+                              )
+                            }
+                            disabled={galleryPage >= galleryPageCount - 1}
+                            className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      ) : null}
                       <div className="mt-4 grid gap-3 md:grid-cols-2">
-                        {publicBadgeDefinitions.map((badgeDefinition) => {
+                        {pagedGalleryBadges.map((badgeDefinition) => {
                           const earnedBadge = earnedBadgeMap.get(badgeDefinition.key);
                           const isFeatured = featuredBadgeDraft.includes(badgeDefinition.key);
 
@@ -3579,6 +3698,7 @@ export default function HomePage() {
                             <ProfileBadgeCard
                               key={`gallery-${badgeDefinition.key}`}
                               badge={{
+                                badgeKey: badgeDefinition.key,
                                 title: badgeDefinition.title,
                                 description: badgeDefinition.description,
                                 tone: badgeDefinition.tone,
