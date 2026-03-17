@@ -6,6 +6,15 @@ import {
   type AvatarColor,
   type AvatarStyle,
 } from "@/lib/avatar";
+import {
+  BADGE_ORDER,
+  SUBMISSION_COUNT_BADGES,
+  getBadgeDefinition,
+  hydrateBadge,
+  isBadgeKey,
+  type BadgeKey,
+  type UserBadge,
+} from "@/lib/badges";
 
 export type AppUser = {
   user_id: string;
@@ -18,6 +27,16 @@ export type AppUser = {
   avatar_bg: AvatarColor;
   avatar_accent: AvatarColor;
   status: string;
+  badges: UserBadge[];
+};
+
+type AppUserRow = Omit<AppUser, "badges">;
+
+type UserBadgeRow = {
+  badge_key: string;
+  awarded_at: string;
+  awarded_by_user_id: string | null;
+  award_note: string | null;
 };
 
 type UsernameValidationResult =
@@ -136,20 +155,69 @@ export function validateUsername(rawValue: string): UsernameValidationResult {
   };
 }
 
-export async function getUserByGoogleSubject(googleSubject: string) {
-  const result = await pool.query<AppUser>(
+const USER_SELECT_COLUMNS = `
+  user_id::text,
+  google_subject,
+  email,
+  email_normalized,
+  username,
+  username_normalized,
+  avatar_style,
+  avatar_bg,
+  avatar_accent,
+  status
+`;
+
+async function loadBadgesForUser(userId: string) {
+  const result = await pool.query<UserBadgeRow>(
     `
     SELECT
-      user_id::text,
-      google_subject,
-      email,
-      email_normalized,
-      username,
-      username_normalized,
-      avatar_style,
-      avatar_bg,
-      avatar_accent,
-      status
+      badge_key,
+      awarded_at::text,
+      awarded_by_user_id::text,
+      award_note
+    FROM user_badge
+    WHERE user_id = $1
+    ORDER BY awarded_at DESC
+    `,
+    [userId]
+  );
+
+  const badges = result.rows
+    .map((row) =>
+      hydrateBadge({
+        badgeKey: row.badge_key,
+        awardedAt: row.awarded_at,
+        awardedByUserId: row.awarded_by_user_id,
+        awardNote: row.award_note,
+      })
+    )
+    .filter((badge): badge is UserBadge => badge !== null);
+
+  badges.sort((a, b) => {
+    const orderA = BADGE_ORDER.indexOf(a.badgeKey);
+    const orderB = BADGE_ORDER.indexOf(b.badgeKey);
+    if (orderA !== orderB) return orderA - orderB;
+    return b.awardedAt.localeCompare(a.awardedAt);
+  });
+
+  return badges;
+}
+
+async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> {
+  if (!user) return null;
+
+  return {
+    ...user,
+    badges: await loadBadgesForUser(user.user_id),
+  };
+}
+
+export async function getUserByGoogleSubject(googleSubject: string) {
+  const result = await pool.query<AppUserRow>(
+    `
+    SELECT
+      ${USER_SELECT_COLUMNS}
     FROM app_user
     WHERE google_subject = $1
     LIMIT 1
@@ -157,23 +225,14 @@ export async function getUserByGoogleSubject(googleSubject: string) {
     [googleSubject]
   );
 
-  return result.rows[0] ?? null;
+  return withUserBadges(result.rows[0] ?? null);
 }
 
 export async function getUserById(userId: string) {
-  const result = await pool.query<AppUser>(
+  const result = await pool.query<AppUserRow>(
     `
     SELECT
-      user_id::text,
-      google_subject,
-      email,
-      email_normalized,
-      username,
-      username_normalized,
-      avatar_style,
-      avatar_bg,
-      avatar_accent,
-      status
+      ${USER_SELECT_COLUMNS}
     FROM app_user
     WHERE user_id = $1
     LIMIT 1
@@ -181,7 +240,7 @@ export async function getUserById(userId: string) {
     [userId]
   );
 
-  return result.rows[0] ?? null;
+  return withUserBadges(result.rows[0] ?? null);
 }
 
 export async function upsertGoogleUser(input: {
@@ -190,7 +249,7 @@ export async function upsertGoogleUser(input: {
 }) {
   const emailNormalized = input.email.trim().toLowerCase();
 
-  const result = await pool.query<AppUser>(
+  const result = await pool.query<AppUserRow>(
     `
     INSERT INTO app_user (
       google_subject,
@@ -206,16 +265,7 @@ export async function upsertGoogleUser(input: {
       email = EXCLUDED.email,
       email_normalized = EXCLUDED.email_normalized
     RETURNING
-      user_id::text,
-      google_subject,
-      email,
-      email_normalized,
-      username,
-      username_normalized,
-      avatar_style,
-      avatar_bg,
-      avatar_accent,
-      status
+      ${USER_SELECT_COLUMNS}
     `,
     [
       input.googleSubject,
@@ -227,7 +277,7 @@ export async function upsertGoogleUser(input: {
     ]
   );
 
-  return result.rows[0];
+  return withUserBadges(result.rows[0]);
 }
 
 export async function setUsernameForUser(userId: string, rawUsername: string) {
@@ -236,7 +286,7 @@ export async function setUsernameForUser(userId: string, rawUsername: string) {
     return validation;
   }
 
-  const result = await pool.query<AppUser>(
+  const result = await pool.query<AppUserRow>(
     `
     UPDATE app_user
     SET
@@ -245,16 +295,7 @@ export async function setUsernameForUser(userId: string, rawUsername: string) {
     WHERE user_id = $1
       AND status = 'active'
     RETURNING
-      user_id::text,
-      google_subject,
-      email,
-      email_normalized,
-      username,
-      username_normalized,
-      avatar_style,
-      avatar_bg,
-      avatar_accent,
-      status
+      ${USER_SELECT_COLUMNS}
     `,
     [userId, validation.username, validation.usernameNormalized]
   );
@@ -265,7 +306,7 @@ export async function setUsernameForUser(userId: string, rawUsername: string) {
 
   return {
     ok: true as const,
-    user: result.rows[0],
+    user: (await withUserBadges(result.rows[0])) as AppUser,
   };
 }
 
@@ -291,7 +332,7 @@ export async function updateAvatarForUser(input: {
     return { ok: false as const, reason: "invalid" as const };
   }
 
-  const result = await pool.query<AppUser>(
+  const result = await pool.query<AppUserRow>(
     `
     UPDATE app_user
     SET
@@ -301,16 +342,7 @@ export async function updateAvatarForUser(input: {
     WHERE user_id = $1
       AND status = 'active'
     RETURNING
-      user_id::text,
-      google_subject,
-      email,
-      email_normalized,
-      username,
-      username_normalized,
-      avatar_style,
-      avatar_bg,
-      avatar_accent,
-      status
+      ${USER_SELECT_COLUMNS}
     `,
     [input.userId, input.avatarStyle, input.avatarBg, input.avatarAccent]
   );
@@ -321,6 +353,155 @@ export async function updateAvatarForUser(input: {
 
   return {
     ok: true as const,
-    user: result.rows[0],
+    user: (await withUserBadges(result.rows[0])) as AppUser,
   };
+}
+
+export async function grantBadgesToUser(input: {
+  userId: string;
+  badgeKeys: BadgeKey[];
+  awardedByUserId?: string | null;
+  awardNote?: string | null;
+}) {
+  const uniqueBadgeKeys = [...new Set(input.badgeKeys)].filter((badgeKey) =>
+    isBadgeKey(badgeKey)
+  );
+
+  if (uniqueBadgeKeys.length === 0) {
+    return [] as UserBadge[];
+  }
+
+  const result = await pool.query<UserBadgeRow>(
+    `
+    INSERT INTO user_badge (
+      user_id,
+      badge_key,
+      awarded_by_user_id,
+      award_note
+    )
+    SELECT
+      $1::bigint,
+      badge_key,
+      $3::bigint,
+      $4
+    FROM unnest($2::text[]) AS badge_key
+    ON CONFLICT (user_id, badge_key)
+    DO NOTHING
+    RETURNING
+      badge_key,
+      awarded_at::text,
+      awarded_by_user_id::text,
+      award_note
+    `,
+    [
+      Number(input.userId),
+      uniqueBadgeKeys,
+      input.awardedByUserId ? Number(input.awardedByUserId) : null,
+      input.awardNote ?? null,
+    ]
+  );
+
+  return result.rows
+    .map((row) =>
+      hydrateBadge({
+        badgeKey: row.badge_key,
+        awardedAt: row.awarded_at,
+        awardedByUserId: row.awarded_by_user_id,
+        awardNote: row.award_note,
+      })
+    )
+    .filter((badge): badge is UserBadge => badge !== null)
+    .sort(
+      (a, b) => BADGE_ORDER.indexOf(a.badgeKey) - BADGE_ORDER.indexOf(b.badgeKey)
+    );
+}
+
+export async function awardBadgesForSubmission(input: {
+  userId: string;
+  puzzleId: number;
+  submissionId: number;
+  activeLinks: number;
+}) {
+  const badgeKeys = new Set<BadgeKey>();
+
+  const submissionCountResult = await pool.query<{ submission_count: string }>(
+    `
+    SELECT COUNT(*)::text AS submission_count
+    FROM puzzle_submission
+    WHERE user_id = $1
+    `,
+    [Number(input.userId)]
+  );
+  const submissionCount = Number(
+    submissionCountResult.rows[0]?.submission_count ?? "0"
+  );
+
+  SUBMISSION_COUNT_BADGES.forEach(({ count, key }) => {
+    if (submissionCount >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  if (input.activeLinks >= 10) {
+    badgeKeys.add("ten_links_submission");
+  }
+
+  const placementResult = await pool.query<{ placement: string }>(
+    `
+    WITH ranked AS (
+      SELECT
+        submission_id,
+        ROW_NUMBER() OVER (
+          PARTITION BY puzzle_id
+          ORDER BY final_score DESC, submitted_at ASC
+        ) AS placement
+      FROM puzzle_submission
+      WHERE puzzle_id = $1
+    )
+    SELECT placement::text
+    FROM ranked
+    WHERE submission_id = $2
+    LIMIT 1
+    `,
+    [input.puzzleId, input.submissionId]
+  );
+  const placement = Number(placementResult.rows[0]?.placement ?? "9999");
+
+  if (placement <= 10) {
+    badgeKeys.add("top_10_finish");
+  }
+
+  const topTenCountResult = await pool.query<{ top_ten_count: string }>(
+    `
+    WITH ranked AS (
+      SELECT
+        puzzle_id,
+        user_id,
+        ROW_NUMBER() OVER (
+          PARTITION BY puzzle_id
+          ORDER BY final_score DESC, submitted_at ASC
+        ) AS placement
+      FROM puzzle_submission
+    )
+    SELECT COUNT(*)::text AS top_ten_count
+    FROM ranked
+    WHERE user_id = $1
+      AND placement <= 10
+    `,
+    [Number(input.userId)]
+  );
+  const topTenCount = Number(topTenCountResult.rows[0]?.top_ten_count ?? "0");
+
+  if (topTenCount >= 5) {
+    badgeKeys.add("top_10_finish_5");
+  }
+
+  return grantBadgesToUser({
+    userId: input.userId,
+    badgeKeys: [...badgeKeys],
+  });
+}
+
+export function getManualBadgeKeys() {
+  return BADGE_ORDER.filter((badgeKey) => getBadgeDefinition(badgeKey)?.manualOnly);
 }

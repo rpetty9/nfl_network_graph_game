@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { awardBadgesForSubmission } from "@/lib/users";
 import { pool } from "@/lib/db";
 import { getLinkMultiplier } from "@/lib/scoring";
 
@@ -643,11 +644,22 @@ export async function POST(request: NextRequest) {
       ]
     );
 
+    const awardedBadges =
+      registeredUserId != null
+        ? await awardBadgesForSubmission({
+            userId: registeredUserId,
+            puzzleId: Number(puzzle.puzzle_id),
+            submissionId: Number(submission.submission_id),
+            activeLinks,
+          })
+        : [];
+
     return NextResponse.json({
       submission_id: submission.submission_id,
       display_name: submission.display_name,
       final_score: finalScore,
       percent_of_optimal: percentOfOptimal,
+      awarded_badges: awardedBadges,
     });
   } catch (error) {
     console.error("Submission route failed:", error);

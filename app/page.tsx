@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { type BadgeIcon, type BadgeTone, type UserBadge } from "@/lib/badges";
 import {
   AVATAR_COLORS,
   AVATAR_COLOR_CLASSES,
@@ -132,6 +133,7 @@ type SubmissionResponse = {
   display_name: string;
   final_score: number;
   percent_of_optimal: number | null;
+  awarded_badges?: UserBadge[];
 };
 
 type LeaderboardEntry = {
@@ -145,6 +147,17 @@ type LeaderboardEntry = {
   percent_of_optimal: number | null;
   submitted_at: string;
 };
+
+function formatBadgeAwardDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 type NodeState = {
   node_id: number;
@@ -509,6 +522,148 @@ function GuestProfileButton({
   );
 }
 
+function getBadgeToneClasses(tone: BadgeTone) {
+  switch (tone) {
+    case "emerald":
+      return {
+        shell: "border-emerald-200 bg-emerald-50/90 text-emerald-900",
+        icon: "bg-emerald-500 text-white",
+        meta: "text-emerald-700",
+      };
+    case "amber":
+      return {
+        shell: "border-amber-200 bg-amber-50/90 text-amber-900",
+        icon: "bg-amber-500 text-white",
+        meta: "text-amber-700",
+      };
+    case "violet":
+      return {
+        shell: "border-violet-200 bg-violet-50/90 text-violet-900",
+        icon: "bg-violet-500 text-white",
+        meta: "text-violet-700",
+      };
+    case "rose":
+      return {
+        shell: "border-rose-200 bg-rose-50/90 text-rose-900",
+        icon: "bg-rose-500 text-white",
+        meta: "text-rose-700",
+      };
+    case "slate":
+      return {
+        shell: "border-slate-200 bg-slate-100/90 text-slate-900",
+        icon: "bg-slate-700 text-white",
+        meta: "text-slate-600",
+      };
+    case "sky":
+    default:
+      return {
+        shell: "border-sky-200 bg-sky-50/90 text-sky-900",
+        icon: "bg-sky-500 text-white",
+        meta: "text-sky-700",
+      };
+  }
+}
+
+function BadgeGlyph({ icon }: { icon: BadgeIcon }) {
+  switch (icon) {
+    case "stack":
+      return (
+        <>
+          <rect x="5" y="6" width="14" height="4" rx="1.5" />
+          <rect x="5" y="10" width="14" height="4" rx="1.5" />
+          <rect x="5" y="14" width="14" height="4" rx="1.5" />
+        </>
+      );
+    case "trophy":
+      return (
+        <>
+          <path d="M8 4h8v3a4 4 0 0 1-8 0V4Z" />
+          <path d="M12 11v4" />
+          <path d="M9 19h6" />
+          <path d="M16 6h2a2 2 0 0 1-2 2" />
+          <path d="M8 6H6a2 2 0 0 0 2 2" />
+        </>
+      );
+    case "link":
+      return (
+        <>
+          <path d="M9 8H7a4 4 0 1 0 0 8h2" />
+          <path d="M15 8h2a4 4 0 1 1 0 8h-2" />
+          <path d="M8 12h8" />
+        </>
+      );
+    case "shield":
+      return (
+        <>
+          <path d="M12 3l7 3v5c0 4.2-2.4 7.8-7 10-4.6-2.2-7-5.8-7-10V6l7-3Z" />
+          <path d="M9.5 12.5l1.8 1.8 3.4-3.8" />
+        </>
+      );
+    case "flag":
+      return (
+        <>
+          <path d="M7 20V4" />
+          <path d="M7 5h8l-1.6 2.5L15 10H7" />
+        </>
+      );
+    case "spark":
+    default:
+      return (
+        <>
+          <path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z" />
+        </>
+      );
+  }
+}
+
+function ProfileBadgeCard({
+  badge,
+  compact = false,
+}: {
+  badge: UserBadge;
+  compact?: boolean;
+}) {
+  const tone = getBadgeToneClasses(badge.tone);
+
+  return (
+    <div
+      className={`rounded-[18px] border px-3 py-3 ${tone.shell} ${
+        compact ? "min-w-[150px]" : ""
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone.icon}`}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <BadgeGlyph icon={badge.icon} />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.08em]">
+            {badge.title}
+          </p>
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+            {badge.description}
+          </p>
+          <p className={`mt-2 text-[10px] font-black uppercase tracking-[0.08em] ${tone.meta}`}>
+            Earned {formatBadgeAwardDate(badge.awardedAt)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const todayIso = getCurrentLocalDateIso();
   const loadRequestRef = useRef(0);
@@ -574,6 +729,7 @@ export default function HomePage() {
   const sessionAvatarBg = (session?.user?.avatarBg ?? DEFAULT_AVATAR.bg) as AvatarColor;
   const sessionAvatarAccent = (session?.user?.avatarAccent ??
     DEFAULT_AVATAR.accent) as AvatarColor;
+  const userBadges = (session?.user?.badges ?? []) as UserBadge[];
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1727,6 +1883,10 @@ export default function HomePage() {
         setSubmissionResult(saved);
         markBrowserSubmittedForDate(selectedDate);
         setHasSubmittedForSelectedDate(true);
+        if (session?.user?.id) {
+          await updateSession();
+          if (controller.signal.aborted) return;
+        }
 
         const leaderboardResponse = await fetch(
           `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
@@ -1759,7 +1919,15 @@ export default function HomePage() {
 
     saveSubmissionAndLoadLeaderboard();
     return () => controller.abort();
-  }, [submitted, optimalLineup, selectedDate, nodes, browserClientToken]);
+  }, [
+    submitted,
+    optimalLineup,
+    selectedDate,
+    nodes,
+    browserClientToken,
+    session?.user?.id,
+    updateSession,
+  ]);
 
   useEffect(() => {
     if (!leaderboardOpen || submitted) return;
@@ -2401,6 +2569,24 @@ export default function HomePage() {
                 )}
               </div>
             </div>
+
+            {submissionResult?.awarded_badges &&
+            submissionResult.awarded_badges.length > 0 ? (
+              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-6 text-left shadow-[0_14px_36px_rgba(16,185,129,0.12)]">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">
+                  New Badges
+                </p>
+                <h3 className="mt-2 text-2xl font-black text-emerald-900">
+                  You earned {submissionResult.awarded_badges.length} new badge
+                  {submissionResult.awarded_badges.length === 1 ? "" : "s"}
+                </h3>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {submissionResult.awarded_badges.map((badge) => (
+                    <ProfileBadgeCard key={badge.badgeKey} badge={badge} compact />
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-6 text-left shadow-[0_14px_36px_rgba(251,191,36,0.12)]">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
@@ -3072,7 +3258,7 @@ export default function HomePage() {
                       Profile
                     </p>
                     <h2 className="mt-2 text-2xl font-black text-sky-900">
-                      Customize Your Avatar
+                      Customize Your Profile
                     </h2>
                     <p className="mt-2 text-sm font-semibold text-slate-600">
                       {signedInUsername}
@@ -3087,20 +3273,44 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                <div className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
-                  <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-5 text-center">
-                    <ProfileAvatar
-                      style={avatarStyleDraft}
-                      bg={avatarBgDraft}
-                      accent={avatarAccentDraft}
-                      size="lg"
-                    />
-                    <p className="mt-4 text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
-                      Preview
-                    </p>
-                    <p className="mt-1 text-lg font-black text-slate-900">
-                      {signedInUsername}
-                    </p>
+                <div className="mt-6 grid gap-6 md:grid-cols-[240px_1fr]">
+                  <div className="space-y-4">
+                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-5 text-center">
+                      <ProfileAvatar
+                        style={avatarStyleDraft}
+                        bg={avatarBgDraft}
+                        accent={avatarAccentDraft}
+                        size="lg"
+                      />
+                      <p className="mt-4 text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+                        Preview
+                      </p>
+                      <p className="mt-1 text-lg font-black text-slate-900">
+                        {signedInUsername}
+                      </p>
+                    </div>
+
+                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                          Earned Badges
+                        </p>
+                        <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          {userBadges.length}
+                        </span>
+                      </div>
+                      {userBadges.length > 0 ? (
+                        <div className="mt-4 space-y-3">
+                          {userBadges.map((badge) => (
+                            <ProfileBadgeCard key={badge.badgeKey} badge={badge} />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/60 px-4 py-4 text-sm font-semibold text-slate-600">
+                          Submit puzzles, crack the top 10, and hit special milestones to start earning badges.
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-5">

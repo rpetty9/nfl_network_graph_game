@@ -1,5 +1,6 @@
 import "next-auth";
 import "next-auth/jwt";
+import type { UserBadge } from "@/lib/badges";
 
 declare module "next-auth" {
   interface Session {
@@ -12,6 +13,7 @@ declare module "next-auth" {
       avatarStyle: string;
       avatarBg: string;
       avatarAccent: string;
+      badges: UserBadge[];
       needsUsername: boolean;
     };
   }
@@ -25,6 +27,7 @@ declare module "next-auth/jwt" {
     avatarStyle?: string;
     avatarBg?: string;
     avatarAccent?: string;
+    badges?: UserBadge[];
     needsUsername?: boolean;
   }
 }

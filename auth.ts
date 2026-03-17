@@ -49,13 +49,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email,
           });
 
-          token.appUserId = appUser.user_id;
-          token.googleSubject = appUser.google_subject;
-          token.username = appUser.username;
-          token.avatarStyle = appUser.avatar_style;
-          token.avatarBg = appUser.avatar_bg;
-          token.avatarAccent = appUser.avatar_accent;
-          token.needsUsername = !appUser.username;
+          if (appUser) {
+            token.appUserId = appUser.user_id;
+            token.googleSubject = appUser.google_subject;
+            token.username = appUser.username;
+            token.avatarStyle = appUser.avatar_style;
+            token.avatarBg = appUser.avatar_bg;
+            token.avatarAccent = appUser.avatar_accent;
+            token.badges = appUser.badges;
+            token.needsUsername = !appUser.username;
+          }
         }
 
         return token;
@@ -68,6 +71,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.avatarStyle = refreshedUser.avatar_style;
           token.avatarBg = refreshedUser.avatar_bg;
           token.avatarAccent = refreshedUser.avatar_accent;
+          token.badges = refreshedUser.badges;
           token.needsUsername = !refreshedUser.username;
         }
         return token;
@@ -81,6 +85,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.avatarStyle = appUser.avatar_style;
           token.avatarBg = appUser.avatar_bg;
           token.avatarAccent = appUser.avatar_accent;
+          token.badges = appUser.badges;
           token.needsUsername = !appUser.username;
         }
       }
@@ -98,6 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           typeof token.avatarBg === "string" ? token.avatarBg : "sky";
         session.user.avatarAccent =
           typeof token.avatarAccent === "string" ? token.avatarAccent : "amber";
+        session.user.badges = Array.isArray(token.badges) ? token.badges : [];
         session.user.needsUsername = Boolean(token.needsUsername);
       }
 
