@@ -3928,9 +3928,6 @@ export default function HomePage() {
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                       Profile
                     </p>
-                    <h2 className="mt-2 text-2xl font-black text-sky-900">
-                      Customize Your Profile
-                    </h2>
                     <p className="mt-2 text-sm font-semibold text-slate-600">
                       {signedInUsername}
                     </p>
