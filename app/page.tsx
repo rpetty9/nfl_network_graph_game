@@ -444,9 +444,9 @@ function ProfileAvatar({
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"
-        className={`${svgClass} ${accentPalette.accent}`}
-        fill="currentColor"
-        stroke="currentColor"
+        className={svgClass}
+        fill={accentPalette.iconHex}
+        stroke={accentPalette.iconHex}
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -2050,28 +2050,19 @@ export default function HomePage() {
                   Loading
                 </div>
               ) : signedInUsername ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setProfileOpen(true)}
-                    className="inline-flex h-10 items-center gap-2 rounded-full border-[2px] border-white/60 bg-white/18 px-2 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26"
-                  >
-                    <ProfileAvatar
-                      style={sessionAvatarStyle}
-                      bg={sessionAvatarBg}
-                      accent={sessionAvatarAccent}
-                      size="sm"
-                    />
-                    <span>{signedInUsername}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void signOut({ redirect: false })}
-                    className="inline-flex h-10 items-center rounded-full border-[2px] border-white/60 bg-white/12 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/22"
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen(true)}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border-[2px] border-white/60 bg-white/18 px-2 pr-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/26"
+                >
+                  <ProfileAvatar
+                    style={sessionAvatarStyle}
+                    bg={sessionAvatarBg}
+                    accent={sessionAvatarAccent}
+                    size="sm"
+                  />
+                  <span>{signedInUsername}</span>
+                </button>
               ) : needsUsername ? (
                 <div className="inline-flex h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm">
                   Finish Profile
@@ -3044,7 +3035,14 @@ export default function HomePage() {
                   </div>
                 )}
 
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void signOut({ redirect: false })}
+                    className="rounded-2xl border-[3px] border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Sign Out
+                  </button>
                   <button
                     type="button"
                     onClick={() => void handleSaveAvatar()}
