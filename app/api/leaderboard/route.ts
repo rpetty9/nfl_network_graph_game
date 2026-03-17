@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       const allTimeResult = await pool.query(
         `
         SELECT
-          au.user_id,
+          au.user_id::text AS user_id,
           au.username AS display_name,
           COUNT(*)::int AS top_10_finishes,
           MIN(dlf.placement)::int AS best_finish,
@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
     const submissionsResult = await pool.query(
       `
       SELECT
+        ps.user_id::text AS user_id,
         ps.submission_id,
         ps.display_name,
         ps.base_score,

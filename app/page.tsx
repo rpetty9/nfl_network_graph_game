@@ -154,6 +154,7 @@ type SubmissionResponse = {
 };
 
 type LeaderboardEntry = {
+  user_id: string;
   submission_id: number;
   display_name: string;
   base_score: number;
@@ -167,12 +168,32 @@ type LeaderboardEntry = {
 };
 
 type AllTimeLeaderboardEntry = {
-  user_id: number;
+  user_id: string;
   display_name: string;
   top_10_finishes: number;
   best_finish: number;
   latest_finish_at: string;
   featured_badges?: BadgeKey[];
+};
+
+type PublicProfileResponse = {
+  profile: {
+    user_id: string;
+    created_at: string;
+    username: string | null;
+    avatar_style: AvatarStyle;
+    avatar_bg: AvatarColor;
+    avatar_accent: AvatarColor;
+    avatar_border: AvatarColor;
+    featured_badges: BadgeKey[];
+    badges: UserBadge[];
+    stats: {
+      puzzles_submitted: number;
+      leaderboard_finishes: number;
+      links_created: number;
+      longest_submission_streak: number;
+    };
+  };
 };
 
 type ActiveLinkDetail = {
@@ -1202,6 +1223,15 @@ export default function HomePage() {
   const [allTimeLeaderboardError, setAllTimeLeaderboardError] = useState<string | null>(
     null
   );
+  const [publicProfileOpen, setPublicProfileOpen] = useState(false);
+  const [publicProfileLoading, setPublicProfileLoading] = useState(false);
+  const [publicProfileError, setPublicProfileError] = useState<string | null>(null);
+  const [publicProfile, setPublicProfile] = useState<PublicProfileResponse["profile"] | null>(
+    null
+  );
+  const [activePublicFeaturedBadgeKey, setActivePublicFeaturedBadgeKey] = useState<string | null>(
+    null
+  );
   const [savedSubmissionLoading, setSavedSubmissionLoading] = useState(false);
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
@@ -1278,6 +1308,14 @@ export default function HomePage() {
     .map((badgeKey) => earnedBadgeMap.get(badgeKey))
     .filter((badge): badge is UserBadge => Boolean(badge));
   const featuredBadgeSlots = [0, 1, 2].map((index) => featuredBadges[index] ?? null);
+  const publicFeaturedBadges = (publicProfile?.featured_badges ?? [])
+    .map((badgeKey) =>
+      publicProfile?.badges.find((badge) => badge.badgeKey === badgeKey) ?? null
+    )
+    .filter((badge): badge is UserBadge => Boolean(badge));
+  const publicFeaturedBadgeSlots = [0, 1, 2].map(
+    (index) => publicFeaturedBadges[index] ?? null
+  );
   const avatarEditorConfig = useMemo(() => {
     switch (avatarEditorTab) {
       case "background":
@@ -2911,6 +2949,33 @@ export default function HomePage() {
     }
   }
 
+  async function openPublicProfile(userId: string) {
+    try {
+      setPublicProfileOpen(true);
+      setPublicProfileLoading(true);
+      setPublicProfileError(null);
+      setPublicProfile(null);
+      setActivePublicFeaturedBadgeKey(null);
+
+      const response = await fetch(
+        `/api/profile/public?userId=${encodeURIComponent(userId)}`,
+        { cache: "no-store" }
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || "Unable to load profile.");
+      }
+
+      const json = (await response.json()) as PublicProfileResponse;
+      setPublicProfile(json.profile);
+    } catch (error) {
+      setPublicProfileError((error as Error).message);
+    } finally {
+      setPublicProfileLoading(false);
+    }
+  }
+
   function handleToggleFeaturedBadge(badgeKey: BadgeKey) {
     setBadgeError(null);
     setFeaturedBadgeDraft((current) => {
@@ -3624,13 +3689,15 @@ export default function HomePage() {
               ) : leaderboard.length > 0 ? (
                 <div className="mt-4 space-y-3">
                   {leaderboard.map((entry, index) => (
-                    <div
+                    <button
+                      type="button"
                       key={entry.submission_id}
+                      onClick={() => void openPublicProfile(entry.user_id)}
                       className={`flex items-center justify-between gap-4 rounded-[18px] border-[3px] bg-white/90 px-4 py-3 ${
                         submissionResult?.submission_id === entry.submission_id
                           ? "border-emerald-200 shadow-[0_0_20px_rgba(52,211,153,0.12)]"
                           : "border-amber-100"
-                      }`}
+                      } text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]`}
                     >
                       <div className="min-w-0">
                         <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
@@ -3656,7 +3723,7 @@ export default function HomePage() {
                           })}
                         </p>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (
@@ -4661,6 +4728,156 @@ export default function HomePage() {
           </div>
         )}
 
+        {publicProfileOpen && (
+          <div className="fixed inset-0 z-[106] overflow-y-auto bg-slate-950/40 px-4 py-6">
+            <div className="flex min-h-full items-center justify-center">
+              <div className="w-full max-w-3xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                      Player Profile
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-600">
+                      Public avatar, badges, and stats
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPublicProfileOpen(false)}
+                    className="rounded-full border-[3px] border-sky-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-sky-700"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {publicProfileError ? (
+                  <div className="mt-5 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900">
+                    {publicProfileError}
+                  </div>
+                ) : publicProfileLoading || !publicProfile ? (
+                  <div className="mt-5 rounded-[20px] border-[3px] border-sky-100 bg-white/90 px-4 py-8 text-center text-sm font-semibold text-slate-600">
+                    Loading profile...
+                  </div>
+                ) : (
+                  <div className="mt-6 space-y-6">
+                    <div className="rounded-[28px] border-[3px] border-sky-100 bg-white/90 p-5">
+                      <div className="grid gap-5 md:grid-cols-[240px_1fr]">
+                        <div className="flex items-center gap-4">
+                          <ProfileAvatar
+                            style={publicProfile.avatar_style}
+                            bg={publicProfile.avatar_bg}
+                            accent={publicProfile.avatar_accent}
+                            border={publicProfile.avatar_border}
+                            size="lg"
+                          />
+                          <div>
+                            <p className="text-xl font-black text-slate-900">
+                              {publicProfile.username}
+                            </p>
+                            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Joined {formatProfileCreatedDate(publicProfile.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          {publicFeaturedBadgeSlots.some(Boolean) ? (
+                            publicFeaturedBadgeSlots.map((badge, index) => (
+                              <FeaturedBadgeSlot
+                                key={badge?.badgeKey ?? `public-empty-${index}`}
+                                badge={badge}
+                                active={activePublicFeaturedBadgeKey === badge?.badgeKey}
+                                onToggle={() =>
+                                  setActivePublicFeaturedBadgeKey((current) =>
+                                    current === badge?.badgeKey ? null : (badge?.badgeKey ?? null)
+                                  )
+                                }
+                              />
+                            ))
+                          ) : (
+                            <div className="rounded-[18px] border-[3px] border-dashed border-sky-200 bg-sky-50/60 px-4 py-4 text-left">
+                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+                                No Featured Badges
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-slate-500">
+                                This player has not featured any badges yet.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-[240px_1fr]">
+                      <div className="space-y-4">
+                        <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                            Stats
+                          </p>
+                          <div className="mt-4 grid gap-3">
+                            <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                Puzzles Submitted
+                              </p>
+                              <p className="mt-1 text-2xl font-black text-slate-900">
+                                {publicProfile.stats.puzzles_submitted}
+                              </p>
+                            </div>
+                            <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                Leaderboards Made
+                              </p>
+                              <p className="mt-1 text-2xl font-black text-slate-900">
+                                {publicProfile.stats.leaderboard_finishes}
+                              </p>
+                            </div>
+                            <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                                Links Created
+                              </p>
+                              <p className="mt-1 text-2xl font-black text-slate-900">
+                                {publicProfile.stats.links_created}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-5">
+                        <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                                Earned Badges
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-slate-600">
+                                Public profile achievements earned through play.
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              {publicProfile.badges.length}
+                            </span>
+                          </div>
+                          <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            {publicProfile.badges.length > 0 ? (
+                              publicProfile.badges.map((badge) => (
+                                <ProfileBadgeCard key={`public-${badge.badgeKey}`} badge={badge} />
+                              ))
+                            ) : (
+                              <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600 md:col-span-2">
+                                No earned badges yet.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {leaderboardOpen && (
           <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/35 px-4 py-6">
             <div className="flex min-h-full items-start justify-center">
@@ -4721,9 +4938,11 @@ export default function HomePage() {
                   ) : leaderboard.length > 0 ? (
                     <div className="space-y-3">
                       {leaderboard.map((entry, index) => (
-                        <div
+                        <button
+                          type="button"
                           key={entry.submission_id}
-                          className="flex items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3"
+                          onClick={() => void openPublicProfile(entry.user_id)}
+                          className="flex w-full items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]"
                         >
                           <div className="min-w-0">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
@@ -4745,7 +4964,7 @@ export default function HomePage() {
                               })}
                             </p>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   ) : (
@@ -4763,9 +4982,11 @@ export default function HomePage() {
                   ) : allTimeLeaderboard.length > 0 ? (
                     <div className="space-y-3">
                       {allTimeLeaderboard.map((entry, index) => (
-                        <div
+                        <button
+                          type="button"
                           key={entry.user_id}
-                          className="flex items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3"
+                          onClick={() => void openPublicProfile(entry.user_id)}
+                          className="flex w-full items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]"
                         >
                           <div className="min-w-0">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
@@ -4787,7 +5008,7 @@ export default function HomePage() {
                               {entry.top_10_finishes.toLocaleString()}
                             </p>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   ) : (

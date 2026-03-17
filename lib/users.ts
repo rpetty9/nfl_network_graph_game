@@ -41,6 +41,24 @@ export type AppUser = {
   };
 };
 
+export type PublicUserProfile = {
+  user_id: string;
+  created_at: string;
+  username: string | null;
+  avatar_style: AvatarStyle;
+  avatar_bg: AvatarColor;
+  avatar_accent: AvatarColor;
+  avatar_border: AvatarColor;
+  featured_badges: BadgeKey[];
+  badges: UserBadge[];
+  stats: {
+    puzzles_submitted: number;
+    leaderboard_finishes: number;
+    links_created: number;
+    longest_submission_streak: number;
+  };
+};
+
 type AppUserRow = Omit<AppUser, "badges" | "stats">;
 
 type UserBadgeRow = {
@@ -353,6 +371,37 @@ export async function getUserById(userId: string) {
   );
 
   return withUserBadges(result.rows[0] ?? null);
+}
+
+export async function getPublicUserProfileById(userId: string): Promise<PublicUserProfile | null> {
+  const result = await pool.query<AppUserRow>(
+    `
+    SELECT
+      ${USER_SELECT_COLUMNS}
+    FROM app_user
+    WHERE user_id = $1
+      AND status = 'active'
+      AND username IS NOT NULL
+    LIMIT 1
+    `,
+    [userId]
+  );
+
+  const user = await withUserBadges(result.rows[0] ?? null);
+  if (!user) return null;
+
+  return {
+    user_id: user.user_id,
+    created_at: user.created_at,
+    username: user.username,
+    avatar_style: user.avatar_style,
+    avatar_bg: user.avatar_bg,
+    avatar_accent: user.avatar_accent,
+    avatar_border: user.avatar_border,
+    featured_badges: user.featured_badges,
+    badges: user.badges,
+    stats: user.stats,
+  };
 }
 
 export async function upsertGoogleUser(input: {
