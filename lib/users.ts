@@ -296,6 +296,22 @@ async function loadStatsForUser(userId: string) {
 async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> {
   if (!user) return null;
 
+  const derivedBadgeKeys: BadgeKey[] = ["account_created"];
+  const hasCustomizedAvatar =
+    user.avatar_style !== DEFAULT_AVATAR.style ||
+    user.avatar_bg !== DEFAULT_AVATAR.bg ||
+    user.avatar_accent !== DEFAULT_AVATAR.accent ||
+    user.avatar_border !== DEFAULT_AVATAR.border;
+
+  if (hasCustomizedAvatar) {
+    derivedBadgeKeys.push("avatar_customized");
+  }
+
+  await grantBadgesToUser({
+    userId: user.user_id,
+    badgeKeys: derivedBadgeKeys,
+  });
+
   const [badges, stats] = await Promise.all([
     loadBadgesForUser(user.user_id),
     loadStatsForUser(user.user_id),
