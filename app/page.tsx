@@ -1465,56 +1465,102 @@ function FormationLogoConcept() {
   );
 }
 
-function RoutesLogoConcept() {
+function FiveWLogoConcept() {
   return (
-    <div className="flex w-full max-w-[280px] items-center justify-center gap-4">
-      <div className="flex h-28 w-28 items-center justify-center rounded-[28px] border-[3px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_48%,#22d3ee_100%)] shadow-[0_16px_26px_rgba(99,102,241,0.18)]">
-        <svg viewBox="0 0 80 80" className="h-20 w-20">
-          <circle cx="16" cy="56" r="5.5" fill="#fff" />
-          <circle cx="30" cy="24" r="5.5" fill="#fff" />
-          <circle cx="40" cy="56" r="6.5" fill="#fef08a" />
-          <circle cx="50" cy="24" r="5.5" fill="#fff" />
-          <circle cx="64" cy="56" r="5.5" fill="#fff" />
-          <path d="M16 56 Q26 42 30 24" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" fill="none" />
-          <path d="M30 24 H50" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" />
-          <path d="M40 56 V36" stroke="#fef08a" strokeWidth="4" strokeLinecap="round" />
-          <path d="M50 24 Q54 42 64 56" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" fill="none" />
+    <div className="flex w-full max-w-[280px] flex-col items-center text-center">
+      <div className="flex h-36 w-36 items-center justify-center rounded-[34px] border-[3px] border-sky-300 bg-[linear-gradient(135deg,#f8fbff_0%,#dbeafe_22%,#818cf8_68%,#312e81_100%)] shadow-[0_18px_32px_rgba(99,102,241,0.2)]">
+        <svg viewBox="0 0 120 120" className="h-28 w-28">
+          <path d="M84 20H46c-9.5 0-18 7.8-18 18v4h18v-3c0-3.2 2.2-5.5 5.5-5.5H84c3.4 0 5.5 2.2 5.5 5.4 0 3.6-2.4 5.5-6.3 6.9L53 56.5c-14 5.1-22.5 13.8-22.5 29.1 0 18 13.7 30.4 34.3 30.4 21.6 0 35.2-12.7 35.2-31.4H81.7c0 9.2-6.3 15.1-16.2 15.1-9.1 0-15.6-5.2-15.6-13.2 0-6.7 4.1-10.6 11.4-13.2l29.6-10.8c10.9-4 17.1-12.3 17.1-24.1C108 28.7 98.8 20 84 20Z" fill="#ffffff" />
+          <path d="M22 88c10-10.5 19.8-18 29.3-22.3" stroke="#fef08a" strokeWidth="5.5" strokeLinecap="round" strokeDasharray="6 7" />
+          <path d="M60 86c6.7-8.6 13.4-14.5 20-17.8" stroke="#fef08a" strokeWidth="5.5" strokeLinecap="round" strokeDasharray="6 7" />
+          <circle cx="24" cy="88" r="5.5" fill="#fef08a" />
+          <circle cx="60" cy="86" r="5.5" fill="#fef08a" />
+          <circle cx="96" cy="74" r="5.5" fill="#fef08a" />
         </svg>
       </div>
-      <div className="min-w-0">
-        <p className="font-[family-name:var(--font-display)] text-3xl leading-none text-sky-900">
-          Five
-          <br />
-          Wide
+      <div className="mt-4">
+        <p className="font-[family-name:var(--font-display)] text-[28px] leading-none text-sky-900">
+          5W
         </p>
         <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">
-          Linked Routes
+          Bold 5W Mark
         </p>
       </div>
     </div>
   );
 }
 
-function CrestLogoConcept() {
+function FwMonogramLogoConcept() {
   return (
     <div className="flex w-full max-w-[300px] flex-col items-center text-center">
-      <div className="relative flex h-36 w-36 items-center justify-center rounded-[36px] border-[3px] border-amber-300 bg-[radial-gradient(circle_at_top,#fff7d6_0%,#fde68a_22%,#fbbf24_48%,#7c3aed_92%)] shadow-[0_18px_34px_rgba(251,191,36,0.25)]">
+      <div className="relative flex h-36 w-36 items-center justify-center rounded-[36px] border-[3px] border-slate-300 bg-[linear-gradient(145deg,#ffffff_0%,#dbeafe_30%,#a78bfa_68%,#312e81_100%)] shadow-[0_18px_34px_rgba(99,102,241,0.2)]">
         <div className="absolute inset-3 rounded-[28px] border border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.26)_0%,rgba(255,255,255,0.05)_100%)]" />
         <svg viewBox="0 0 120 120" className="relative z-10 h-24 w-24">
-          <path d="M24 76 L60 34 L96 76" stroke="#0f172a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          <path d="M60 34 V90" stroke="#0f172a" strokeWidth="9" strokeLinecap="round" />
-          <circle cx="24" cy="76" r="7" fill="#0f172a" />
-          <circle cx="42" cy="58" r="7" fill="#0f172a" />
-          <circle cx="60" cy="40" r="8" fill="#f8fafc" stroke="#0f172a" strokeWidth="4" />
-          <circle cx="78" cy="58" r="7" fill="#0f172a" />
-          <circle cx="96" cy="76" r="7" fill="#0f172a" />
+          <path d="M30 26h44v14H46v16h24v14H46v24H30V26Z" fill="#0f172a" />
+          <path d="M60 36 76 92 92 36" fill="none" stroke="#0f172a" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="76" cy="92" r="6" fill="#fef08a" />
+        </svg>
+      </div>
+      <p className="mt-4 font-[family-name:var(--font-display)] text-[28px] leading-none text-slate-900">
+        FW
+      </p>
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">
+        FW Monogram
+      </p>
+    </div>
+  );
+}
+
+function FieldBadgeLogoConcept() {
+  return (
+    <div className="flex w-full max-w-[300px] flex-col items-center text-center">
+      <div className="relative flex h-36 w-36 items-center justify-center rounded-[32px] border-[3px] border-emerald-300 bg-[linear-gradient(180deg,#ecfdf5_0%,#bbf7d0_22%,#34d399_60%,#0f766e_100%)] shadow-[0_18px_34px_rgba(16,185,129,0.22)]">
+        <svg viewBox="0 0 120 120" className="h-24 w-24">
+          <rect x="18" y="18" width="84" height="84" rx="16" fill="none" stroke="#ecfeff" strokeWidth="4" />
+          <path d="M60 18v84" stroke="#ecfeff" strokeWidth="3" strokeDasharray="5 7" />
+          <path d="M18 44h84" stroke="#ecfeff" strokeWidth="2.5" opacity="0.95" />
+          <path d="M18 76h84" stroke="#ecfeff" strokeWidth="2.5" opacity="0.95" />
+          {[28, 44, 60, 76, 92].map((x, index) => (
+            <circle key={x} cx={x} cy={index === 2 ? 60 : 92} r={index === 2 ? 7 : 5.5} fill={index === 2 ? "#fef08a" : "#ffffff"} />
+          ))}
         </svg>
       </div>
       <p className="mt-4 font-[family-name:var(--font-display)] text-[28px] leading-none text-slate-900">
         Five Wide
       </p>
-      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">
-        Premium Crest
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
+        Minimal Field Badge
+      </p>
+    </div>
+  );
+}
+
+function FiveWideWordmarkConcept() {
+  return (
+    <div className="flex w-full max-w-[300px] flex-col items-center text-center">
+      <div className="rounded-[30px] border-[3px] border-sky-200 bg-[linear-gradient(135deg,#ffffff_0%,#eff6ff_38%,#ddd6fe_100%)] px-6 py-5 shadow-[0_16px_30px_rgba(125,211,252,0.18)]">
+        <div className="flex items-end justify-center gap-3">
+          <span className="font-[family-name:var(--font-display)] text-[46px] leading-none text-sky-900">
+            5
+          </span>
+          <span className="font-[family-name:var(--font-display)] text-[46px] leading-none text-violet-700">
+            W
+          </span>
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-2">
+          {[0, 1, 2, 3, 4].map((index) => (
+            <span
+              key={index}
+              className={`h-2.5 rounded-full ${index === 2 ? "w-10 bg-amber-400" : "w-6 bg-sky-400"}`}
+            />
+          ))}
+        </div>
+      </div>
+      <p className="mt-4 font-[family-name:var(--font-display)] text-[28px] leading-none text-slate-900">
+        Five Wide
+      </p>
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">
+        5W Wordmark
       </p>
     </div>
   );
@@ -5106,12 +5152,12 @@ export default function HomePage() {
                 Five Wide Logo Concepts
               </h2>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-base">
-                Three different directions to compare quickly: a true playbook formation,
-                a more modern route-diagram mark, and a polished crest version.
+                A wider range this time: lettermarks, monograms, a minimal field badge,
+                and one formation-first option so you can react to the overall direction.
               </p>
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-3">
+            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
               <LogoConceptCard
                 title="Concept 1"
                 note="Most literal to the game: five spread receivers, a central link point, and route structure like a real playsheet."
@@ -5120,15 +5166,27 @@ export default function HomePage() {
               </LogoConceptCard>
               <LogoConceptCard
                 title="Concept 2"
-                note="Cleaner and more app-like: a compact route network mark that still clearly feels football-specific."
+                note="A bolder 5W icon that could work really well as an app badge or favicon."
               >
-                <RoutesLogoConcept />
+                <FiveWLogoConcept />
               </LogoConceptCard>
               <LogoConceptCard
                 title="Concept 3"
-                note="A more premium badge look if you want Five Wide to feel like a polished sports property or game brand."
+                note="A cleaner FW monogram if you want the brand to feel a little more like a sports identity mark."
               >
-                <CrestLogoConcept />
+                <FwMonogramLogoConcept />
+              </LogoConceptCard>
+              <LogoConceptCard
+                title="Concept 4"
+                note="Minimal field badge version with a little football geometry but a simpler, cleaner silhouette."
+              >
+                <FieldBadgeLogoConcept />
+              </LogoConceptCard>
+              <LogoConceptCard
+                title="Concept 5"
+                note="A straightforward 5 plus W wordmark treatment, more brand-first and less emblem-heavy."
+              >
+                <FiveWideWordmarkConcept />
               </LogoConceptCard>
             </div>
           </div>
