@@ -1131,6 +1131,168 @@ function getBadgeToneClasses(tone: BadgeTone) {
   }
 }
 
+function GraphLogoMark({
+  variant,
+}: {
+  variant: "formation" | "shield" | "playbook" | "spark";
+}) {
+  const nodes = [
+    { x: 24, y: 78 },
+    { x: 76, y: 34 },
+    { x: 128, y: 20 },
+    { x: 180, y: 34 },
+    { x: 232, y: 78 },
+  ];
+
+  return (
+    <svg aria-hidden="true" viewBox="0 0 256 176" className="h-full w-full">
+      <defs>
+        <linearGradient id={`bg-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={variant === "shield" ? "#0f172a" : "#f8fdff"} />
+          <stop offset="100%" stopColor={variant === "shield" ? "#312e81" : "#e0e7ff"} />
+        </linearGradient>
+        <linearGradient id={`link-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+        <linearGradient id={`node-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#fef3c7" />
+          <stop offset="100%" stopColor="#f59e0b" />
+        </linearGradient>
+      </defs>
+
+      {variant === "shield" ? (
+        <path
+          d="M128 10 214 34v60c0 34.2-22.1 56.7-86 72-63.9-15.3-86-37.8-86-72V34L128 10Z"
+          fill={`url(#bg-${variant})`}
+          stroke="rgba(147,197,253,0.8)"
+          strokeWidth="4"
+        />
+      ) : variant === "playbook" ? (
+        <rect
+          x="12"
+          y="12"
+          width="232"
+          height="152"
+          rx="34"
+          fill={`url(#bg-${variant})`}
+          stroke="rgba(147,197,253,0.8)"
+          strokeWidth="4"
+        />
+      ) : (
+        <rect
+          x="12"
+          y="12"
+          width="232"
+          height="152"
+          rx="44"
+          fill={`url(#bg-${variant})`}
+          stroke="rgba(147,197,253,0.8)"
+          strokeWidth="4"
+        />
+      )}
+
+      {variant === "playbook" ? (
+        <>
+          <path
+            d="M34 122C58 104 75 90 94 64"
+            fill="none"
+            stroke={`url(#link-${variant})`}
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray="8 10"
+          />
+          <path
+            d="M222 122C198 104 181 90 162 64"
+            fill="none"
+            stroke={`url(#link-${variant})`}
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray="8 10"
+          />
+          <path
+            d="M128 128V44"
+            fill="none"
+            stroke={`url(#link-${variant})`}
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray="10 10"
+          />
+        </>
+      ) : (
+        <>
+          {nodes.flatMap((from, index) =>
+            nodes.slice(index + 1).map((to, innerIndex) => (
+              <line
+                key={`${index}-${innerIndex}`}
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                stroke={`url(#link-${variant})`}
+                strokeWidth={variant === "spark" ? 5 : 4}
+                strokeOpacity={variant === "spark" ? 0.9 : 0.72}
+              />
+            )),
+          )}
+        </>
+      )}
+
+      {variant === "spark" ? (
+        <path
+          d="M123 78h14l-10 23h14l-17 27 4-20h-13l8-30Z"
+          fill="#fef3c7"
+          stroke="#f59e0b"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+      ) : null}
+
+      {nodes.map((node, index) => (
+        <g key={index}>
+          <circle cx={node.x} cy={node.y} r={15} fill={`url(#node-${variant})`} />
+          <circle cx={node.x} cy={node.y} r={15} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="3" />
+          <circle cx={node.x} cy={node.y} r={6} fill={variant === "shield" ? "#0f172a" : "#1e293b"} />
+        </g>
+      ))}
+
+      <text
+        x="128"
+        y="154"
+        textAnchor="middle"
+        className="fill-sky-900 font-black tracking-[0.22em]"
+        fontSize="20"
+      >
+        FIVE WIDE
+      </text>
+    </svg>
+  );
+}
+
+function GraphLogoCard({
+  title,
+  description,
+  variant,
+}: {
+  title: string;
+  description: string;
+  variant: "formation" | "shield" | "playbook" | "spark";
+}) {
+  return (
+    <div className="rounded-[28px] border-[3px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] p-4 shadow-[0_8px_0_rgba(125,211,252,0.08),0_14px_26px_rgba(125,211,252,0.12)]">
+      <div className="rounded-[24px] border-[2px] border-sky-100 bg-white/90 p-4">
+        <div className="mx-auto aspect-[256/176] w-full max-w-[280px]">
+          <GraphLogoMark variant={variant} />
+        </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-sky-700">{title}</p>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{description}</p>
+      </div>
+    </div>
+  );
+}
+
 function BadgeGlyph({ icon }: { icon: BadgeIcon }) {
   switch (icon) {
     case "stack":
@@ -4979,28 +5141,65 @@ export default function HomePage() {
           <div className="rounded-[34px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] p-5 shadow-[0_8px_0_rgba(125,211,252,0.08),0_14px_32px_rgba(125,211,252,0.12)] md:p-7">
             <div className="max-w-2xl">
               <p className="text-[11px] font-black uppercase tracking-[0.14em] text-sky-700">
-                Logo Preview
+                Logo Ideas
               </p>
               <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl text-sky-900 md:text-4xl">
-                Reference Logo
+                Five-Node Graph Marks
               </h2>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-base">
-                This is the exact logo image from your Desktop dropped into the page so you can
-                judge how it feels in the actual app layout.
+                A few cleaner logo directions built around the actual Five Wide graph:
+                five nodes, full connections, and a simple football-diagram feel.
               </p>
             </div>
 
-            <div className="mt-6 rounded-[28px] border-[3px] border-sky-200 bg-[linear-gradient(180deg,#f8fdff_0%,#eef6ff_100%)] p-4 shadow-[0_12px_28px_rgba(125,211,252,0.12)] md:p-6">
-              <div className="mx-auto flex w-full max-w-[720px] items-center justify-center rounded-[24px] border-[2px] border-sky-100 bg-white p-4 md:p-6">
-                <img
-                  src="/logo.png"
-                  alt="Five Wide logo reference"
-                  className="w-full max-w-[560px] object-contain"
-                />
-              </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <GraphLogoCard
+                title="Formation"
+                description="The simplest version: five spread nodes with every line active."
+                variant="formation"
+              />
+              <GraphLogoCard
+                title="Shield"
+                description="A darker app-icon option with the graph sitting inside a crest."
+                variant="shield"
+              />
+              <GraphLogoCard
+                title="Playbook"
+                description="A cleaner play-sheet angle with route lines instead of the full mesh."
+                variant="playbook"
+              />
+              <GraphLogoCard
+                title="Spark"
+                description="The same graph mark with a little extra energy in the center."
+                variant="spark"
+              />
             </div>
           </div>
         </section>
+
+        <div className="mx-auto mt-6 max-w-[1080px] px-2 text-center">
+          <p className="text-[11px] font-semibold leading-5 text-slate-500 md:text-xs">
+            NFL player and stats data for this project is loaded via{" "}
+            <a
+              href="https://nflreadpy.nflverse.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-black text-sky-700 underline decoration-sky-300 underline-offset-2"
+            >
+              nflreadpy
+            </a>{" "}
+            from the{" "}
+            <a
+              href="https://github.com/nflverse/nflverse-data"
+              target="_blank"
+              rel="noreferrer"
+              className="font-black text-sky-700 underline decoration-sky-300 underline-offset-2"
+            >
+              nflverse data
+            </a>{" "}
+            project.
+          </p>
+        </div>
 
         {accountChoiceOpen && !signedInUsername && !needsUsername && (
           <div className="fixed inset-0 z-[108] overflow-y-auto bg-slate-950/45 px-4 py-6">
