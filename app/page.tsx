@@ -1569,79 +1569,104 @@ function FiveWideWordmarkConcept() {
 function NeonChallengeLogoConcept() {
   return (
     <div className="flex w-full max-w-[320px] flex-col items-center text-center">
-      <div className="relative flex h-40 w-40 items-center justify-center">
-        <div className="absolute inset-0 rounded-[38px] bg-[radial-gradient(circle,rgba(168,85,247,0.22),transparent_60%)] blur-2xl" />
-        <div className="absolute inset-3 rounded-[32px] border-[3px] border-cyan-300/90 bg-[linear-gradient(180deg,#1e1b4b_0%,#111827_100%)] shadow-[0_0_28px_rgba(34,211,238,0.42),0_0_48px_rgba(192,38,211,0.28)]" />
-        <svg viewBox="0 0 160 160" className="relative z-10 h-36 w-36 overflow-visible">
-          <path
-            d="M80 14 126 36v36c0 34-16 58-46 74C50 130 34 106 34 72V36l46-22Z"
-            fill="url(#neonShield)"
-            stroke="#e879f9"
-            strokeWidth="4"
-          />
-          <path d="M80 36v72" stroke="#67e8f9" strokeWidth="3.5" strokeDasharray="6 7" opacity="0.9" />
-          <path d="M42 66 66 48" stroke="#67e8f9" strokeWidth="4" strokeLinecap="round" />
-          <path d="M118 66 94 48" stroke="#67e8f9" strokeWidth="4" strokeLinecap="round" />
-          <path d="M54 98 74 76" stroke="#e879f9" strokeWidth="4" strokeLinecap="round" />
-          <path d="M106 98 86 76" stroke="#e879f9" strokeWidth="4" strokeLinecap="round" />
-          <ellipse
-            cx="80"
-            cy="74"
-            rx="24"
-            ry="15"
-            fill="#22d3ee"
-            stroke="#bae6fd"
-            strokeWidth="3"
-            transform="rotate(-24 80 74)"
-          />
-          <path
-            d="M67 64c6 5.5 20 18 25 28"
-            stroke="#082f49"
-            strokeWidth="3"
-            strokeLinecap="round"
-            transform="rotate(-24 80 74)"
-          />
-          <path
-            d="M72 57h16"
-            stroke="#082f49"
-            strokeWidth="3"
-            strokeLinecap="round"
-            transform="rotate(-24 80 74)"
-          />
-          {[46, 66, 80, 94, 114].map((x, index) => (
-            <path
-              key={x}
-              d={`M${x} ${index % 2 === 0 ? 34 : 28}c5 7 10 13 15 17`}
-              stroke={index % 2 === 0 ? "#67e8f9" : "#e879f9"}
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              fill="none"
-            />
-          ))}
-          <text
-            x="80"
-            y="120"
-            textAnchor="middle"
-            className="font-[family-name:var(--font-display)]"
-            fontSize="28"
-            fill="#f8fafc"
-          >
-            5W
-          </text>
+      <div className="relative flex h-56 w-56 items-center justify-center">
+        <div className="absolute inset-0 rounded-[52px] bg-[radial-gradient(circle,rgba(168,85,247,0.32),transparent_58%)] blur-3xl" />
+        <div className="absolute inset-2 rounded-[44px] bg-[linear-gradient(180deg,#0f172a_0%,#111827_44%,#020617_100%)] shadow-[0_24px_44px_rgba(15,23,42,0.42),0_0_34px_rgba(34,211,238,0.24)]" />
+        <svg viewBox="0 0 220 220" className="relative z-10 h-52 w-52 overflow-visible">
           <defs>
-            <linearGradient id="neonShield" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#312e81" />
-              <stop offset="45%" stopColor="#1d4ed8" />
-              <stop offset="100%" stopColor="#111827" />
+            <linearGradient id="directNeonShield" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="#d946ef" />
+              <stop offset="100%" stopColor="#38bdf8" />
+            </linearGradient>
+            <linearGradient id="directNeonFive" x1="0" x2="1">
+              <stop offset="0%" stopColor="#67e8f9" />
+              <stop offset="100%" stopColor="#22d3ee" />
+            </linearGradient>
+            <linearGradient id="directNeonWide" x1="0" x2="1">
+              <stop offset="0%" stopColor="#d946ef" />
+              <stop offset="100%" stopColor="#a855f7" />
             </linearGradient>
           </defs>
+          <path
+            d="M110 18 166 42v47c0 42-21 72-56 93-35-21-56-51-56-93V42l56-24Z"
+            fill="none"
+            stroke="url(#directNeonShield)"
+            strokeWidth="5"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M110 32 154 50v39c0 32-16 56-44 73-28-17-44-41-44-73V50l44-18Z"
+            fill="none"
+            stroke="#c084fc"
+            strokeWidth="3"
+            strokeLinejoin="round"
+            opacity="0.95"
+          />
+          <path d="M82 70 58 94" stroke="#d946ef" strokeWidth="4" strokeLinecap="round" />
+          <path d="M96 48 76 28" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" />
+          <path d="M110 42V18" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" />
+          <path d="M124 48 144 28" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" />
+          <path d="M138 70 162 94" stroke="#d946ef" strokeWidth="4" strokeLinecap="round" />
+          <path d="M54 96l8-2-2 8" stroke="#d946ef" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M72 30l8 2-2 8" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" transform="rotate(180 76 36)" />
+          <path d="M106 20l8 2-2 8" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" transform="rotate(45 110 26)" />
+          <path d="M140 30l8 2-2 8" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" transform="rotate(90 144 36)" />
+          <path d="M158 96l8-2-2-8" stroke="#d946ef" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path
+            d="M96 58c6-10 12-15 21-15 11 0 18 7 18 18 0 6-2 10-7 14l-3 3 10 8-10 8-11-8-8 24-11-4 8-22-13 7-5-10 15-7c0-5 1-9 6-16Z"
+            fill="none"
+            stroke="#f472ff"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path d="M90 113 100 103" stroke="#d946ef" strokeWidth="4" strokeLinecap="round" />
+          <path d="M120 115 130 105" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" />
+          <g transform="translate(14 126)">
+            <path
+              d="M0 34h70l-7 18H-10l10-18Zm18-22h69l-8 18H10l8-18Zm16-12h73l-7 16H27l7-16Z"
+              fill="url(#directNeonFive)"
+              stroke="#d946ef"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            <text
+              x="37"
+              y="36"
+              textAnchor="middle"
+              className="font-[family-name:var(--font-display)]"
+              fontSize="56"
+              fill="#0f172a"
+            >
+              5
+            </text>
+          </g>
+          <g transform="translate(88 138)">
+            <path
+              d="M0 0h100l-6 40H-8L0 0Z"
+              fill="url(#directNeonWide)"
+              stroke="#38bdf8"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            <text
+              x="46"
+              y="28"
+              textAnchor="middle"
+              className="font-[family-name:var(--font-display)]"
+              fontSize="34"
+              fill="#fdf4ff"
+            >
+              WIDE
+            </text>
+          </g>
         </svg>
       </div>
       <p className="mt-3 font-[family-name:var(--font-display)] text-[28px] leading-none text-slate-900">
         Five Wide
       </p>
       <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-fuchsia-700">
-        Neon Challenge Crest
+        Direct Neon Shield
       </p>
     </div>
   );
