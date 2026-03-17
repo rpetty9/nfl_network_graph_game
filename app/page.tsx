@@ -289,27 +289,30 @@ function FeaturedBadgeSlot({
       <button
         type="button"
         onClick={onToggle}
-        className={`flex w-full items-center gap-3 rounded-[18px] border px-4 py-3 text-center transition hover:-translate-y-0.5 ${
+        className={`relative flex w-full items-center gap-3 overflow-hidden rounded-[20px] border px-4 py-3.5 text-center transition hover:-translate-y-0.5 ${
           isCreatorBadge
-            ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.98)_0%,rgba(253,224,71,0.45)_32%,rgba(245,158,11,0.26)_62%,rgba(120,53,15,0.22)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.45),0_0_26px_rgba(251,191,36,0.35),0_18px_42px_rgba(245,158,11,0.28)]"
+            ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.99)_0%,rgba(253,224,71,0.45)_32%,rgba(245,158,11,0.26)_62%,rgba(120,53,15,0.22)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.45),0_0_26px_rgba(251,191,36,0.35),0_18px_42px_rgba(245,158,11,0.28)]"
             : tone.shell
         } ${
           isCreatorBadge
             ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.42),transparent_34%),radial-gradient(circle_at_80%_18%,rgba(255,236,179,0.28),transparent_24%)] before:content-['']"
-            : "shadow-[0_10px_22px_rgba(15,23,42,0.08)]"
+            : "shadow-[0_16px_30px_rgba(15,23,42,0.11)]"
         }`}
       >
+        <span className="pointer-events-none absolute inset-x-4 top-0 h-px bg-white/70" />
+        <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.26),transparent_52%)]" />
         <div
-          className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-white/50 ${
+          className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-white/50 ${
             isCreatorBadge
               ? "bg-[linear-gradient(145deg,#fff7cc,#facc15_50%,#f59e0b_78%,#b45309)] text-amber-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]"
               : tone.icon
           }`}
         >
+          <span className="absolute inset-[1px] rounded-[12px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.4),transparent_58%)]" />
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
-            className="h-5 w-5"
+            className="relative h-5 w-5"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -320,7 +323,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-center text-sm font-black uppercase tracking-[0.08em] text-slate-900">
+          <p className="text-center text-sm font-black uppercase tracking-[0.1em] text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]">
             {badge.title}
           </p>
         </div>
@@ -330,7 +333,7 @@ function FeaturedBadgeSlot({
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${badge.title} from featured badges`}
-          className="absolute right-2 top-2 z-20 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/70 bg-white/85 text-xs font-black text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.12)] transition hover:bg-white"
+          className="absolute right-2 top-2 z-20 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/80 bg-white/90 text-xs font-black text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.12)] transition hover:scale-105 hover:bg-white"
         >
           x
         </button>
@@ -770,40 +773,46 @@ function getBadgeToneClasses(tone: BadgeTone) {
   switch (tone) {
     case "emerald":
       return {
-        shell: "border-emerald-200 bg-emerald-50/90 text-emerald-900",
-        icon: "bg-emerald-500 text-white",
-        meta: "text-emerald-700",
+        shell:
+          "border-emerald-300 bg-[radial-gradient(circle_at_top,rgba(236,253,245,0.98)_0%,rgba(110,231,183,0.28)_36%,rgba(5,150,105,0.15)_72%,rgba(2,44,34,0.16)_100%)] text-emerald-950 shadow-[0_0_0_1px_rgba(16,185,129,0.14),0_18px_34px_rgba(5,150,105,0.12),inset_0_1px_0_rgba(255,255,255,0.72)]",
+        icon: "bg-[linear-gradient(145deg,#d1fae5_0%,#6ee7b7_32%,#10b981_72%,#065f46_100%)] text-emerald-950 shadow-[0_0_18px_rgba(16,185,129,0.24)]",
+        meta: "text-emerald-800",
       };
     case "amber":
       return {
-        shell: "border-amber-200 bg-amber-50/90 text-amber-900",
-        icon: "bg-amber-500 text-white",
-        meta: "text-amber-700",
+        shell:
+          "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,251,235,0.98)_0%,rgba(253,230,138,0.32)_30%,rgba(245,158,11,0.18)_68%,rgba(120,53,15,0.16)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(245,158,11,0.16),0_18px_34px_rgba(245,158,11,0.12),inset_0_1px_0_rgba(255,255,255,0.72)]",
+        icon: "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_28%,#f59e0b_70%,#b45309_100%)] text-amber-950 shadow-[0_0_18px_rgba(245,158,11,0.26)]",
+        meta: "text-amber-800",
       };
     case "violet":
       return {
-        shell: "border-violet-200 bg-violet-50/90 text-violet-900",
-        icon: "bg-violet-500 text-white",
-        meta: "text-violet-700",
+        shell:
+          "border-violet-300 bg-[radial-gradient(circle_at_top,rgba(245,243,255,0.98)_0%,rgba(196,181,253,0.3)_34%,rgba(139,92,246,0.16)_70%,rgba(59,7,100,0.16)_100%)] text-violet-950 shadow-[0_0_0_1px_rgba(139,92,246,0.14),0_18px_34px_rgba(109,40,217,0.12),inset_0_1px_0_rgba(255,255,255,0.72)]",
+        icon: "bg-[linear-gradient(145deg,#ede9fe_0%,#c4b5fd_32%,#8b5cf6_72%,#5b21b6_100%)] text-violet-950 shadow-[0_0_18px_rgba(139,92,246,0.24)]",
+        meta: "text-violet-800",
       };
     case "rose":
       return {
-        shell: "border-rose-200 bg-rose-50/90 text-rose-900",
-        icon: "bg-rose-500 text-white",
-        meta: "text-rose-700",
+        shell:
+          "border-rose-300 bg-[radial-gradient(circle_at_top,rgba(255,241,242,0.98)_0%,rgba(253,164,175,0.3)_32%,rgba(244,63,94,0.16)_68%,rgba(136,19,55,0.14)_100%)] text-rose-950 shadow-[0_0_0_1px_rgba(244,63,94,0.12),0_18px_34px_rgba(244,63,94,0.1),inset_0_1px_0_rgba(255,255,255,0.72)]",
+        icon: "bg-[linear-gradient(145deg,#ffe4e6_0%,#fda4af_34%,#f43f5e_74%,#9f1239_100%)] text-rose-950 shadow-[0_0_18px_rgba(244,63,94,0.22)]",
+        meta: "text-rose-800",
       };
     case "slate":
       return {
-        shell: "border-slate-200 bg-slate-100/90 text-slate-900",
-        icon: "bg-slate-700 text-white",
-        meta: "text-slate-600",
+        shell:
+          "border-slate-300 bg-[radial-gradient(circle_at_top,rgba(248,250,252,0.98)_0%,rgba(203,213,225,0.28)_34%,rgba(100,116,139,0.18)_70%,rgba(15,23,42,0.18)_100%)] text-slate-950 shadow-[0_0_0_1px_rgba(71,85,105,0.12),0_18px_34px_rgba(51,65,85,0.12),inset_0_1px_0_rgba(255,255,255,0.7)]",
+        icon: "bg-[linear-gradient(145deg,#f8fafc_0%,#cbd5e1_26%,#64748b_74%,#1e293b_100%)] text-slate-950 shadow-[0_0_18px_rgba(51,65,85,0.22)]",
+        meta: "text-slate-700",
       };
     case "sky":
     default:
       return {
-        shell: "border-sky-200 bg-sky-50/90 text-sky-900",
-        icon: "bg-sky-500 text-white",
-        meta: "text-sky-700",
+        shell:
+          "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(240,249,255,0.98)_0%,rgba(125,211,252,0.3)_34%,rgba(14,165,233,0.16)_70%,rgba(8,47,73,0.15)_100%)] text-sky-950 shadow-[0_0_0_1px_rgba(14,165,233,0.12),0_18px_34px_rgba(14,165,233,0.11),inset_0_1px_0_rgba(255,255,255,0.72)]",
+        icon: "bg-[linear-gradient(145deg,#e0f2fe_0%,#7dd3fc_30%,#0ea5e9_70%,#075985_100%)] text-sky-950 shadow-[0_0_18px_rgba(14,165,233,0.22)]",
+        meta: "text-sky-800",
       };
   }
 }
@@ -912,19 +921,22 @@ function ProfileBadgeCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[22px] border px-3 py-3 ${tone.shell} ${tone.aura} ${
-        compact ? "min-w-[150px]" : ""
+      className={`relative overflow-hidden rounded-[24px] border px-3.5 py-3.5 ${tone.shell} ${tone.aura} ${
+        compact ? "min-w-[158px]" : ""
       }`}
     >
-      <div className="absolute inset-x-4 top-0 h-px bg-white/60" />
+      <div className="absolute inset-x-5 top-0 h-px bg-white/70" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.26),transparent_52%)]" />
+      <div className="pointer-events-none absolute -right-10 top-4 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
       <div className="relative flex items-start gap-3">
         <div
-          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-white/45 shadow-[0_10px_18px_rgba(15,23,42,0.14)] ${tone.icon}`}
+          className={`relative inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[17px] border border-white/45 shadow-[0_14px_22px_rgba(15,23,42,0.14)] ${tone.icon}`}
         >
+          <span className="absolute inset-[1px] rounded-[14px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.42),transparent_58%)]" />
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
-            className="h-5 w-5"
+            className="relative h-5 w-5"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -935,17 +947,17 @@ function ProfileBadgeCard({
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.12em]">
+          <p className="text-xs font-black uppercase tracking-[0.13em] drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]">
             {badge.title}
           </p>
           <p
-            className={`mt-1 text-xs font-semibold leading-5 ${
-              locked ? "text-slate-600" : isCreatorBadge ? "text-amber-900/85" : "text-slate-600"
+            className={`mt-1.5 text-xs font-semibold leading-5 ${
+              locked ? "text-slate-600" : isCreatorBadge ? "text-amber-900/85" : "text-slate-700"
             }`}
           >
             {badge.description}
           </p>
-          <p className={`mt-2 text-[10px] font-black uppercase tracking-[0.08em] ${tone.meta}`}>
+          <p className={`mt-2.5 text-[10px] font-black uppercase tracking-[0.1em] ${tone.meta}`}>
             {locked
               ? helperText ?? "Locked"
               : `Earned ${formatBadgeAwardDate(badge.awardedAt)}`}
@@ -955,7 +967,7 @@ function ProfileBadgeCard({
               type="button"
               onClick={onAction}
               disabled={actionDisabled}
-              className="mt-3 rounded-full border border-white/60 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-3 rounded-full border border-white/70 bg-white/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {actionLabel}
             </button>
@@ -977,24 +989,25 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
   }
 
   return (
-    <div className="mt-1 flex items-center gap-1">
+    <div className="mt-1 flex items-center gap-1.5">
       {badges.map((badge) => {
         const tone = getBadgeToneClasses(badge.tone);
         const isCreatorBadge = badge.key === "creator";
         return (
           <span
             key={badge.key}
-            className={`relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/70 shadow-[0_6px_12px_rgba(15,23,42,0.08)] ${
+            className={`relative inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/75 shadow-[0_8px_16px_rgba(15,23,42,0.12)] ${
               isCreatorBadge
                 ? "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_28%,#facc15_56%,#f59e0b_78%,#b45309_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.52),0_0_14px_rgba(251,191,36,0.55),0_10px_20px_rgba(245,158,11,0.3)] before:absolute before:-inset-1 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(251,191,36,0.48),transparent_68%)] before:blur-[6px] before:content-['']"
                 : tone.icon
             }`}
             title={badge.title}
           >
+            <span className="absolute inset-[1px] rounded-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.38),transparent_58%)]" />
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"
-              className="h-3 w-3"
+              className="relative h-3.5 w-3.5"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.9"
