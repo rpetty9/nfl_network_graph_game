@@ -11,6 +11,10 @@ export const AVATAR_STYLES = [
   "flame",
   "moon",
   "prism",
+  "phoenix",
+  "nova",
+  "rocket",
+  "shieldstar",
 ] as const;
 export type AvatarStyle = (typeof AVATAR_STYLES)[number];
 

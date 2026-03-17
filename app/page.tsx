@@ -682,6 +682,45 @@ function renderAvatarGlyph(style: AvatarStyle) {
           <path d="M8.5 5.6 15.5 9.8" />
         </>
       );
+    case "phoenix":
+      return (
+        <>
+          <path d="M12 5.2c1.7 2 2.8 4 2.8 5.8a2.8 2.8 0 0 1-5.6 0c0-1.9 1-3.9 2.8-5.8Z" />
+          <path d="M12 10.6c-1.8 2.3-4.7 3.8-7.5 3.9 1.1-2.4 3-4.4 5.6-5.7" />
+          <path d="M12 10.6c1.8 2.3 4.7 3.8 7.5 3.9-1.1-2.4-3-4.4-5.6-5.7" />
+          <path d="M8.3 15.4c.8 2.2 2.1 3.9 3.7 5 1.7-1.1 3-2.8 3.8-5" />
+        </>
+      );
+    case "nova":
+      return (
+        <>
+          <circle cx="12" cy="12" r="2.2" />
+          <path d="M12 4.2v3.1" />
+          <path d="M12 16.7v3.1" />
+          <path d="M4.2 12h3.1" />
+          <path d="M16.7 12h3.1" />
+          <path d="m6.6 6.6 2.2 2.2" />
+          <path d="m15.2 15.2 2.2 2.2" />
+          <path d="m17.4 6.6-2.2 2.2" />
+          <path d="m8.8 15.2-2.2 2.2" />
+        </>
+      );
+    case "rocket":
+      return (
+        <>
+          <path d="M13.1 4.2c3.1 1.2 5.1 4.3 5.6 8.6l-4.9 1.4-4.2-4.2 1.4-4.9c.7-.3 1.4-.6 2.1-.9Z" />
+          <path d="m9.6 10.1-3.8 1 2.8 2.8 1-3.8Z" />
+          <path d="m13.9 14.4-1 3.8 2.8-2.8-3.8-1Z" />
+          <circle cx="14.7" cy="9.4" r="1.1" />
+        </>
+      );
+    case "shieldstar":
+      return (
+        <>
+          <path d="M12 3.4 18.8 6v4.9c0 4.1-2.4 7.6-6.8 9.6-4.4-2-6.8-5.5-6.8-9.6V6l6.8-2.6Z" />
+          <path d="m12 7.4 1.1 2.3 2.5.3-1.8 1.7.5 2.5-2.3-1.3-2.3 1.3.5-2.5-1.8-1.7 2.5-.3Z" />
+        </>
+      );
     case "star":
       return (
         <>
@@ -746,15 +785,24 @@ function ProfileAvatar({
 
   return (
     <div
-      className={`inline-flex ${sizeClass} ${paddingClass} items-center justify-center rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.16)]`}
+      className={`relative inline-flex ${sizeClass} ${paddingClass} items-center justify-center rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.16)]`}
       style={{
         background: `linear-gradient(145deg, ${borderPalette.borderSoft}, ${borderPalette.borderHex})`,
         boxShadow: `0 10px 24px rgba(15,23,42,0.16), 0 0 0 1px ${borderPalette.borderSoft}`,
       }}
     >
+      <span
+        className="pointer-events-none absolute inset-[2px] rounded-full opacity-80"
+        style={{
+          background:
+            "radial-gradient(circle at 30% 22%, rgba(255,255,255,0.42), transparent 34%), radial-gradient(circle at 72% 78%, rgba(255,255,255,0.12), transparent 28%)",
+        }}
+      />
       <div
-        className={`flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br ${bgPalette.bg}`}
+        className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-br ${bgPalette.bg}`}
       >
+        <span className="pointer-events-none absolute inset-[9%] rounded-full border border-white/18" />
+        <span className="pointer-events-none absolute inset-x-[18%] top-[14%] h-[26%] rounded-full bg-white/18 blur-[2px]" />
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
