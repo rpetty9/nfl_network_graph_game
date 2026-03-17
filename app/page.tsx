@@ -3441,7 +3441,7 @@ export default function HomePage() {
                 {linkPartners.map((name) => (
                   <span
                     key={`${player.player_id}-${name}`}
-                    className={`inline-flex items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.06em] ${accentClasses.border} ${accentClasses.label} bg-white/80`}
+                    className={`inline-flex items-center rounded-full border px-2 py-1 font-[family-name:var(--font-display)] text-[9px] uppercase tracking-[0.06em] ${accentClasses.border} ${accentClasses.label} bg-white/80 sm:text-[8px] sm:tracking-[0.04em]`}
                   >
                     {relationshipLabel}: {name}
                   </span>
