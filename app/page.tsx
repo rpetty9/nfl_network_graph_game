@@ -1587,10 +1587,6 @@ export default function HomePage() {
     [session?.user?.stats]
   );
   const selfRecentSubmissions = selfProfile?.recent_submissions ?? [];
-  const homeRecapTickerEntries = useMemo(() => {
-    if (!homeRecap?.winners?.length) return [];
-    return [...homeRecap.winners, ...homeRecap.winners, ...homeRecap.winners];
-  }, [homeRecap]);
   const featuredBadgeKeys = useMemo(
     () =>
       ((session?.user?.featuredBadges ?? []) as string[])
@@ -3895,57 +3891,6 @@ export default function HomePage() {
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-4 md:max-w-4xl md:text-base">
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
-              {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
-                <div className="-mx-1.5 mt-2 w-[calc(100%+12px)] overflow-hidden rounded-[14px] border-[2px] border-white/35 bg-white/14 px-1 py-0 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:-mx-6 md:mt-2.5 md:w-[calc(100%+48px)] md:px-1.5 md:py-0.5">
-                  <div className="flex items-center gap-1 md:gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLeaderboardTab("yesterday");
-                        setLeaderboardOpen(true);
-                      }}
-                      className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1 py-[2px] text-[3px] font-black uppercase tracking-[0.04em] text-white/85 transition hover:bg-white/22 md:px-1.5 md:py-[3px] md:text-[4px] md:tracking-[0.05em]"
-                    >
-                      Yesterday
-                    </button>
-                    <div className="min-w-0 flex-1 overflow-hidden">
-                      <div className="home-recap-ticker flex w-max items-center gap-1 md:gap-1.5">
-                        {homeRecapTickerEntries.map((winner, index) => {
-                          const placementClasses = getRecapPlacementClasses(
-                            winner.placement
-                          );
-
-                          return (
-                            <button
-                              key={`${winner.user_id}-${winner.placement}-${index}`}
-                              type="button"
-                              onClick={() => void openPublicProfile(winner.user_id)}
-                              className={`inline-flex items-center gap-0.5 rounded-full border px-1 py-[2px] text-left transition hover:-translate-y-0.5 md:gap-1 md:px-1.5 md:py-[3px] ${placementClasses.shell}`}
-                            >
-                              <span
-                              className={`text-[3px] font-black uppercase tracking-[0.02em] md:text-[4px] md:tracking-[0.03em] ${placementClasses.place}`}
-                              >
-                                #{winner.placement}
-                              </span>
-                              <span className="font-[family-name:var(--font-display)] whitespace-nowrap text-[3.5px] md:text-[4.5px]">
-                                {winner.display_name}
-                              </span>
-                              <span
-                                className={`text-[3px] font-black uppercase tracking-[0.02em] md:text-[4px] md:tracking-[0.03em] ${placementClasses.score}`}
-                              >
-                                {formatCompactScore(winner.final_score)}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <span className="hidden shrink-0 rounded-full border border-white/35 bg-white/16 px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.06em] text-white/85 md:inline-flex">
-                      Finalized {formatPuzzleDateLabel(homeRecap.puzzle_date)}
-                    </span>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
@@ -5991,22 +5936,6 @@ export default function HomePage() {
           }
         }
 
-        .home-recap-ticker {
-          animation: home-recap-scroll 18s linear infinite;
-        }
-
-        .home-recap-ticker:hover {
-          animation-play-state: paused;
-        }
-
-        @keyframes home-recap-scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-33.333%);
-          }
-        }
       `}</style>
     </main>
   );
