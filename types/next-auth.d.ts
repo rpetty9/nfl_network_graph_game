@@ -15,6 +15,11 @@ declare module "next-auth" {
       avatarAccent: string;
       featuredBadges: string[];
       badges: UserBadge[];
+      stats: {
+        puzzles_submitted: number;
+        leaderboard_finishes: number;
+        links_created: number;
+      };
       needsUsername: boolean;
     };
   }
@@ -30,6 +35,11 @@ declare module "next-auth/jwt" {
     avatarAccent?: string;
     featuredBadges?: string[];
     badges?: UserBadge[];
+    stats?: {
+      puzzles_submitted: number;
+      leaderboard_finishes: number;
+      links_created: number;
+    };
     needsUsername?: boolean;
   }
 }

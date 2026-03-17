@@ -58,6 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.avatarAccent = appUser.avatar_accent;
             token.featuredBadges = appUser.featured_badges;
             token.badges = appUser.badges;
+            token.stats = appUser.stats;
             token.needsUsername = !appUser.username;
           }
         }
@@ -74,6 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.avatarAccent = refreshedUser.avatar_accent;
           token.featuredBadges = refreshedUser.featured_badges;
           token.badges = refreshedUser.badges;
+          token.stats = refreshedUser.stats;
           token.needsUsername = !refreshedUser.username;
         }
         return token;
@@ -89,6 +91,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.avatarAccent = appUser.avatar_accent;
           token.featuredBadges = appUser.featured_badges;
           token.badges = appUser.badges;
+          token.stats = appUser.stats;
           token.needsUsername = !appUser.username;
         }
       }
@@ -110,6 +113,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ? token.featuredBadges.filter((badge): badge is string => typeof badge === "string")
           : [];
         session.user.badges = Array.isArray(token.badges) ? token.badges : [];
+        session.user.stats =
+          token.stats &&
+          typeof token.stats === "object" &&
+          typeof token.stats.puzzles_submitted === "number" &&
+          typeof token.stats.leaderboard_finishes === "number" &&
+          typeof token.stats.links_created === "number"
+            ? token.stats
+            : {
+                puzzles_submitted: 0,
+                leaderboard_finishes: 0,
+                links_created: 0,
+              };
         session.user.needsUsername = Boolean(token.needsUsername);
       }
 

@@ -29,9 +29,14 @@ export type AppUser = {
   featured_badges: BadgeKey[];
   status: string;
   badges: UserBadge[];
+  stats: {
+    puzzles_submitted: number;
+    leaderboard_finishes: number;
+    links_created: number;
+  };
 };
 
-type AppUserRow = Omit<AppUser, "badges">;
+type AppUserRow = Omit<AppUser, "badges" | "stats">;
 
 type UserBadgeRow = {
   badge_key: string;
@@ -213,13 +218,55 @@ async function loadBadgesForUser(userId: string) {
   return badges;
 }
 
+async function loadStatsForUser(userId: string) {
+  const [submissionStatsResult, leaderboardStatsResult] = await Promise.all([
+    pool.query<{
+      puzzles_submitted: string;
+      links_created: string;
+    }>(
+      `
+      SELECT
+        COUNT(*)::text AS puzzles_submitted,
+        COALESCE(SUM(active_links), 0)::text AS links_created
+      FROM puzzle_submission
+      WHERE user_id = $1
+      `,
+      [Number(userId)]
+    ),
+    pool.query<{ leaderboard_finishes: string }>(
+      `
+      SELECT COUNT(*)::text AS leaderboard_finishes
+      FROM daily_leaderboard_finish
+      WHERE user_id = $1
+      `,
+      [Number(userId)]
+    ),
+  ]);
+
+  return {
+    puzzles_submitted: Number(
+      submissionStatsResult.rows[0]?.puzzles_submitted ?? "0"
+    ),
+    leaderboard_finishes: Number(
+      leaderboardStatsResult.rows[0]?.leaderboard_finishes ?? "0"
+    ),
+    links_created: Number(submissionStatsResult.rows[0]?.links_created ?? "0"),
+  };
+}
+
 async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> {
   if (!user) return null;
+
+  const [badges, stats] = await Promise.all([
+    loadBadgesForUser(user.user_id),
+    loadStatsForUser(user.user_id),
+  ]);
 
   return {
     ...user,
     featured_badges: sanitizeFeaturedBadges(user.featured_badges),
-    badges: await loadBadgesForUser(user.user_id),
+    badges,
+    stats,
   };
 }
 
@@ -475,8 +522,6 @@ export async function grantBadgesToUser(input: {
 
 export async function awardBadgesForSubmission(input: {
   userId: string;
-  puzzleId: number;
-  submissionId: number;
   activeLinks: number;
 }) {
   const badgeKeys = new Set<BadgeKey>();
@@ -501,56 +546,6 @@ export async function awardBadgesForSubmission(input: {
 
   if (input.activeLinks >= 10) {
     badgeKeys.add("ten_links_submission");
-  }
-
-  const placementResult = await pool.query<{ placement: string }>(
-    `
-    WITH ranked AS (
-      SELECT
-        submission_id,
-        ROW_NUMBER() OVER (
-          PARTITION BY puzzle_id
-          ORDER BY final_score DESC, submitted_at ASC
-        ) AS placement
-      FROM puzzle_submission
-      WHERE puzzle_id = $1
-    )
-    SELECT placement::text
-    FROM ranked
-    WHERE submission_id = $2
-    LIMIT 1
-    `,
-    [input.puzzleId, input.submissionId]
-  );
-  const placement = Number(placementResult.rows[0]?.placement ?? "9999");
-
-  if (placement <= 10) {
-    badgeKeys.add("top_10_finish");
-  }
-
-  const topTenCountResult = await pool.query<{ top_ten_count: string }>(
-    `
-    WITH ranked AS (
-      SELECT
-        puzzle_id,
-        user_id,
-        ROW_NUMBER() OVER (
-          PARTITION BY puzzle_id
-          ORDER BY final_score DESC, submitted_at ASC
-        ) AS placement
-      FROM puzzle_submission
-    )
-    SELECT COUNT(*)::text AS top_ten_count
-    FROM ranked
-    WHERE user_id = $1
-      AND placement <= 10
-    `,
-    [Number(input.userId)]
-  );
-  const topTenCount = Number(topTenCountResult.rows[0]?.top_ten_count ?? "0");
-
-  if (topTenCount >= 5) {
-    badgeKeys.add("top_10_finish_5");
   }
 
   return grantBadgesToUser({

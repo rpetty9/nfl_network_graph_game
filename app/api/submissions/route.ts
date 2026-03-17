@@ -650,8 +650,6 @@ export async function POST(request: NextRequest) {
       registeredUserId != null
         ? await awardBadgesForSubmission({
             userId: registeredUserId,
-            puzzleId: Number(puzzle.puzzle_id),
-            submissionId: Number(submission.submission_id),
             activeLinks,
           })
         : [];

@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
         submitted_at
       FROM puzzle_submission
       WHERE puzzle_id = $1
+        AND user_id IS NOT NULL
       ORDER BY final_score DESC, submitted_at ASC
       LIMIT $2
       `,

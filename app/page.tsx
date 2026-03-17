@@ -818,6 +818,11 @@ export default function HomePage() {
     () => (session?.user?.badges ?? []) as UserBadge[],
     [session?.user?.badges]
   );
+  const userStats = session?.user?.stats ?? {
+    puzzles_submitted: 0,
+    leaderboard_finishes: 0,
+    links_created: 0,
+  };
   const featuredBadgeKeys = useMemo(
     () =>
       ((session?.user?.featuredBadges ?? []) as string[])
@@ -2153,25 +2158,38 @@ export default function HomePage() {
     }
   }
 
-  async function handleSaveAvatar() {
+  async function handleSaveProfile() {
     try {
       setAvatarSaving(true);
+      setBadgeSaving(true);
       setAvatarError(null);
+      setBadgeError(null);
 
-      const response = await fetch("/api/profile/avatar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          avatar_style: avatarStyleDraft,
-          avatar_bg: avatarBgDraft,
-          avatar_accent: avatarAccentDraft,
+      const [avatarResponse, featuredBadgesResponse] = await Promise.all([
+        fetch("/api/profile/avatar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            avatar_style: avatarStyleDraft,
+            avatar_bg: avatarBgDraft,
+            avatar_accent: avatarAccentDraft,
+          }),
         }),
-      });
+        fetch("/api/profile/featured-badges", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            featured_badges: featuredBadgeDraft,
+          }),
+        }),
+      ]);
 
-      if (!response.ok) {
-        throw new Error("Unable to save avatar.");
+      if (!avatarResponse.ok || !featuredBadgesResponse.ok) {
+        throw new Error("Unable to save profile.");
       }
 
       await updateSession();
@@ -2180,6 +2198,7 @@ export default function HomePage() {
       setAvatarError((error as Error).message);
     } finally {
       setAvatarSaving(false);
+      setBadgeSaving(false);
     }
   }
 
@@ -2201,33 +2220,6 @@ export default function HomePage() {
 
       return [...current, badgeKey];
     });
-  }
-
-  async function handleSaveFeaturedBadges() {
-    try {
-      setBadgeSaving(true);
-      setBadgeError(null);
-
-      const response = await fetch("/api/profile/featured-badges", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          featured_badges: featuredBadgeDraft,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Unable to save featured badges.");
-      }
-
-      await updateSession();
-    } catch (error) {
-      setBadgeError((error as Error).message);
-    } finally {
-      setBadgeSaving(false);
-    }
   }
 
   function handleReset() {
@@ -3504,6 +3496,38 @@ export default function HomePage() {
                     </div>
 
                     <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                        Stats
+                      </p>
+                      <div className="mt-4 grid gap-3">
+                        <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            Puzzles Submitted
+                          </p>
+                          <p className="mt-1 text-2xl font-black text-slate-900">
+                            {userStats.puzzles_submitted}
+                          </p>
+                        </div>
+                        <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            Leaderboards Made
+                          </p>
+                          <p className="mt-1 text-2xl font-black text-slate-900">
+                            {userStats.leaderboard_finishes}
+                          </p>
+                        </div>
+                        <div className="rounded-[18px] border border-sky-100 bg-sky-50/70 px-4 py-3 text-left">
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                            Links Created
+                          </p>
+                          <p className="mt-1 text-2xl font-black text-slate-900">
+                            {userStats.links_created}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                           Earned Badges
@@ -3731,19 +3755,11 @@ export default function HomePage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => void handleSaveAvatar()}
-                    disabled={avatarSaving}
+                    onClick={() => void handleSaveProfile()}
+                    disabled={avatarSaving || badgeSaving}
                     className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {avatarSaving ? "Saving..." : "Save Avatar"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleSaveFeaturedBadges()}
-                    disabled={badgeSaving}
-                    className="rounded-2xl border-[3px] border-violet-300 bg-[linear-gradient(180deg,#c4b5fd_0%,#8b5cf6_55%,#6d28d9_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(139,92,246,0.18),0_14px_28px_rgba(139,92,246,0.22)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {badgeSaving ? "Saving..." : "Save Featured Badges"}
+                    {avatarSaving || badgeSaving ? "Saving..." : "Save Profile"}
                   </button>
                 </div>
               </div>

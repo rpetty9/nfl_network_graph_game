@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "grant:badge": "node scripts/grant_badge.mjs"
+    "grant:badge": "node scripts/grant_badge.mjs",
+    "award:leaderboard": "node scripts/award_daily_leaderboard_badges.mjs"
   },
   "dependencies": {
     "next": "16.1.6",
