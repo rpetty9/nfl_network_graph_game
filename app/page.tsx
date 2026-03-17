@@ -3911,7 +3911,7 @@ export default function HomePage() {
                               >
                                 #{winner.placement}
                               </span>
-                              <span className="max-w-[60px] truncate font-[family-name:var(--font-display)] text-[7px] md:max-w-[88px] md:text-[8px]">
+                              <span className="font-[family-name:var(--font-display)] whitespace-nowrap text-[7px] md:text-[8px]">
                                 {winner.display_name}
                               </span>
                               <span
