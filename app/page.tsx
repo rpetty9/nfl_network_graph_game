@@ -2213,6 +2213,36 @@ export default function HomePage() {
 
     return details;
   }, [nodes, pairMap, playerMap, relationshipType]);
+  const activeLinkSummaryByPlayer = useMemo(() => {
+    const summaryMap = new Map<
+      string,
+      Array<{
+        pairKey: string;
+        otherPlayerName: string;
+      }>
+    >();
+
+    activeLinkDetails.forEach((detail) => {
+      const playerAId = String(detail.playerA.player_id);
+      const playerBId = String(detail.playerB.player_id);
+
+      const playerAEntries = summaryMap.get(playerAId) ?? [];
+      playerAEntries.push({
+        pairKey: detail.pairKey,
+        otherPlayerName: detail.playerB.player_name,
+      });
+      summaryMap.set(playerAId, playerAEntries);
+
+      const playerBEntries = summaryMap.get(playerBId) ?? [];
+      playerBEntries.push({
+        pairKey: detail.pairKey,
+        otherPlayerName: detail.playerA.player_name,
+      });
+      summaryMap.set(playerBId, playerBEntries);
+    });
+
+    return summaryMap;
+  }, [activeLinkDetails]);
   const activeSlotRule = getSlotRule(activeNodeId);
 
   const totalPossibleLinks = nodePairs.length;
@@ -2707,7 +2737,8 @@ export default function HomePage() {
       label: string;
       value: string;
     },
-    slotLabel?: string
+    slotLabel?: string,
+    linkPartners?: string[]
   ) {
     return (
       <div
@@ -2730,6 +2761,18 @@ export default function HomePage() {
               {player.theme_start_season ?? player.career_start_season ?? "N/A"}–
               {player.theme_end_season ?? player.career_end_season ?? "N/A"}
             </p>
+            {linkPartners && linkPartners.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {linkPartners.map((name) => (
+                  <span
+                    key={`${player.player_id}-${name}`}
+                    className={`inline-flex items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.06em] ${accentClasses.border} ${accentClasses.label} bg-white/80`}
+                  >
+                    {relationshipLabel}: {name}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
         <div className="shrink-0 text-right">
@@ -3081,50 +3124,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mx-auto mt-6 max-w-3xl rounded-[24px] border-[3px] border-emerald-100 bg-white/80 p-5 text-left">
-              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">
-                Active Link Details
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-600">
-                {relationshipLabel} link
-                {activeLinkDetails.length === 1 ? "" : "s"} that counted toward your multiplier.
-              </p>
-              {activeLinkDetails.length > 0 ? (
-                <div className="mt-4 space-y-3">
-                  {activeLinkDetails.map((detail) => (
-                    <div
-                      key={detail.pairKey}
-                      className="flex items-center justify-between gap-3 rounded-[18px] border-[3px] border-emerald-100 bg-emerald-50/70 px-4 py-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-slate-900">
-                          {detail.playerA.player_name}
-                        </p>
-                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/80">
-                          {detail.playerA.primary_position ?? "N/A"}
-                        </p>
-                      </div>
-                      <div className="shrink-0 rounded-full border-[2px] border-emerald-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-emerald-700">
-                        {relationshipLabel}
-                      </div>
-                      <div className="min-w-0 text-right">
-                        <p className="truncate text-sm font-black text-slate-900">
-                          {detail.playerB.player_name}
-                        </p>
-                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/80">
-                          {detail.playerB.primary_position ?? "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-4 rounded-[18px] border-[3px] border-emerald-100 bg-emerald-50/60 px-4 py-4 text-sm font-semibold text-slate-600">
-                  No active links connected in this lineup.
-                </div>
-              )}
-            </div>
-
             {optimalError && (
               <div className="mx-auto mt-6 max-w-3xl rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3 text-left text-sm text-rose-900">
                 <p className="font-bold">Optimal lineup error</p>
@@ -3145,7 +3144,11 @@ export default function HomePage() {
                         border: "border-sky-100",
                         label: "text-sky-700/80",
                         value: "text-sky-700",
-                      }
+                      },
+                      undefined,
+                      (activeLinkSummaryByPlayer.get(String(player.player_id)) ?? []).map(
+                        (entry) => entry.otherPlayerName
+                      )
                     )
                   )}
                 </div>
