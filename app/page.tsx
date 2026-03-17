@@ -1163,6 +1163,7 @@ export default function HomePage() {
   const todayIso = getCurrentLocalDateIso();
   const loadRequestRef = useRef(0);
   const relationshipRequestRef = useRef(0);
+  const submissionRequestKeyRef = useRef<string | null>(null);
   const nodeFocusMapRef = useRef(new Map<number, () => void>());
   const [isMobileBoard, setIsMobileBoard] = useState(false);
   const [puzzleData, setPuzzleData] = useState<PuzzleResponse | null>(null);
@@ -2639,6 +2640,16 @@ export default function HomePage() {
 
     const controller = new AbortController();
     const optimalResult = optimalLineup;
+    const submissionRequestKey =
+      submissionViewMode === "new"
+        ? JSON.stringify({
+            date: selectedDate,
+            lineup: nodes.map((node) => ({
+              slot_number: node.node_id,
+              player_id: String(node.player_id),
+            })),
+          })
+        : `existing:${selectedDate}`;
 
     async function loadLeaderboardForSubmission() {
       const leaderboardResponse = await fetch(
@@ -2670,6 +2681,11 @@ export default function HomePage() {
           await loadLeaderboardForSubmission();
           return;
         }
+
+        if (submissionRequestKeyRef.current === submissionRequestKey) {
+          return;
+        }
+        submissionRequestKeyRef.current = submissionRequestKey;
 
         if (!isTrackedAccountUser && !browserClientToken) {
           throw new Error("Unable to verify this browser for submission.");
@@ -2729,6 +2745,7 @@ export default function HomePage() {
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
+        submissionRequestKeyRef.current = null;
         setSubmitted(false);
         setSubmissionError((error as Error).message);
       } finally {
@@ -2837,6 +2854,7 @@ export default function HomePage() {
   function handleSubmit() {
     if (!canSubmit) return;
     setSubmissionError(null);
+    submissionRequestKeyRef.current = null;
     setSubmissionViewMode("new");
     setSubmitted(true);
   }
@@ -3017,6 +3035,7 @@ export default function HomePage() {
   function handleCloseSubmittedView() {
     setSubmitted(false);
     setSubmissionError(null);
+    submissionRequestKeyRef.current = null;
     setMobileNavigatorOpen(true);
   }
 
@@ -3711,13 +3730,13 @@ export default function HomePage() {
                       type="button"
                       key={entry.submission_id}
                       onClick={() => void openPublicProfile(entry.user_id)}
-                      className={`flex items-center justify-between gap-4 rounded-[18px] border-[3px] bg-white/90 px-4 py-3 ${
+                      className={`flex w-full flex-col items-start gap-2 rounded-[18px] border-[3px] bg-white/90 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4 ${
                         submissionResult?.submission_id === entry.submission_id
                           ? "border-emerald-200 shadow-[0_0_20px_rgba(52,211,153,0.12)]"
                           : "border-amber-100"
                       } text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]`}
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 w-full sm:w-auto">
                         <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
                           #{index + 1}
                         </p>
@@ -3730,11 +3749,11 @@ export default function HomePage() {
                           {entry.active_links} links
                         </p>
                       </div>
-                      <div className="shrink-0 text-right">
+                      <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
                         <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
                           Final Score
                         </p>
-                        <p className="mt-1 text-lg font-black text-amber-700">
+                        <p className="mt-1 text-base font-black text-amber-700 sm:text-lg">
                           {Number(entry.final_score).toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
@@ -4960,9 +4979,9 @@ export default function HomePage() {
                           type="button"
                           key={entry.submission_id}
                           onClick={() => void openPublicProfile(entry.user_id)}
-                          className="flex w-full items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]"
+                          className="flex w-full flex-col items-start gap-2 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                         >
-                          <div className="min-w-0">
+                          <div className="min-w-0 w-full sm:w-auto">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
                               #{index + 1}
                             </p>
@@ -4971,11 +4990,11 @@ export default function HomePage() {
                             </p>
                             <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
                           </div>
-                          <div className="shrink-0 text-right">
+                          <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
                               Total Points
                             </p>
-                            <p className="mt-1 text-lg font-black text-amber-700">
+                            <p className="mt-1 text-base font-black text-amber-700 sm:text-lg">
                               {Number(entry.final_score).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
@@ -5004,9 +5023,9 @@ export default function HomePage() {
                           type="button"
                           key={entry.user_id}
                           onClick={() => void openPublicProfile(entry.user_id)}
-                          className="flex w-full items-center justify-between gap-4 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]"
+                          className="flex w-full flex-col items-start gap-2 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
                         >
-                          <div className="min-w-0">
+                          <div className="min-w-0 w-full sm:w-auto">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
                               #{index + 1}
                             </p>
@@ -5018,11 +5037,11 @@ export default function HomePage() {
                               Best finish #{entry.best_finish}
                             </p>
                           </div>
-                          <div className="shrink-0 text-right">
+                          <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
                               Top 10s
                             </p>
-                            <p className="mt-1 text-lg font-black text-amber-700">
+                            <p className="mt-1 text-base font-black text-amber-700 sm:text-lg">
                               {entry.top_10_finishes.toLocaleString()}
                             </p>
                           </div>
