@@ -2698,7 +2698,7 @@ export default function HomePage() {
               </svg>
             </button>
             <div className="relative z-10">
-              <div className="mt-2 flex items-center justify-center gap-2 md:mt-6 md:gap-3">
+              <div className="mt-5 flex items-center justify-center gap-2 md:mt-8 md:gap-3">
                 <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)] md:text-5xl md:tracking-[0.08em]">
                   Five Wide
                 </h1>
@@ -2708,7 +2708,7 @@ export default function HomePage() {
                 </span>
               </div>
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
-                Pick 5 players, total their fantasy points for the time period, then boost the score with active links.
+                Build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
             </div>
           </div>
@@ -3965,32 +3965,40 @@ export default function HomePage() {
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Objective:</span>{" "}
-                  Fill all 5 slots with unique players and finish with the highest final fantasy score possible.
+                  Fill all 5 lineup slots with different players who satisfy the puzzle rules, then maximize your final score by balancing high fantasy totals with strong connectivity between the players you picked.
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Time Period:</span>{" "}
-                  {puzzleData.theme?.display_name ?? "N/A"} is the season window for the puzzle. Only stats from those seasons count toward each player&apos;s total score.
+                  {puzzleData.theme?.display_name ?? "N/A"} is the scoring window for this puzzle. A player&apos;s fantasy total only comes from games and seasons that fall inside that exact time period.
                 </p>
                 <p>
-                  Time periods are always a specific season or range of seasons, like <span className="font-semibold text-sky-900">2012</span>, <span className="font-semibold text-sky-900">2010s</span>, or <span className="font-semibold text-sky-900">2020-2025</span>. Only production from those years is used.
+                  Time periods can be a single season, a span of seasons, or a themed era like <span className="font-semibold text-sky-900">2012</span>, <span className="font-semibold text-sky-900">2010s</span>, or <span className="font-semibold text-sky-900">2020-2025</span>. If a player was great outside that window, those outside stats do not count here.
                 </p>
                 <p>
-                  Each slot can also have its own requirement, like <span className="font-semibold text-sky-900">QB</span>, <span className="font-semibold text-sky-900">WR</span>, a specific <span className="font-semibold text-sky-900">team</span>, or a <span className="font-semibold text-sky-900">conference/division</span>. A player only shows up in that slot if they match the slot rule.
+                  <span className="font-bold text-sky-900">Slot Rules:</span>{" "}
+                  Each slot has its own filter. That could be a position like <span className="font-semibold text-sky-900">QB</span> or <span className="font-semibold text-sky-900">WR</span>, a team requirement, a draft rule, a division or conference rule, or another career qualifier. A player is only eligible for a slot if they match that slot&apos;s rule.
                 </p>
                 <p>
-                  <span className="font-bold text-sky-900">Link:</span>{" "}
-                  {relationshipLabel} is the connection rule between two selected players. Each active link increases your bonus, and every additional link is worth more than the last.
+                  You cannot use the same player twice in one lineup. Every valid lineup must contain five unique players.
                 </p>
                 <p>
-                  Link bonuses stack. More active connections means a bigger multiplier on top of your lineup&apos;s base fantasy points.
+                  <span className="font-bold text-sky-900">Links:</span>{" "}
+                  {relationshipLabel} is the connection rule being tested between every pair of selected players. With 5 players there are 10 possible pairings, and each valid pairing becomes an active link.
                 </p>
                 <p>
-                  <span className="font-bold text-sky-900">Formula:</span>{" "}
-                  Final Score = Total Fantasy Points x Link Multiplier.
+                  Links are not just cosmetic. They build your multiplier. The more active links you create, the larger your bonus becomes, and the curve rewards deep, well-connected lineups more than random one-off connections.
                 </p>
                 <p>
-                  <span className="font-bold text-sky-900">Available Players:</span>{" "}
-                  {players.length}
+                  <span className="font-bold text-sky-900">Scoring Formula:</span>{" "}
+                  Final Score = Base Fantasy Points x Link Multiplier.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Base Score:</span>{" "}
+                  Add together the fantasy points from your 5 selected players during the active time period.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Multiplier:</span>{" "}
+                  The multiplier is based on your active links. More links means a bigger boost on top of your base score.
                 </p>
                 <p>
                   Example: with the current curve, {activeLinkCount} active links gives you a{" "}
@@ -3998,7 +4006,29 @@ export default function HomePage() {
                   <span className="font-semibold text-sky-900">+{linkBonusPct.toFixed(1)}%</span> total bonus.
                 </p>
                 <p>
-                  Select five players, activate as many valid links as possible, and submit once every slot is filled.
+                  <span className="font-bold text-sky-900">Available Players:</span>{" "}
+                  {players.length} players match today&apos;s overall theme and can appear across the five slot filters.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Submission Rules:</span>{" "}
+                  You can only submit when all 5 slots are filled with valid, unique players. Guest browsers get one submission per date per browser. Signed-in accounts get one submission per date per account.
+                </p>
+                <p>
+                  Once a lineup is submitted, that entry is locked for leaderboard purposes. You can still inspect the puzzle, compare scores, and review the optimal lineup after submitting, but you do not get another official entry for that date.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Leaderboard:</span>{" "}
+                  The live leaderboard is account-based. Registered users can track their finishes, badges, and profile stats across days.
+                </p>
+                <p>
+                  Daily leaderboard badges are based on the finalized end-of-day top 10 for that puzzle date. The board can move during the day, but the official top-10 award is determined from the finished daily snapshot.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Date Access:</span>{" "}
+                  You can replay older puzzles, but future puzzle dates are hidden until their day arrives.
+                </p>
+                <p>
+                  The core strategy is to find players who are both individually strong in the scoring window and tightly connected under the current link rule. Great lineups usually need both.
                 </p>
               </div>
             </div>
