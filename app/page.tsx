@@ -1528,6 +1528,10 @@ export default function HomePage() {
     [session?.user?.stats]
   );
   const selfRecentSubmissions = selfProfile?.recent_submissions ?? [];
+  const homeRecapTickerEntries = useMemo(() => {
+    if (!homeRecap?.winners?.length) return [];
+    return [...homeRecap.winners, ...homeRecap.winners];
+  }, [homeRecap]);
   const featuredBadgeKeys = useMemo(
     () =>
       ((session?.user?.featuredBadges ?? []) as string[])
@@ -3823,41 +3827,37 @@ export default function HomePage() {
               <p className="mx-auto mt-3 max-w-3xl text-[12px] font-semibold leading-[1.4] text-white/90 md:mt-5 md:max-w-4xl md:text-base">
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
-              {!homeRecapLoading && homeRecap ? (
-                <div className="mx-auto mt-4 w-full max-w-3xl rounded-[24px] border-[3px] border-white/35 bg-white/16 p-3 text-left shadow-[0_16px_34px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-5 md:p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-white/80">
-                        Yesterday&apos;s Winners
-                      </p>
-                      <p className="mt-1 text-sm font-bold text-white md:text-base">
-                        Finalized {formatPuzzleDateLabel(homeRecap.puzzle_date)} finishers
-                      </p>
+              {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
+                <div className="mx-auto mt-4 w-full max-w-5xl overflow-hidden rounded-[22px] border-[3px] border-white/35 bg-white/14 px-3 py-2 shadow-[0_14px_30px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-5">
+                  <div className="flex items-center gap-3">
+                    <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/85">
+                      Yesterday&apos;s Top 10
                     </div>
-                    <span className="rounded-full border border-white/35 bg-white/18 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white/85">
-                      Top 3
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="home-recap-ticker flex w-max items-center gap-2">
+                        {homeRecapTickerEntries.map((winner, index) => (
+                          <button
+                            key={`${winner.user_id}-${winner.placement}-${index}`}
+                            type="button"
+                            onClick={() => void openPublicProfile(winner.user_id)}
+                            className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/18 px-2.5 py-1.5 text-left text-white transition hover:-translate-y-0.5 hover:bg-white/24"
+                          >
+                            <span className="text-[9px] font-black uppercase tracking-[0.08em] text-white/75">
+                              #{winner.placement}
+                            </span>
+                            <span className="max-w-[120px] truncate font-[family-name:var(--font-display)] text-[10px]">
+                              {winner.display_name}
+                            </span>
+                            <span className="text-[9px] font-black uppercase tracking-[0.06em] text-white/80">
+                              {formatCompactScore(winner.final_score)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <span className="hidden shrink-0 rounded-full border border-white/35 bg-white/16 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-white/85 md:inline-flex">
+                      Finalized {formatPuzzleDateLabel(homeRecap.puzzle_date)}
                     </span>
-                  </div>
-                  <div className="mt-3 grid gap-2 md:grid-cols-3">
-                    {homeRecap.winners.map((winner) => (
-                      <button
-                        key={`${winner.user_id}-${winner.placement}`}
-                        type="button"
-                        onClick={() => void openPublicProfile(winner.user_id)}
-                        className="rounded-[18px] border border-white/35 bg-white/16 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:bg-white/22"
-                      >
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-white/75">
-                          #{winner.placement}
-                        </p>
-                        <p className="mt-1 truncate text-sm font-black text-white md:text-base">
-                          {winner.display_name}
-                        </p>
-                        <LeaderboardBadgeIcons badgeKeys={winner.featured_badges} />
-                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-white/80">
-                          {formatCompactScore(winner.final_score)}
-                        </p>
-                      </button>
-                    ))}
                   </div>
                 </div>
               ) : null}
@@ -5839,6 +5839,23 @@ export default function HomePage() {
                 calc(-50% + var(--burst-y))
               )
               scale(1.15) rotate(var(--burst-rotate));
+          }
+        }
+
+        .home-recap-ticker {
+          animation: home-recap-scroll 34s linear infinite;
+        }
+
+        .home-recap-ticker:hover {
+          animation-play-state: paused;
+        }
+
+        @keyframes home-recap-scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
           }
         }
       `}</style>

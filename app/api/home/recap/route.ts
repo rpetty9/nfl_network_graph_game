@@ -48,7 +48,7 @@ export async function GET() {
         AND ps.user_id = dlf.user_id
       WHERE dp.puzzle_date = $1
       ORDER BY dlf.placement ASC, ps.final_score DESC, ps.submitted_at ASC
-      LIMIT 3
+      LIMIT 10
       `,
       [latestFinishedDate]
     );
