@@ -3222,7 +3222,7 @@ export default function HomePage() {
                     />
                   )}
                 </div>
-                <div className="mx-auto flex max-w-[320px] flex-col items-center pt-2 text-center">
+                <div className="mx-auto flex max-w-[320px] flex-col items-center pt-4 text-center">
                   <h1 className="text-2xl font-black tracking-[0.06em] text-white drop-shadow-[0_4px_0_rgba(30,41,59,0.18)]">
                     Five Wide
                   </h1>
