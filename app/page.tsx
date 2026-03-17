@@ -4630,7 +4630,7 @@ export default function HomePage() {
                             </div>
                           )}
                           <p
-                            className={`text-[10px] font-black uppercase tracking-[0.08em] sm:font-[family-name:var(--font-display)] sm:text-[8px] sm:tracking-[0.04em] ${
+                            className={`text-[10px] font-black uppercase tracking-[0.08em] sm:text-[8px] sm:tracking-[0.04em] ${
                               isFullyConnected ? "text-emerald-700" : "text-sky-700"
                             }`}
                           >
@@ -4638,7 +4638,7 @@ export default function HomePage() {
                           </p>
 
                           <p
-                            className={`mt-2 text-[1.8rem] font-black leading-[1.06] tracking-[0.01em] sm:font-[family-name:var(--font-display)] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
+                            className={`mt-2 text-[1.8rem] font-black leading-[1.06] tracking-[0.01em] sm:mt-3 sm:text-[1.35rem] sm:leading-[1.35] ${
                               isFullyConnected ? "text-emerald-900" : "text-sky-900"
                             }`}
                           >
