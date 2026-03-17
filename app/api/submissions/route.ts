@@ -51,6 +51,22 @@ type ResolvedLineupEntry = {
   rule: SlotRule;
 };
 
+type ExistingSubmissionRow = {
+  submission_id: string;
+  display_name: string;
+  base_score: string;
+  active_links: string;
+  multiplier: string;
+  final_score: string;
+  optimal_final_score: string | null;
+  percent_of_optimal: string | null;
+};
+
+type ExistingSubmissionPlayerRow = {
+  slot_number: number;
+  player_id: string;
+};
+
 const ADJECTIVES = [
   "Blitz",
   "Clutch",
@@ -161,6 +177,80 @@ function normalizeClientToken(value: unknown) {
   const trimmed = value.trim();
   if (!trimmed || trimmed.length > 120) return null;
   return trimmed;
+}
+
+async function loadExistingSubmission(input: {
+  requestedDate: string | null;
+  registeredUserId: string | null;
+  clientToken: string | null;
+}) {
+  if (!input.registeredUserId && !input.clientToken) {
+    throw new Error("Missing submission identity");
+  }
+
+  const { puzzle } = await loadPuzzleContext(input.requestedDate);
+  const identityClause = input.registeredUserId
+    ? "user_id = $2"
+    : "client_token = $2";
+  const identityValue = input.registeredUserId
+    ? Number(input.registeredUserId)
+    : input.clientToken;
+
+  const submissionResult = await pool.query<ExistingSubmissionRow>(
+    `
+    SELECT
+      submission_id::text,
+      display_name,
+      base_score::text,
+      active_links::text,
+      multiplier::text,
+      final_score::text,
+      optimal_final_score::text,
+      percent_of_optimal::text
+    FROM puzzle_submission
+    WHERE puzzle_id = $1
+      AND ${identityClause}
+    LIMIT 1
+    `,
+    [puzzle.puzzle_id, identityValue]
+  );
+
+  const submission = submissionResult.rows[0];
+  if (!submission) {
+    return null;
+  }
+
+  const lineupResult = await pool.query<ExistingSubmissionPlayerRow>(
+    `
+    SELECT
+      slot_number,
+      player_id::text
+    FROM puzzle_submission_player
+    WHERE submission_id = $1
+    ORDER BY slot_number
+    `,
+    [Number(submission.submission_id)]
+  );
+
+  return {
+    submission_id: Number(submission.submission_id),
+    display_name: submission.display_name,
+    base_score: Number(submission.base_score),
+    active_links: Number(submission.active_links),
+    multiplier: Number(submission.multiplier),
+    final_score: Number(submission.final_score),
+    optimal_final_score: submission.optimal_final_score
+      ? Number(submission.optimal_final_score)
+      : null,
+    percent_of_optimal: submission.percent_of_optimal
+      ? Number(submission.percent_of_optimal)
+      : null,
+    lineup: lineupResult.rows.map((row) => ({
+      slot_number: Number(row.slot_number),
+      player_id: row.player_id,
+    })),
+    awarded_badges: [],
+  };
 }
 
 async function loadPuzzleContext(requestedDate: string | null) {
@@ -673,6 +763,36 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { error: (error as Error).message || "Failed to save submission" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+    const registeredUserId =
+      session?.user?.id && /^\d+$/.test(session.user.id) ? session.user.id : null;
+    const requestedDate = request.nextUrl.searchParams.get("date");
+    const clientToken = normalizeClientToken(
+      request.nextUrl.searchParams.get("client_token")
+    );
+
+    const submission = await loadExistingSubmission({
+      requestedDate,
+      registeredUserId,
+      clientToken,
+    });
+
+    if (!submission) {
+      return NextResponse.json({ error: "No submission found." }, { status: 404 });
+    }
+
+    return NextResponse.json(submission);
+  } catch (error) {
+    console.error("Submission fetch failed:", error);
+    return NextResponse.json(
+      { error: (error as Error).message || "Failed to load submission." },
       { status: 500 }
     );
   }

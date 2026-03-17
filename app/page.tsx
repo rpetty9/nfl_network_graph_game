@@ -139,8 +139,16 @@ type OptimalLineupResponse = {
 type SubmissionResponse = {
   submission_id: number;
   display_name: string;
+  base_score?: number;
+  active_links?: number;
+  multiplier?: number;
   final_score: number;
+  optimal_final_score?: number | null;
   percent_of_optimal: number | null;
+  lineup?: Array<{
+    slot_number: number;
+    player_id: string;
+  }>;
   awarded_badges?: UserBadge[];
 };
 
@@ -1003,10 +1011,14 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  const [savedSubmissionLoading, setSavedSubmissionLoading] = useState(false);
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
   const signedInUsername = session?.user?.username ?? null;
   const isTrackedAccountUser = Boolean(session?.user?.id && signedInUsername);
+  const [submissionViewMode, setSubmissionViewMode] = useState<
+    "new" | "existing" | null
+  >(null);
   const needsUsername = Boolean(session?.user?.id && session.user.needsUsername);
   const sessionAvatarStyle = (session?.user?.avatarStyle ?? DEFAULT_AVATAR.style) as AvatarStyle;
   const sessionAvatarBg = (session?.user?.avatarBg ?? DEFAULT_AVATAR.bg) as AvatarColor;
@@ -1247,6 +1259,7 @@ export default function HomePage() {
         setOptimalError(null);
         setOptimalLoading(false);
         setSubmissionResult(null);
+        setSubmissionViewMode(null);
         setLeaderboard([]);
         setLeaderboardLoading(false);
         setLeaderboardError(null);
@@ -2194,6 +2207,7 @@ export default function HomePage() {
       setOptimalError(null);
       setOptimalLoading(false);
       setSubmissionResult(null);
+      setSubmissionViewMode(null);
       setLeaderboard([]);
       setLeaderboardLoading(false);
       setLeaderboardError(null);
@@ -2243,11 +2257,36 @@ export default function HomePage() {
     const controller = new AbortController();
     const optimalResult = optimalLineup;
 
+    async function loadLeaderboardForSubmission() {
+      const leaderboardResponse = await fetch(
+        `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
+        {
+          cache: "no-store",
+          signal: controller.signal,
+        }
+      );
+
+      if (!leaderboardResponse.ok) {
+        const body = await leaderboardResponse.text();
+        throw new Error(body || "Failed to load leaderboard");
+      }
+
+      const leaderboardJson: { leaderboard: LeaderboardEntry[] } =
+        await leaderboardResponse.json();
+      if (controller.signal.aborted) return;
+      setLeaderboard(leaderboardJson.leaderboard ?? []);
+    }
+
     async function saveSubmissionAndLoadLeaderboard() {
       try {
         setLeaderboardLoading(true);
         setLeaderboardError(null);
         setSubmissionError(null);
+
+        if (submissionViewMode === "existing") {
+          await loadLeaderboardForSubmission();
+          return;
+        }
 
         if (!isTrackedAccountUser && !browserClientToken) {
           throw new Error("Unable to verify this browser for submission.");
@@ -2303,23 +2342,7 @@ export default function HomePage() {
           if (controller.signal.aborted) return;
         }
 
-        const leaderboardResponse = await fetch(
-          `/api/leaderboard?date=${encodeURIComponent(selectedDate)}&limit=10`,
-          {
-            cache: "no-store",
-            signal: controller.signal,
-          }
-        );
-
-        if (!leaderboardResponse.ok) {
-          const body = await leaderboardResponse.text();
-          throw new Error(body || "Failed to load leaderboard");
-        }
-
-        const leaderboardJson: { leaderboard: LeaderboardEntry[] } =
-          await leaderboardResponse.json();
-        if (controller.signal.aborted) return;
-        setLeaderboard(leaderboardJson.leaderboard ?? []);
+        await loadLeaderboardForSubmission();
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
@@ -2341,6 +2364,7 @@ export default function HomePage() {
     nodes,
     browserClientToken,
     isTrackedAccountUser,
+    submissionViewMode,
     session?.user?.id,
     updateSession,
   ]);
@@ -2390,7 +2414,55 @@ export default function HomePage() {
   function handleSubmit() {
     if (!canSubmit) return;
     setSubmissionError(null);
+    setSubmissionViewMode("new");
     setSubmitted(true);
+  }
+
+  async function handleShowSubmission() {
+    try {
+      setSavedSubmissionLoading(true);
+      setSubmissionError(null);
+
+      const params = new URLSearchParams();
+      params.set("date", selectedDate);
+      if (!isTrackedAccountUser && browserClientToken) {
+        params.set("client_token", browserClientToken);
+      }
+
+      const response = await fetch(`/api/submissions?${params.toString()}`, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(
+          body && typeof body.error === "string"
+            ? body.error
+            : "Unable to load your saved submission."
+        );
+      }
+
+      const saved: SubmissionResponse = await response.json();
+      const savedNodes =
+        saved.lineup?.map((entry) => ({
+          node_id: Number(entry.slot_number),
+          player_id: String(entry.player_id),
+        })) ?? [];
+
+      if (savedNodes.length !== 5) {
+        throw new Error("Saved submission is incomplete.");
+      }
+
+      setNodes(savedNodes);
+      setInitialNodes(savedNodes);
+      setSubmissionResult(saved);
+      setSubmissionViewMode("existing");
+      setSubmitted(true);
+    } catch (error) {
+      setSubmissionError((error as Error).message);
+    } finally {
+      setSavedSubmissionLoading(false);
+    }
   }
 
   async function handleSaveUsername() {
@@ -3577,23 +3649,27 @@ export default function HomePage() {
                   >
                     {isLockedForSelectedDate
                       ? isTrackedAccountUser
-                        ? `Your account already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, but each account only gets one leaderboard entry per date.`
-                        : `This browser already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, but the leaderboard only accepts one entry per browser per date.`
+                        ? `Your account already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, and you can reopen that saved lineup below, but each account only gets one leaderboard entry per date.`
+                        : `This browser already submitted for ${formatPuzzleDateLabel(selectedDate)}. You can still explore the puzzle, and you can reopen that saved lineup below, but the leaderboard only accepts one entry per browser per date.`
                       : submissionError}
                   </div>
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
-                    onClick={handleSubmit}
-                    disabled={!canSubmit}
+                    onClick={isLockedForSelectedDate ? () => void handleShowSubmission() : handleSubmit}
+                    disabled={isLockedForSelectedDate ? savedSubmissionLoading : !canSubmit}
                     className={`sm:order-2 rounded-2xl px-6 py-4 text-sm font-bold transition ${
-                      canSubmit
+                      isLockedForSelectedDate || canSubmit
                         ? "border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] hover:-translate-y-0.5 hover:brightness-105"
                         : "cursor-not-allowed border border-white/10 bg-white/10 text-slate-400 shadow-none"
                     }`}
                   >
-                    Submit Score
+                    {isLockedForSelectedDate
+                      ? savedSubmissionLoading
+                        ? "Loading Submission..."
+                        : "Show Submission"
+                      : "Submit Score"}
                   </button>
                   <button
                     type="button"
