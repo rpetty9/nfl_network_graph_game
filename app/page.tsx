@@ -3724,36 +3724,36 @@ export default function HomePage() {
                   Loading leaderboard...
                 </div>
               ) : leaderboard.length > 0 ? (
-                <div className="mt-4 space-y-3">
+                <div className="mt-3 space-y-2">
                   {leaderboard.map((entry, index) => (
                     <button
                       type="button"
                       key={entry.submission_id}
                       onClick={() => void openPublicProfile(entry.user_id)}
-                      className={`flex w-full flex-col items-start gap-2 rounded-[18px] border-[3px] bg-white/90 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4 ${
+                      className={`flex w-full flex-col items-start gap-1.5 rounded-[14px] border-[2px] bg-white/90 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-3 sm:py-2.5 ${
                         submissionResult?.submission_id === entry.submission_id
                           ? "border-emerald-200 shadow-[0_0_20px_rgba(52,211,153,0.12)]"
                           : "border-amber-100"
-                      } text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)]`}
+                      } text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_10px_22px_rgba(245,158,11,0.1)]`}
                     >
                       <div className="min-w-0 w-full sm:w-auto">
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
+                        <p className="text-[9px] font-black uppercase tracking-[0.08em] text-amber-700">
                           #{index + 1}
                         </p>
-                        <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                        <p className="mt-0.5 truncate text-[13px] font-bold text-slate-900 sm:text-sm">
                           {entry.display_name}
                         </p>
                         <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
-                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-amber-700/80">
+                        <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] text-amber-700/80">
                           {Number(entry.percent_of_optimal ?? 0).toFixed(1)}% of optimal •{" "}
                           {entry.active_links} links
                         </p>
                       </div>
                       <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                        <p className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-500">
                           Final Score
                         </p>
-                        <p className="mt-1 text-base font-black text-amber-700 sm:text-lg">
+                        <p className="mt-0.5 text-sm font-black text-amber-700 sm:text-base">
                           {Number(entry.final_score).toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
