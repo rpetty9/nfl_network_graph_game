@@ -3887,9 +3887,9 @@ export default function HomePage() {
                 An NFL fantasy trivia game where you build the strongest 5-player lineup for the daily era, satisfy every slot rule, and chase the best score by combining raw fantasy production with as many valid player-to-player links as possible.
               </p>
               {!homeRecapLoading && homeRecap && homeRecap.winners.length > 0 ? (
-                <div className="mt-1 w-[calc(100%-4px)] overflow-hidden rounded-[22px] border-[3px] border-white/35 bg-white/14 px-2 py-1.5 shadow-[0_14px_30px_rgba(15,23,42,0.16)] backdrop-blur-sm md:mt-2 md:w-[calc(100%-8px)] md:px-3 md:py-2">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] text-white/85 md:px-2.5 md:py-1 md:text-[9px] md:tracking-[0.1em]">
+                <div className="mt-0.5 w-[calc(100%-4px)] overflow-hidden rounded-[18px] border-[2px] border-white/35 bg-white/14 px-1.5 py-1 shadow-[0_12px_24px_rgba(15,23,42,0.14)] backdrop-blur-sm md:mt-1 md:w-[calc(100%-8px)] md:px-2 md:py-1.5">
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <div className="shrink-0 rounded-full border border-white/35 bg-white/16 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.06em] text-white/85 md:px-2 md:py-0.5 md:text-[7px] md:tracking-[0.08em]">
                       Yesterday&apos;s Top 10
                     </div>
                     <div className="min-w-0 flex-1 overflow-hidden">
@@ -3904,18 +3904,18 @@ export default function HomePage() {
                               key={`${winner.user_id}-${winner.placement}-${index}`}
                               type="button"
                               onClick={() => void openPublicProfile(winner.user_id)}
-                              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-left transition hover:-translate-y-0.5 md:gap-2 md:px-2.5 md:py-1.5 ${placementClasses.shell}`}
+                              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-left transition hover:-translate-y-0.5 md:gap-1.5 md:px-2 md:py-1 ${placementClasses.shell}`}
                             >
                               <span
-                                className={`text-[7px] font-black uppercase tracking-[0.06em] md:text-[9px] md:tracking-[0.08em] ${placementClasses.place}`}
+                                className={`text-[6px] font-black uppercase tracking-[0.04em] md:text-[7px] md:tracking-[0.06em] ${placementClasses.place}`}
                               >
                                 #{winner.placement}
                               </span>
-                              <span className="max-w-[78px] truncate font-[family-name:var(--font-display)] text-[8px] md:max-w-[120px] md:text-[10px]">
+                              <span className="max-w-[60px] truncate font-[family-name:var(--font-display)] text-[7px] md:max-w-[88px] md:text-[8px]">
                                 {winner.display_name}
                               </span>
                               <span
-                                className={`text-[7px] font-black uppercase tracking-[0.04em] md:text-[9px] md:tracking-[0.06em] ${placementClasses.score}`}
+                                className={`text-[6px] font-black uppercase tracking-[0.03em] md:text-[7px] md:tracking-[0.04em] ${placementClasses.score}`}
                               >
                                 {formatCompactScore(winner.final_score)}
                               </span>
@@ -3924,7 +3924,7 @@ export default function HomePage() {
                         })}
                       </div>
                     </div>
-                    <span className="hidden shrink-0 rounded-full border border-white/35 bg-white/16 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-white/85 md:inline-flex">
+                    <span className="hidden shrink-0 rounded-full border border-white/35 bg-white/16 px-2 py-0.5 text-[7px] font-black uppercase tracking-[0.06em] text-white/85 md:inline-flex">
                       Finalized {formatPuzzleDateLabel(homeRecap.puzzle_date)}
                     </span>
                   </div>
