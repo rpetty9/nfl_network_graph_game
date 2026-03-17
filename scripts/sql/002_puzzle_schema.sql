@@ -133,9 +133,22 @@ CREATE TABLE IF NOT EXISTS daily_puzzle_slot_rule (
   CHECK (slot_number BETWEEN 1 AND 5)
 );
 
+CREATE TABLE IF NOT EXISTS app_user (
+  user_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  google_subject TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL,
+  email_normalized TEXT NOT NULL,
+  username TEXT,
+  username_normalized TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (status IN ('active', 'flagged', 'banned'))
+);
+
 CREATE TABLE IF NOT EXISTS puzzle_submission (
   submission_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   puzzle_id BIGINT NOT NULL REFERENCES daily_puzzle(puzzle_id) ON DELETE CASCADE,
+  user_id BIGINT REFERENCES app_user(user_id) ON DELETE SET NULL,
   client_token TEXT,
   display_name TEXT NOT NULL,
   base_score NUMERIC(12,2) NOT NULL,
@@ -146,6 +159,9 @@ CREATE TABLE IF NOT EXISTS puzzle_submission (
   percent_of_optimal NUMERIC(8,2),
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE puzzle_submission
+  ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES app_user(user_id) ON DELETE SET NULL;
 
 ALTER TABLE puzzle_submission
   ADD COLUMN IF NOT EXISTS client_token TEXT;
@@ -188,9 +204,20 @@ CREATE INDEX IF NOT EXISTS idx_daily_puzzle_slot_rule_puzzle
 CREATE INDEX IF NOT EXISTS idx_puzzle_submission_puzzle_score
   ON puzzle_submission (puzzle_id, final_score DESC, submitted_at ASC);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_app_user_email_normalized
+  ON app_user (email_normalized);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_app_user_username_normalized
+  ON app_user (username_normalized)
+  WHERE username_normalized IS NOT NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_puzzle_submission_puzzle_client
   ON puzzle_submission (puzzle_id, client_token)
   WHERE client_token IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_puzzle_submission_puzzle_user
+  ON puzzle_submission (puzzle_id, user_id)
+  WHERE user_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_puzzle_submission_player_submission
   ON puzzle_submission_player (submission_id, slot_number);

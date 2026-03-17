@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { getLinkBonusPct, getLinkMultiplier } from "@/lib/scoring";
 
 type PuzzleResponse = {
@@ -410,6 +411,9 @@ export default function HomePage() {
     useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [usernameDraft, setUsernameDraft] = useState("");
+  const [usernameSaving, setUsernameSaving] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -425,6 +429,8 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  const { data: session, status: sessionStatus, update: updateSession } =
+    useSession();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -636,6 +642,8 @@ export default function HomePage() {
   }, [nodes, selectedDate]);
 
   const players = playersData?.players ?? [];
+  const signedInUsername = session?.user?.username ?? null;
+  const needsUsername = Boolean(session?.user?.id && session.user.needsUsername);
 
   const playerMap = useMemo(() => {
     return new Map(players.map((player) => [String(player.player_id), player]));
@@ -1637,6 +1645,41 @@ export default function HomePage() {
     setSubmitted(true);
   }
 
+  async function handleSaveUsername() {
+    const trimmed = usernameDraft.trim();
+    if (!trimmed) {
+      setUsernameError("Choose a username to finish your profile.");
+      return;
+    }
+
+    try {
+      setUsernameSaving(true);
+      setUsernameError(null);
+
+      const response = await fetch("/api/profile/username", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: trimmed,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("That username is not available.");
+      }
+
+      setUsernameDraft("");
+      setSubmissionError(null);
+      await updateSession();
+    } catch (error) {
+      setUsernameError((error as Error).message);
+    } finally {
+      setUsernameSaving(false);
+    }
+  }
+
   function handleReset() {
     setNodes(initialNodes.map((node) => ({ ...node })));
     setActiveNodeId(1);
@@ -1866,6 +1909,38 @@ export default function HomePage() {
           <div className="relative overflow-hidden border-b-[4px] border-sky-300 bg-[linear-gradient(135deg,#38bdf8_0%,#818cf8_42%,#7dd3fc_100%)] px-4 py-5 text-center md:px-10 md:py-8">
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_14px,transparent_14px,transparent_30px)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.36)_0%,transparent_34%)]" />
+            <div className="absolute left-3 top-3 z-20 md:left-5 md:top-5">
+              {sessionStatus === "loading" ? (
+                <div className="inline-flex h-10 items-center rounded-full border-[2px] border-white/55 bg-white/15 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white/90 backdrop-blur-sm">
+                  Loading
+                </div>
+              ) : signedInUsername ? (
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex h-10 items-center rounded-full border-[2px] border-white/60 bg-white/18 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm">
+                    {signedInUsername}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void signOut({ redirect: false })}
+                    className="inline-flex h-10 items-center rounded-full border-[2px] border-white/60 bg-white/12 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-white/22"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : needsUsername ? (
+                <div className="inline-flex h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white backdrop-blur-sm">
+                  Finish Profile
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void signIn("google")}
+                  className="inline-flex h-10 items-center rounded-full border-[2px] border-white/65 bg-white/20 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-[1.02] hover:bg-white/28"
+                >
+                  Sign In
+                </button>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setLeaderboardOpen(true)}
@@ -2647,6 +2722,64 @@ export default function HomePage() {
                 </div>
               </div>
           </>
+        )}
+
+        {needsUsername && (
+          <div className="fixed inset-0 z-[110] overflow-y-auto bg-slate-950/45 px-4 py-6">
+            <div className="flex min-h-full items-center justify-center">
+              <div className="w-full max-w-md rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                  Finish Profile
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-sky-900">
+                  Choose Your Username
+                </h2>
+                <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                  Pick a unique, moderated username so your scores can be tracked across devices.
+                </p>
+                <div className="mt-5">
+                  <label
+                    htmlFor="username"
+                    className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700"
+                  >
+                    Username
+                  </label>
+                  <input
+                    id="username"
+                    type="text"
+                    value={usernameDraft}
+                    onChange={(e) => setUsernameDraft(e.target.value)}
+                    placeholder="3-16 letters, numbers, underscore"
+                    className="mt-2 w-full rounded-2xl border-[3px] border-sky-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400"
+                    maxLength={16}
+                    autoFocus
+                  />
+                </div>
+                {usernameError && (
+                  <div className="mt-4 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900">
+                    {usernameError}
+                  </div>
+                )}
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => void signOut({ redirect: false })}
+                    className="rounded-2xl border-[3px] border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Continue As Guest
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveUsername()}
+                    disabled={usernameSaving}
+                    className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {usernameSaving ? "Saving..." : "Save Username"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {leaderboardOpen && (

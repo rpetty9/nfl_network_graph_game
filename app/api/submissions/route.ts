@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { pool } from "@/lib/db";
 import { getLinkMultiplier } from "@/lib/scoring";
 
@@ -480,6 +481,13 @@ async function loadRelationships(playerIds: number[], themeRule: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    const registeredUserId =
+      session?.user?.id && /^\d+$/.test(session.user.id) ? session.user.id : null;
+    const registeredUsername =
+      session?.user?.username && session.user.username.trim()
+        ? session.user.username.trim()
+        : null;
     const body = await request.json();
     const requestedDate = typeof body?.date === "string" ? body.date : null;
     const clientToken = normalizeClientToken(body?.client_token);
@@ -489,10 +497,17 @@ export async function POST(request: NextRequest) {
         ? body.optimal_final_score
         : null;
 
-    if (!clientToken) {
+    if (!registeredUserId && !clientToken) {
       return NextResponse.json(
-        { error: "Missing browser submission token" },
+        { error: "Missing submission identity" },
         { status: 400 }
+      );
+    }
+
+    if (registeredUserId && !registeredUsername) {
+      return NextResponse.json(
+        { error: "Choose a username before tracking scores." },
+        { status: 403 }
       );
     }
 
@@ -571,11 +586,12 @@ export async function POST(request: NextRequest) {
         ? (finalScore / optimalFinalScore) * 100
         : null;
 
-    const displayName = makeDisplayName();
+    const displayName = registeredUsername ?? makeDisplayName();
     const submissionResult = await pool.query(
       `
       INSERT INTO puzzle_submission (
         puzzle_id,
+        user_id,
         client_token,
         display_name,
         base_score,
@@ -585,12 +601,13 @@ export async function POST(request: NextRequest) {
         optimal_final_score,
         percent_of_optimal
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING submission_id, display_name
       `,
       [
         puzzle.puzzle_id,
-        clientToken,
+        registeredUserId ? Number(registeredUserId) : null,
+        registeredUserId ? null : clientToken,
         displayName,
         baseScore,
         activeLinks,
@@ -637,7 +654,7 @@ export async function POST(request: NextRequest) {
 
     if ((error as { code?: string }).code === "23505") {
       return NextResponse.json(
-        { error: "This browser already submitted for this puzzle." },
+        { error: "You already submitted for this puzzle." },
         { status: 409 }
       );
     }

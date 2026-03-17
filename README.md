@@ -64,6 +64,12 @@ Optional SSL-related values for hosted Postgres:
 - `DB_SSL_MODE`
 - `DB_CHANNEL_BINDING`
 
+Auth-related values for optional Google profiles:
+
+- `AUTH_SECRET`
+- `AUTH_GOOGLE_ID`
+- `AUTH_GOOGLE_SECRET`
+
 Do not commit real secrets. `.env.local` is already ignored by `.gitignore`.
 
 ## Database / ETL

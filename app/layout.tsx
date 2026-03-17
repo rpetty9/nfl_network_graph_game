@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Press_Start_2P, Nunito, Geist_Mono } from "next/font/google";
+import { AppSessionProvider } from "@/components/session-provider";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -40,7 +41,7 @@ export default function RootLayout({
       <body
         className={`${nunito.variable} ${arcade.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AppSessionProvider>{children}</AppSessionProvider>
       </body>
     </html>
   );
