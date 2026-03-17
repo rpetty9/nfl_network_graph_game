@@ -3179,7 +3179,7 @@ export default function HomePage() {
               </svg>
             </button>
             <div className="relative z-10">
-              <div className="mx-auto mt-1 grid max-w-[360px] grid-cols-[40px_1fr_40px] items-start gap-3 md:hidden">
+              <div className="mx-auto mt-3 grid max-w-[360px] grid-cols-[40px_1fr_40px] items-start gap-3 md:hidden">
                 <div className="flex justify-start">
                   {sessionStatus === "loading" ? (
                     <div className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/55 bg-white/15 text-[10px] font-black uppercase tracking-[0.08em] text-white/90 backdrop-blur-sm">
