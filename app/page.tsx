@@ -1007,7 +1007,6 @@ export default function HomePage() {
       : todayIso;
   });
   const [nodes, setNodes] = useState<NodeState[]>([]);
-  const [initialNodes, setInitialNodes] = useState<NodeState[]>([]);
   const [activeNodeId, setActiveNodeId] = useState(1);
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(true);
   const [submitted, setSubmitted] = useState(false);
@@ -1321,8 +1320,7 @@ export default function HomePage() {
         }));
 
         setNodes(initial);
-        setInitialNodes(initial);
-        setActiveNodeId(1);
+          setActiveNodeId(1);
         setMobileNavigatorOpen(true);
         setSubmitted(false);
       } catch (error) {
@@ -2566,7 +2564,6 @@ export default function HomePage() {
       }
 
       setNodes(savedNodes);
-      setInitialNodes(savedNodes);
       setSubmissionResult(saved);
       setSubmissionViewMode("existing");
       setSubmitted(true);
@@ -2675,21 +2672,6 @@ export default function HomePage() {
 
       return [...current, badgeKey];
     });
-  }
-
-  function handleReset() {
-    setNodes(initialNodes.map((node) => ({ ...node })));
-    setActiveNodeId(1);
-    setMobileNavigatorOpen(true);
-    setSubmitted(false);
-    setOptimalLineup(null);
-    setOptimalError(null);
-    setOptimalLoading(false);
-    setSubmissionResult(null);
-    setLeaderboard([]);
-    setLeaderboardLoading(false);
-    setLeaderboardError(null);
-    setSubmissionError(null);
   }
 
   function handleCloseSubmittedView() {
@@ -3435,16 +3417,6 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="mt-8">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] px-6 py-3 text-sm font-bold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50"
-              >
-                Reset Board
-              </button>
             </div>
           </div>
         ) : (
