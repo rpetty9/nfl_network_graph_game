@@ -54,7 +54,7 @@ try {
     WITH ranked AS (
       SELECT
         user_id,
-        ROW_NUMBER() OVER (
+        RANK() OVER (
           ORDER BY final_score DESC, submitted_at ASC
         ) AS placement
       FROM puzzle_submission
