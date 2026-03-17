@@ -5564,7 +5564,10 @@ export default function HomePage() {
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
                       Leaderboard
                     </p>
-                    <h2 className="mt-2 text-xl font-black leading-tight tracking-normal text-amber-900 sm:text-2xl">
+                    <h2
+                      className="mt-2 text-xl font-black leading-tight tracking-normal text-amber-900 sm:text-2xl"
+                      style={{ fontFamily: "var(--font-body), Arial, Helvetica, sans-serif" }}
+                    >
                       {leaderboardHeading}
                     </h2>
                   </div>
