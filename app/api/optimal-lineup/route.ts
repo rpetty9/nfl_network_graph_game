@@ -57,7 +57,7 @@ type OptimalLineupResult = {
   final_score: number;
 };
 
-const OPTIMAL_CACHE_VERSION = "v1";
+const OPTIMAL_CACHE_VERSION = "v2";
 
 const SLOT_LIMITS: Record<string, number> = {
   any: 18,
