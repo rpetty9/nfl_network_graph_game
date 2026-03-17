@@ -56,6 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.avatarStyle = appUser.avatar_style;
             token.avatarBg = appUser.avatar_bg;
             token.avatarAccent = appUser.avatar_accent;
+            token.featuredBadges = appUser.featured_badges;
             token.badges = appUser.badges;
             token.needsUsername = !appUser.username;
           }
@@ -71,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.avatarStyle = refreshedUser.avatar_style;
           token.avatarBg = refreshedUser.avatar_bg;
           token.avatarAccent = refreshedUser.avatar_accent;
+          token.featuredBadges = refreshedUser.featured_badges;
           token.badges = refreshedUser.badges;
           token.needsUsername = !refreshedUser.username;
         }
@@ -85,6 +87,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.avatarStyle = appUser.avatar_style;
           token.avatarBg = appUser.avatar_bg;
           token.avatarAccent = appUser.avatar_accent;
+          token.featuredBadges = appUser.featured_badges;
           token.badges = appUser.badges;
           token.needsUsername = !appUser.username;
         }
@@ -103,6 +106,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           typeof token.avatarBg === "string" ? token.avatarBg : "sky";
         session.user.avatarAccent =
           typeof token.avatarAccent === "string" ? token.avatarAccent : "amber";
+        session.user.featuredBadges = Array.isArray(token.featuredBadges)
+          ? token.featuredBadges.filter((badge): badge is string => typeof badge === "string")
+          : [];
         session.user.badges = Array.isArray(token.badges) ? token.badges : [];
         session.user.needsUsername = Boolean(token.needsUsername);
       }

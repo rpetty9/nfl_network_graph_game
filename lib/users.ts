@@ -26,6 +26,7 @@ export type AppUser = {
   avatar_style: AvatarStyle;
   avatar_bg: AvatarColor;
   avatar_accent: AvatarColor;
+  featured_badges: BadgeKey[];
   status: string;
   badges: UserBadge[];
 };
@@ -165,8 +166,16 @@ const USER_SELECT_COLUMNS = `
   avatar_style,
   avatar_bg,
   avatar_accent,
+  COALESCE(featured_badges, ARRAY[]::text[]) AS featured_badges,
   status
 `;
+
+function sanitizeFeaturedBadges(value: unknown): BadgeKey[] {
+  if (!Array.isArray(value)) return [];
+
+  const unique = [...new Set(value.filter((entry) => typeof entry === "string"))];
+  return unique.filter((entry): entry is BadgeKey => isBadgeKey(entry)).slice(0, 3);
+}
 
 async function loadBadgesForUser(userId: string) {
   const result = await pool.query<UserBadgeRow>(
@@ -209,6 +218,7 @@ async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> 
 
   return {
     ...user,
+    featured_badges: sanitizeFeaturedBadges(user.featured_badges),
     badges: await loadBadgesForUser(user.user_id),
   };
 }
@@ -345,6 +355,53 @@ export async function updateAvatarForUser(input: {
       ${USER_SELECT_COLUMNS}
     `,
     [input.userId, input.avatarStyle, input.avatarBg, input.avatarAccent]
+  );
+
+  if (result.rowCount === 0) {
+    return { ok: false as const, reason: "invalid" as const };
+  }
+
+  return {
+    ok: true as const,
+    user: (await withUserBadges(result.rows[0])) as AppUser,
+  };
+}
+
+export async function updateFeaturedBadgesForUser(input: {
+  userId: string;
+  featuredBadges: string[];
+}) {
+  const nextBadges = sanitizeFeaturedBadges(input.featuredBadges);
+
+  const earnedResult = await pool.query<{ badge_key: string }>(
+    `
+    SELECT badge_key
+    FROM user_badge
+    WHERE user_id = $1
+    `,
+    [Number(input.userId)]
+  );
+
+  const earnedBadgeKeys = new Set(
+    earnedResult.rows
+      .map((row) => row.badge_key)
+      .filter((badgeKey): badgeKey is BadgeKey => isBadgeKey(badgeKey))
+  );
+
+  const allowedFeaturedBadges = nextBadges.filter((badgeKey) =>
+    earnedBadgeKeys.has(badgeKey)
+  );
+
+  const result = await pool.query<AppUserRow>(
+    `
+    UPDATE app_user
+    SET featured_badges = $2::text[]
+    WHERE user_id = $1
+      AND status = 'active'
+    RETURNING
+      ${USER_SELECT_COLUMNS}
+    `,
+    [Number(input.userId), allowedFeaturedBadges]
   );
 
   if (result.rowCount === 0) {

@@ -30,6 +30,7 @@ export type BadgeDefinition = {
   key: BadgeKey;
   title: string;
   description: string;
+  unlockHint: string;
   tone: BadgeTone;
   icon: BadgeIcon;
   manualOnly?: boolean;
@@ -52,6 +53,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "first_submission",
     title: "First Snap",
     description: "Submitted your first Five Wide puzzle.",
+    unlockHint: "Submit your first puzzle.",
     tone: "sky",
     icon: "spark",
   },
@@ -59,6 +61,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "submissions_10",
     title: "Ten Deep",
     description: "Submitted 10 puzzles.",
+    unlockHint: "Submit 10 different daily puzzles.",
     tone: "sky",
     icon: "stack",
   },
@@ -66,6 +69,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "submissions_25",
     title: "Quarter Century",
     description: "Submitted 25 puzzles.",
+    unlockHint: "Submit 25 different daily puzzles.",
     tone: "emerald",
     icon: "stack",
   },
@@ -73,6 +77,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "submissions_50",
     title: "Fifty Club",
     description: "Submitted 50 puzzles.",
+    unlockHint: "Submit 50 different daily puzzles.",
     tone: "amber",
     icon: "stack",
   },
@@ -80,6 +85,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "submissions_100",
     title: "Century Drive",
     description: "Submitted 100 puzzles.",
+    unlockHint: "Submit 100 different daily puzzles.",
     tone: "violet",
     icon: "stack",
   },
@@ -87,6 +93,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "top_10_finish",
     title: "Top Ten",
     description: "Finished in the daily top 10 leaderboard.",
+    unlockHint: "Finish in the top 10 on any daily leaderboard.",
     tone: "amber",
     icon: "trophy",
   },
@@ -94,6 +101,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "top_10_finish_5",
     title: "Top Ten x5",
     description: "Finished in the daily top 10 five different times.",
+    unlockHint: "Finish in the top 10 on five different puzzles.",
     tone: "violet",
     icon: "trophy",
   },
@@ -101,6 +109,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "ten_links_submission",
     title: "Perfect Web",
     description: "Submitted a lineup with all 10 active links.",
+    unlockHint: "Submit a lineup with all 10 active links.",
     tone: "emerald",
     icon: "link",
   },
@@ -108,6 +117,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "creator",
     title: "Creator",
     description: "Built Five Wide from the ground up.",
+    unlockHint: "Awarded manually by the app creator.",
     tone: "rose",
     icon: "shield",
     manualOnly: true,
@@ -116,6 +126,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     key: "founder",
     title: "Founder",
     description: "Early supporter recognized by the creator.",
+    unlockHint: "Awarded manually by the app creator.",
     tone: "slate",
     icon: "flag",
     manualOnly: true,
@@ -173,4 +184,10 @@ export function hydrateBadge(input: {
     awardNote: input.awardNote ?? null,
     manualOnly: Boolean(definition.manualOnly),
   };
+}
+
+export function getPublicBadgeDefinitions() {
+  return BADGE_ORDER.map((badgeKey) => BADGE_DEFINITIONS[badgeKey]).filter(
+    (badge) => !badge.manualOnly
+  );
 }

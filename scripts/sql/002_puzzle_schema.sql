@@ -160,6 +160,9 @@ ALTER TABLE app_user
 ALTER TABLE app_user
   ADD COLUMN IF NOT EXISTS avatar_accent TEXT NOT NULL DEFAULT 'amber';
 
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS featured_badges TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+
 CREATE TABLE IF NOT EXISTS user_badge (
   user_id BIGINT NOT NULL REFERENCES app_user(user_id) ON DELETE CASCADE,
   badge_key TEXT NOT NULL,

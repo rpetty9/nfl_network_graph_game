@@ -1,0 +1,2 @@
+ALTER TABLE app_user
+  ADD COLUMN IF NOT EXISTS featured_badges TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

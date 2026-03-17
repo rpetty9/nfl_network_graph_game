@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { type BadgeIcon, type BadgeTone, type UserBadge } from "@/lib/badges";
+import {
+  getPublicBadgeDefinitions,
+  type BadgeDefinition,
+  type BadgeIcon,
+  type BadgeKey,
+  type BadgeTone,
+  type UserBadge,
+} from "@/lib/badges";
 import {
   AVATAR_COLORS,
   AVATAR_COLOR_CLASSES,
@@ -157,6 +164,10 @@ function formatBadgeAwardDate(value: string) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function getBadgeProgressLabel(badge: BadgeDefinition) {
+  return badge.unlockHint;
 }
 
 type NodeState = {
@@ -619,11 +630,27 @@ function BadgeGlyph({ icon }: { icon: BadgeIcon }) {
 function ProfileBadgeCard({
   badge,
   compact = false,
+  locked = false,
+  helperText,
+  actionLabel,
+  onAction,
+  actionDisabled = false,
 }: {
-  badge: UserBadge;
+  badge: Pick<UserBadge, "title" | "description" | "tone" | "icon" | "awardedAt">;
   compact?: boolean;
+  locked?: boolean;
+  helperText?: string;
+  actionLabel?: string;
+  onAction?: (() => void) | null;
+  actionDisabled?: boolean;
 }) {
-  const tone = getBadgeToneClasses(badge.tone);
+  const tone = locked
+    ? {
+        shell: "border-slate-200 bg-slate-100/90 text-slate-600",
+        icon: "bg-slate-400 text-white",
+        meta: "text-slate-500",
+      }
+    : getBadgeToneClasses(badge.tone);
 
   return (
     <div
@@ -656,8 +683,20 @@ function ProfileBadgeCard({
             {badge.description}
           </p>
           <p className={`mt-2 text-[10px] font-black uppercase tracking-[0.08em] ${tone.meta}`}>
-            Earned {formatBadgeAwardDate(badge.awardedAt)}
+            {locked
+              ? helperText ?? "Locked"
+              : `Earned ${formatBadgeAwardDate(badge.awardedAt)}`}
           </p>
+          {onAction ? (
+            <button
+              type="button"
+              onClick={onAction}
+              disabled={actionDisabled}
+              className="mt-3 rounded-full border border-white/60 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {actionLabel}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
@@ -704,8 +743,11 @@ export default function HomePage() {
   const [avatarAccentDraft, setAvatarAccentDraft] = useState<AvatarColor>(
     DEFAULT_AVATAR.accent
   );
+  const [featuredBadgeDraft, setFeaturedBadgeDraft] = useState<BadgeKey[]>([]);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [badgeSaving, setBadgeSaving] = useState(false);
+  const [badgeError, setBadgeError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -729,7 +771,25 @@ export default function HomePage() {
   const sessionAvatarBg = (session?.user?.avatarBg ?? DEFAULT_AVATAR.bg) as AvatarColor;
   const sessionAvatarAccent = (session?.user?.avatarAccent ??
     DEFAULT_AVATAR.accent) as AvatarColor;
-  const userBadges = (session?.user?.badges ?? []) as UserBadge[];
+  const userBadges = useMemo(
+    () => (session?.user?.badges ?? []) as UserBadge[],
+    [session?.user?.badges]
+  );
+  const featuredBadgeKeys = useMemo(
+    () =>
+      ((session?.user?.featuredBadges ?? []) as string[])
+        .filter((badgeKey): badgeKey is BadgeKey => typeof badgeKey === "string")
+        .slice(0, 3),
+    [session?.user?.featuredBadges]
+  );
+  const publicBadgeDefinitions = getPublicBadgeDefinitions();
+  const earnedBadgeMap = useMemo(
+    () => new Map(userBadges.map((badge) => [badge.badgeKey, badge])),
+    [userBadges]
+  );
+  const featuredBadges = featuredBadgeDraft
+    .map((badgeKey) => earnedBadgeMap.get(badgeKey))
+    .filter((badge): badge is UserBadge => Boolean(badge));
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -777,12 +837,15 @@ export default function HomePage() {
     setAvatarStyleDraft(sessionAvatarStyle);
     setAvatarBgDraft(sessionAvatarBg);
     setAvatarAccentDraft(sessionAvatarAccent);
+    setFeaturedBadgeDraft(featuredBadgeKeys);
     setAvatarError(null);
+    setBadgeError(null);
   }, [
     session?.user?.id,
     sessionAvatarStyle,
     sessionAvatarBg,
     sessionAvatarAccent,
+    featuredBadgeKeys,
   ]);
 
   useEffect(() => {
@@ -2042,6 +2105,53 @@ export default function HomePage() {
     }
   }
 
+  function handleToggleFeaturedBadge(badgeKey: BadgeKey) {
+    setBadgeError(null);
+    setFeaturedBadgeDraft((current) => {
+      if (current.includes(badgeKey)) {
+        return current.filter((entry) => entry !== badgeKey);
+      }
+
+      if (current.length >= 3) {
+        setBadgeError("You can feature up to 3 badges.");
+        return current;
+      }
+
+      if (!earnedBadgeMap.has(badgeKey)) {
+        return current;
+      }
+
+      return [...current, badgeKey];
+    });
+  }
+
+  async function handleSaveFeaturedBadges() {
+    try {
+      setBadgeSaving(true);
+      setBadgeError(null);
+
+      const response = await fetch("/api/profile/featured-badges", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          featured_badges: featuredBadgeDraft,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to save featured badges.");
+      }
+
+      await updateSession();
+    } catch (error) {
+      setBadgeError((error as Error).message);
+    } finally {
+      setBadgeSaving(false);
+    }
+  }
+
   function handleReset() {
     setNodes(initialNodes.map((node) => ({ ...node })));
     setActiveNodeId(1);
@@ -3251,7 +3361,7 @@ export default function HomePage() {
         {profileOpen && signedInUsername && (
           <div className="fixed inset-0 z-[105] overflow-y-auto bg-slate-950/40 px-4 py-6">
             <div className="flex min-h-full items-center justify-center">
-              <div className="w-full max-w-2xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
+              <div className="w-full max-w-3xl rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)] md:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
@@ -3288,6 +3398,26 @@ export default function HomePage() {
                       <p className="mt-1 text-lg font-black text-slate-900">
                         {signedInUsername}
                       </p>
+                      <div className="mt-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
+                          Featured Badges
+                        </p>
+                        {featuredBadges.length > 0 ? (
+                          <div className="mt-3 space-y-2 text-left">
+                            {featuredBadges.map((badge) => (
+                              <ProfileBadgeCard
+                                key={`featured-${badge.badgeKey}`}
+                                badge={badge}
+                                compact
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/60 px-4 py-4 text-sm font-semibold text-slate-600">
+                            Pick up to 3 earned badges to display here.
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
@@ -3302,7 +3432,20 @@ export default function HomePage() {
                       {userBadges.length > 0 ? (
                         <div className="mt-4 space-y-3">
                           {userBadges.map((badge) => (
-                            <ProfileBadgeCard key={badge.badgeKey} badge={badge} />
+                            <ProfileBadgeCard
+                              key={badge.badgeKey}
+                              badge={badge}
+                              actionLabel={
+                                featuredBadgeDraft.includes(badge.badgeKey)
+                                  ? "Remove"
+                                  : "Feature"
+                              }
+                              onAction={() => handleToggleFeaturedBadge(badge.badgeKey)}
+                              actionDisabled={
+                                !featuredBadgeDraft.includes(badge.badgeKey) &&
+                                featuredBadgeDraft.length >= 3
+                              }
+                            />
                           ))}
                         </div>
                       ) : (
@@ -3379,12 +3522,58 @@ export default function HomePage() {
                         ))}
                       </div>
                     </div>
+
+                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                            Badge Gallery
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-slate-600">
+                            Public badges unlock through play. Locked badges stay grey until you earn them.
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          {userBadges.filter((badge) => !badge.manualOnly).length}/
+                          {publicBadgeDefinitions.length}
+                        </span>
+                      </div>
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        {publicBadgeDefinitions.map((badgeDefinition) => {
+                          const earnedBadge = earnedBadgeMap.get(badgeDefinition.key);
+                          const isFeatured = featuredBadgeDraft.includes(badgeDefinition.key);
+
+                          return earnedBadge ? (
+                            <ProfileBadgeCard
+                              key={`gallery-${badgeDefinition.key}`}
+                              badge={earnedBadge}
+                              actionLabel={isFeatured ? "Featured" : "Feature"}
+                              onAction={() => handleToggleFeaturedBadge(badgeDefinition.key)}
+                              actionDisabled={!isFeatured && featuredBadgeDraft.length >= 3}
+                            />
+                          ) : (
+                            <ProfileBadgeCard
+                              key={`gallery-${badgeDefinition.key}`}
+                              badge={{
+                                title: badgeDefinition.title,
+                                description: badgeDefinition.description,
+                                tone: badgeDefinition.tone,
+                                icon: badgeDefinition.icon,
+                                awardedAt: "",
+                              }}
+                              locked
+                              helperText={getBadgeProgressLabel(badgeDefinition)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {avatarError && (
+                {(avatarError || badgeError) && (
                   <div className="mt-5 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900">
-                    {avatarError}
+                    {avatarError ?? badgeError}
                   </div>
                 )}
 
@@ -3403,6 +3592,14 @@ export default function HomePage() {
                     className="rounded-2xl border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {avatarSaving ? "Saving..." : "Save Avatar"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveFeaturedBadges()}
+                    disabled={badgeSaving}
+                    className="rounded-2xl border-[3px] border-violet-300 bg-[linear-gradient(180deg,#c4b5fd_0%,#8b5cf6_55%,#6d28d9_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_0_rgba(139,92,246,0.18),0_14px_28px_rgba(139,92,246,0.22)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {badgeSaving ? "Saving..." : "Save Featured Badges"}
                   </button>
                 </div>
               </div>
