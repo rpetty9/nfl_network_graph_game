@@ -1125,11 +1125,28 @@ export default function HomePage() {
         .slice(0, 3),
     [session?.user?.featuredBadges]
   );
-  const publicBadgeDefinitions = getPublicBadgeDefinitions();
   const earnedBadgeMap = useMemo(
     () => new Map(userBadges.map((badge) => [badge.badgeKey, badge])),
     [userBadges]
   );
+  const publicBadgeDefinitions = useMemo(() => {
+    const visibleDefinitions = [...getPublicBadgeDefinitions()];
+    const visibleKeys = new Set(visibleDefinitions.map((badge) => badge.key));
+
+    userBadges.forEach((badge) => {
+      if (!badge.manualOnly || visibleKeys.has(badge.badgeKey)) {
+        return;
+      }
+
+      const definition = getBadgeDefinition(badge.badgeKey);
+      if (definition) {
+        visibleDefinitions.unshift(definition);
+        visibleKeys.add(definition.key);
+      }
+    });
+
+    return visibleDefinitions;
+  }, [userBadges]);
   const galleryPageSize = 4;
   const pagedGalleryBadges = publicBadgeDefinitions.slice(
     galleryPage * galleryPageSize,
@@ -4334,7 +4351,12 @@ export default function HomePage() {
                           </p>
                         </div>
                         <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                          {userBadges.filter((badge) => !badge.manualOnly).length}/
+                          {
+                            publicBadgeDefinitions.filter((badgeDefinition) =>
+                              earnedBadgeMap.has(badgeDefinition.key)
+                            ).length
+                          }
+                          /
                           {publicBadgeDefinitions.length}
                         </span>
                       </div>
