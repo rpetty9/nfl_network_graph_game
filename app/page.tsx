@@ -323,7 +323,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] drop-shadow-[0_1px_0_rgba(255,255,255,0.45)] ${isCreatorBadge ? "text-amber-50 drop-shadow-[0_1px_0_rgba(120,53,15,0.6)]" : "text-slate-950"}`}>
+          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isCreatorBadge ? "mx-auto inline-flex rounded-full border border-amber-200/80 bg-[linear-gradient(180deg,rgba(17,24,39,0.9)_0%,rgba(120,53,15,0.88)_100%)] px-4 py-1 text-amber-100 shadow-[0_0_0_1px_rgba(251,191,36,0.28),0_6px_18px_rgba(17,24,39,0.28)] drop-shadow-[0_1px_0_rgba(0,0,0,0.55)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
             {badge.title}
           </p>
         </div>
