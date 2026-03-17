@@ -2953,7 +2953,6 @@ export default function HomePage() {
                     </h2>
                     <p className="mt-2 text-sm font-semibold text-slate-600">
                       {signedInUsername}
-                      {session?.user?.email ? ` • ${session.user.email}` : ""}
                     </p>
                   </div>
                   <button
