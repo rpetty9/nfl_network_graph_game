@@ -8,6 +8,8 @@ import {
 } from "@/lib/avatar";
 import {
   BADGE_ORDER,
+  FRIEND_COUNT_BADGES,
+  FRIEND_WIN_BADGES,
   LINK_COUNT_BADGES,
   STREAK_BADGES,
   SUBMISSION_COUNT_BADGES,
@@ -38,6 +40,8 @@ export type AppUser = {
     leaderboard_finishes: number;
     links_created: number;
     longest_submission_streak: number;
+    friends_count: number;
+    friend_daily_wins: number;
   };
   recent_submissions: RecentSubmission[];
 };
@@ -57,6 +61,8 @@ export type PublicUserProfile = {
     leaderboard_finishes: number;
     links_created: number;
     longest_submission_streak: number;
+    friends_count: number;
+    friend_daily_wins: number;
   };
   recent_submissions: RecentSubmission[];
 };
@@ -332,6 +338,8 @@ async function loadStatsForUser(userId: string) {
     submissionStatsResult,
     leaderboardStatsResult,
     streakStatsResult,
+    friendsStatsResult,
+    friendWinsResult,
   ] = await Promise.all([
     pool.query<{
       puzzles_submitted: string;
@@ -379,6 +387,49 @@ async function loadStatsForUser(userId: string) {
       `,
       [Number(userId)]
     ),
+    pool.query<{ friends_count: string }>(
+      `
+      SELECT COUNT(DISTINCT
+        CASE
+          WHEN requester_user_id = $1 THEN addressee_user_id
+          ELSE requester_user_id
+        END
+      )::text AS friends_count
+      FROM user_friend_request
+      WHERE status = 'accepted'
+        AND ($1 IN (requester_user_id, addressee_user_id))
+      `,
+      [Number(userId)]
+    ),
+    pool.query<{ friend_daily_wins: string }>(
+      `
+      WITH accepted_friends AS (
+        SELECT DISTINCT
+          CASE
+            WHEN requester_user_id = $1 THEN addressee_user_id
+            ELSE requester_user_id
+          END AS friend_user_id
+        FROM user_friend_request
+        WHERE status = 'accepted'
+          AND ($1 IN (requester_user_id, addressee_user_id))
+      ),
+      friend_wins AS (
+        SELECT DISTINCT ps.puzzle_id
+        FROM puzzle_submission ps
+        JOIN accepted_friends af
+          ON TRUE
+        JOIN puzzle_submission fps
+          ON fps.puzzle_id = ps.puzzle_id
+         AND fps.user_id = af.friend_user_id
+        WHERE ps.user_id = $1
+          AND ps.user_id IS NOT NULL
+          AND fps.final_score < ps.final_score
+      )
+      SELECT COUNT(*)::text AS friend_daily_wins
+      FROM friend_wins
+      `,
+      [Number(userId)]
+    ),
   ]);
 
   return {
@@ -392,6 +443,8 @@ async function loadStatsForUser(userId: string) {
     longest_submission_streak: Number(
       streakStatsResult.rows[0]?.longest_submission_streak ?? "0"
     ),
+    friends_count: Number(friendsStatsResult.rows[0]?.friends_count ?? "0"),
+    friend_daily_wins: Number(friendWinsResult.rows[0]?.friend_daily_wins ?? "0"),
   };
 }
 
@@ -449,6 +502,69 @@ export async function getAcceptedFriendUserIds(userId: string) {
   );
 
   return result.rows.map((row) => row.user_id);
+}
+
+async function awardFriendshipBadgesForUsers(userIds: string[]) {
+  const uniqueUserIds = [...new Set(userIds.filter(Boolean))];
+
+  await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      const stats = await loadStatsForUser(userId);
+      const badgeKeys = FRIEND_COUNT_BADGES.filter(({ count }) => stats.friends_count >= count).map(
+        ({ key }) => key
+      );
+
+      if (badgeKeys.length > 0) {
+        await grantBadgesToUser({
+          userId,
+          badgeKeys,
+        });
+      }
+    })
+  );
+}
+
+function collectStatBasedBadgeKeys(stats: {
+  puzzles_submitted: number;
+  leaderboard_finishes: number;
+  links_created: number;
+  longest_submission_streak: number;
+  friends_count: number;
+  friend_daily_wins: number;
+}) {
+  const badgeKeys = new Set<BadgeKey>();
+
+  SUBMISSION_COUNT_BADGES.forEach(({ count, key }) => {
+    if (stats.puzzles_submitted >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  LINK_COUNT_BADGES.forEach(({ count, key }) => {
+    if (stats.links_created >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  STREAK_BADGES.forEach(({ count, key }) => {
+    if (stats.longest_submission_streak >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  FRIEND_COUNT_BADGES.forEach(({ count, key }) => {
+    if (stats.friends_count >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  FRIEND_WIN_BADGES.forEach(({ count, key }) => {
+    if (stats.friend_daily_wins >= count) {
+      badgeKeys.add(key);
+    }
+  });
+
+  return [...badgeKeys];
 }
 
 export async function getFriendOverviewForUser(userId: string): Promise<FriendOverview> {
@@ -685,6 +801,7 @@ export async function sendFriendRequest(userId: string, targetUserId: string) {
         [Number(targetUserId), Number(userId)]
       );
       await client.query("COMMIT");
+      await awardFriendshipBadgesForUsers([userId, targetUserId]);
       return { ok: true as const, relationship_status: "friend" as const };
     }
 
@@ -769,6 +886,10 @@ export async function respondToFriendRequest(input: {
       [requesterId, addresseeId]
     );
 
+    if ((result.rowCount ?? 0) > 0) {
+      await awardFriendshipBadgesForUsers([String(input.userId), String(input.targetUserId)]);
+    }
+
     return { ok: (result.rowCount ?? 0) > 0, relationship_status: "friend" as const };
   }
 
@@ -836,9 +957,15 @@ async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> 
     badgeKeys: derivedBadgeKeys,
   });
 
-  const [badges, stats, recentSubmissions] = await Promise.all([
+  const stats = await loadStatsForUser(user.user_id);
+
+  await grantBadgesToUser({
+    userId: user.user_id,
+    badgeKeys: collectStatBasedBadgeKeys(stats),
+  });
+
+  const [badges, recentSubmissions] = await Promise.all([
     loadBadgesForUser(user.user_id),
-    loadStatsForUser(user.user_id),
     loadRecentSubmissionsForUser(user.user_id),
   ]);
 
@@ -1161,27 +1288,8 @@ export async function awardBadgesForSubmission(input: {
   userId: string;
   activeLinks: number;
 }) {
-  const badgeKeys = new Set<BadgeKey>();
   const stats = await loadStatsForUser(input.userId);
-  const submissionCount = stats.puzzles_submitted;
-
-  SUBMISSION_COUNT_BADGES.forEach(({ count, key }) => {
-    if (submissionCount >= count) {
-      badgeKeys.add(key);
-    }
-  });
-
-  LINK_COUNT_BADGES.forEach(({ count, key }) => {
-    if (stats.links_created >= count) {
-      badgeKeys.add(key);
-    }
-  });
-
-  STREAK_BADGES.forEach(({ count, key }) => {
-    if (stats.longest_submission_streak >= count) {
-      badgeKeys.add(key);
-    }
-  });
+  const badgeKeys = new Set<BadgeKey>(collectStatBasedBadgeKeys(stats));
 
   if (input.activeLinks >= 10) {
     badgeKeys.add("ten_links_submission");

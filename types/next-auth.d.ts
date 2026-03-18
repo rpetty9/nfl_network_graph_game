@@ -22,6 +22,8 @@ declare module "next-auth" {
         leaderboard_finishes: number;
         links_created: number;
         longest_submission_streak: number;
+        friends_count: number;
+        friend_daily_wins: number;
       };
       needsUsername: boolean;
     };
@@ -45,6 +47,8 @@ declare module "next-auth/jwt" {
       leaderboard_finishes: number;
       links_created: number;
       longest_submission_streak: number;
+      friends_count: number;
+      friend_daily_wins: number;
     };
     needsUsername?: boolean;
   }

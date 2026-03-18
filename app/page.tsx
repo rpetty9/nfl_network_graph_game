@@ -31,6 +31,7 @@ type PuzzleResponse = {
     stat_pool_size: number;
     seed_value: string;
     published_flag: boolean;
+    position_overlay_enabled?: boolean;
   };
   theme: {
     filter_id: string | number;
@@ -67,6 +68,14 @@ type SlotRule = {
   parameter_type: string;
   parameter_value: string | null;
   display_text: string;
+};
+
+const POSITION_OVERLAY_BY_SLOT: Record<number, string> = {
+  1: "QB",
+  2: "RB",
+  3: "WR",
+  4: "TE",
+  5: "FLEX",
 };
 
 type PlayerOption = {
@@ -192,6 +201,8 @@ type PublicProfileResponse = {
       leaderboard_finishes: number;
       links_created: number;
       longest_submission_streak: number;
+      friends_count: number;
+      friend_daily_wins: number;
     };
     recent_submissions: Array<{
       submission_id: number;
@@ -331,7 +342,11 @@ type BadgeProgressStats = {
   leaderboard_finishes: number;
   links_created: number;
   longest_submission_streak: number;
+  friends_count: number;
+  friend_daily_wins: number;
 };
+
+type BadgeGalleryTab = "milestones" | "links" | "leaderboard" | "social" | "profile";
 
 type NextBadgeGoal = {
   badge: BadgeDefinition;
@@ -365,6 +380,31 @@ function getNextBadgeGoals(input: {
       note,
     });
   };
+
+  pushGoal(
+    "first_friend",
+    stats.friends_count,
+    1,
+    "Add your first exact-username friend."
+  );
+  pushGoal(
+    "friends_10",
+    stats.friends_count,
+    10,
+    "A bigger circle unlocks this social milestone."
+  );
+  pushGoal(
+    "beat_friend_daily",
+    stats.friend_daily_wins,
+    1,
+    "Finish above at least one accepted friend on a puzzle day."
+  );
+  pushGoal(
+    "beat_friend_daily_10",
+    stats.friend_daily_wins,
+    10,
+    "Keep stacking friend wins across different daily puzzles."
+  );
 
   pushGoal(
     "submissions_10",
@@ -412,11 +452,11 @@ function getNextBadgeGoals(input: {
   if (!earnedBadgeKeys.has("ten_links_submission")) {
     const badge = getBadgeDefinition("ten_links_submission");
     if (badge) {
-      goals.push({
+        goals.push({
         badge,
         progressLabel: `${Math.min(currentSubmissionLinks, 10)}/10`,
         progressRatio: Math.min(currentSubmissionLinks / 10, 1),
-        note: "One fully connected lineup hits the max 2.00x bonus.",
+        note: "Each active link adds +20%, and a fully connected lineup reaches 3.00x.",
       });
     }
   }
@@ -433,6 +473,8 @@ function getBadgeProgressLabel(
     leaderboard_finishes: number;
     links_created: number;
     longest_submission_streak: number;
+    friends_count: number;
+    friend_daily_wins: number;
   }
 ) {
   switch (badge.key) {
@@ -440,6 +482,14 @@ function getBadgeProgressLabel(
       return "1/1";
     case "avatar_customized":
       return "Update avatar";
+    case "first_friend":
+      return `${Math.min(stats.friends_count, 1)}/1`;
+    case "friends_10":
+      return `${Math.min(stats.friends_count, 10)}/10`;
+    case "beat_friend_daily":
+      return `${Math.min(stats.friend_daily_wins, 1)}/1`;
+    case "beat_friend_daily_10":
+      return `${Math.min(stats.friend_daily_wins, 10)}/10`;
     case "first_submission":
       return `${Math.min(stats.puzzles_submitted, 1)}/1`;
     case "submissions_10":
@@ -467,12 +517,45 @@ function getBadgeProgressLabel(
   }
 }
 
+function getBadgeGalleryTab(badgeKey: BadgeKey): BadgeGalleryTab {
+  switch (badgeKey) {
+    case "first_friend":
+    case "friends_10":
+    case "beat_friend_daily":
+    case "beat_friend_daily_10":
+      return "social";
+    case "top_10_finish":
+    case "top_10_finish_5":
+      return "leaderboard";
+    case "links_25":
+    case "links_100":
+    case "ten_links_submission":
+      return "links";
+    case "account_created":
+    case "avatar_customized":
+    case "creator":
+    case "founder":
+    case "bestestest":
+      return "profile";
+    default:
+      return "milestones";
+  }
+}
+
 function clampPageIndex(pageIndex: number, totalItems: number, pageSize: number) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   return Math.min(Math.max(pageIndex, 0), totalPages - 1);
 }
 
 function formatAvatarOptionLabel(value: string) {
+  const explicitLabels: Record<string, string> = {
+    shieldstar: "Shield Star",
+  };
+
+  if (explicitLabels[value]) {
+    return explicitLabels[value];
+  }
+
   return value.replace(/_/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
@@ -517,13 +600,13 @@ function FeaturedBadgeSlot({
           isLegendaryManualBadge
             ? isBestestestBadge
               ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.98)_0%,rgba(244,114,182,0.3)_24%,rgba(168,85,247,0.34)_46%,rgba(91,33,182,0.5)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.45),0_0_30px_rgba(168,85,247,0.34),0_20px_48px_rgba(91,33,182,0.34)]"
-              : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.98)_0%,rgba(250,204,21,0.44)_24%,rgba(245,158,11,0.34)_45%,rgba(120,53,15,0.48)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.55),0_0_30px_rgba(251,191,36,0.4),0_20px_48px_rgba(120,53,15,0.36)]"
+              : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,252,235,0.99)_0%,rgba(253,224,71,0.42)_22%,rgba(251,191,36,0.34)_42%,rgba(249,115,22,0.28)_64%,rgba(251,146,60,0.3)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.48),0_0_28px_rgba(249,115,22,0.22),0_20px_48px_rgba(251,146,60,0.2)]"
             : tone.shell
         } ${
           isLegendaryManualBadge
             ? isBestestestBadge
               ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.5),transparent_22%),radial-gradient(circle_at_80%_18%,rgba(244,114,182,0.28),transparent_22%),repeating-linear-gradient(135deg,rgba(236,72,153,0.14)_0,rgba(236,72,153,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(236,72,153,0.24),transparent_62%)] after:blur-xl after:content-['']"
-              : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_22%_16%,rgba(255,255,255,0.55),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,236,179,0.34),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.14)_0,rgba(255,215,0,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.28),transparent_62%)] after:blur-xl after:content-['']"
+              : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_16%,rgba(255,255,255,0.52),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(251,191,36,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(249,115,22,0.1)_0,rgba(249,115,22,0.1)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,146,60,0.22),transparent_62%)] after:blur-xl after:content-['']"
             : "shadow-[0_16px_30px_rgba(15,23,42,0.11)]"
         }`}
       >
@@ -534,7 +617,7 @@ function FeaturedBadgeSlot({
             isLegendaryManualBadge
               ? isBestestestBadge
                 ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_22px_rgba(244,114,182,0.42)]"
-                : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_68%,#78350f_100%)] text-amber-950 shadow-[0_0_22px_rgba(251,191,36,0.58)]"
+                : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_22px_rgba(56,189,248,0.38)]"
               : tone.icon
           }`}
         >
@@ -553,7 +636,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isLegendaryManualBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : "mx-auto inline-flex items-center rounded-[12px] border border-amber-200/70 bg-[linear-gradient(135deg,rgba(17,24,39,0.96)_0%,rgba(52,31,12,0.94)_34%,rgba(120,53,15,0.9)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-[#fff4c2] shadow-[0_0_0_1px_rgba(251,191,36,0.22),0_10px_24px_rgba(17,24,39,0.34),inset_0_1px_0_rgba(255,255,255,0.08)] drop-shadow-[0_1px_0_rgba(0,0,0,0.55)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
+          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isLegendaryManualBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : "mx-auto inline-flex items-center rounded-[12px] border border-amber-200/90 bg-[linear-gradient(135deg,rgba(255,251,235,0.96)_0%,rgba(253,230,138,0.98)_22%,rgba(251,191,36,0.94)_58%,rgba(249,115,22,0.9)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.32),0_10px_24px_rgba(249,115,22,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
             {badge.title}
           </p>
         </div>
@@ -758,7 +841,6 @@ function normalizeUrlDateParam(rawDate: string): string | null {
 function isPlayablePuzzleDate(dateValue: string, maxDate: string): boolean {
   return (
     /^\d{4}-\d{2}-\d{2}$/.test(dateValue) &&
-    dateValue >= "2026-03-15" &&
     dateValue <= maxDate
   );
 }
@@ -1131,168 +1213,6 @@ function getBadgeToneClasses(tone: BadgeTone) {
   }
 }
 
-function GraphLogoMark({
-  variant,
-}: {
-  variant: "formation" | "shield" | "playbook" | "spark";
-}) {
-  const nodes = [
-    { x: 24, y: 78 },
-    { x: 76, y: 34 },
-    { x: 128, y: 20 },
-    { x: 180, y: 34 },
-    { x: 232, y: 78 },
-  ];
-
-  return (
-    <svg aria-hidden="true" viewBox="0 0 256 176" className="h-full w-full">
-      <defs>
-        <linearGradient id={`bg-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={variant === "shield" ? "#0f172a" : "#f8fdff"} />
-          <stop offset="100%" stopColor={variant === "shield" ? "#312e81" : "#e0e7ff"} />
-        </linearGradient>
-        <linearGradient id={`link-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#a855f7" />
-        </linearGradient>
-        <linearGradient id={`node-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#fef3c7" />
-          <stop offset="100%" stopColor="#f59e0b" />
-        </linearGradient>
-      </defs>
-
-      {variant === "shield" ? (
-        <path
-          d="M128 10 214 34v60c0 34.2-22.1 56.7-86 72-63.9-15.3-86-37.8-86-72V34L128 10Z"
-          fill={`url(#bg-${variant})`}
-          stroke="rgba(147,197,253,0.8)"
-          strokeWidth="4"
-        />
-      ) : variant === "playbook" ? (
-        <rect
-          x="12"
-          y="12"
-          width="232"
-          height="152"
-          rx="34"
-          fill={`url(#bg-${variant})`}
-          stroke="rgba(147,197,253,0.8)"
-          strokeWidth="4"
-        />
-      ) : (
-        <rect
-          x="12"
-          y="12"
-          width="232"
-          height="152"
-          rx="44"
-          fill={`url(#bg-${variant})`}
-          stroke="rgba(147,197,253,0.8)"
-          strokeWidth="4"
-        />
-      )}
-
-      {variant === "playbook" ? (
-        <>
-          <path
-            d="M34 122C58 104 75 90 94 64"
-            fill="none"
-            stroke={`url(#link-${variant})`}
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray="8 10"
-          />
-          <path
-            d="M222 122C198 104 181 90 162 64"
-            fill="none"
-            stroke={`url(#link-${variant})`}
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray="8 10"
-          />
-          <path
-            d="M128 128V44"
-            fill="none"
-            stroke={`url(#link-${variant})`}
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray="10 10"
-          />
-        </>
-      ) : (
-        <>
-          {nodes.flatMap((from, index) =>
-            nodes.slice(index + 1).map((to, innerIndex) => (
-              <line
-                key={`${index}-${innerIndex}`}
-                x1={from.x}
-                y1={from.y}
-                x2={to.x}
-                y2={to.y}
-                stroke={`url(#link-${variant})`}
-                strokeWidth={variant === "spark" ? 5 : 4}
-                strokeOpacity={variant === "spark" ? 0.9 : 0.72}
-              />
-            )),
-          )}
-        </>
-      )}
-
-      {variant === "spark" ? (
-        <path
-          d="M123 78h14l-10 23h14l-17 27 4-20h-13l8-30Z"
-          fill="#fef3c7"
-          stroke="#f59e0b"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-      ) : null}
-
-      {nodes.map((node, index) => (
-        <g key={index}>
-          <circle cx={node.x} cy={node.y} r={15} fill={`url(#node-${variant})`} />
-          <circle cx={node.x} cy={node.y} r={15} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="3" />
-          <circle cx={node.x} cy={node.y} r={6} fill={variant === "shield" ? "#0f172a" : "#1e293b"} />
-        </g>
-      ))}
-
-      <text
-        x="128"
-        y="154"
-        textAnchor="middle"
-        className="fill-sky-900 font-black tracking-[0.22em]"
-        fontSize="20"
-      >
-        FIVE WIDE
-      </text>
-    </svg>
-  );
-}
-
-function GraphLogoCard({
-  title,
-  description,
-  variant,
-}: {
-  title: string;
-  description: string;
-  variant: "formation" | "shield" | "playbook" | "spark";
-}) {
-  return (
-    <div className="rounded-[28px] border-[3px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] p-4 shadow-[0_8px_0_rgba(125,211,252,0.08),0_14px_26px_rgba(125,211,252,0.12)]">
-      <div className="rounded-[24px] border-[2px] border-sky-100 bg-white/90 p-4">
-        <div className="mx-auto aspect-[256/176] w-full max-w-[280px]">
-          <GraphLogoMark variant={variant} />
-        </div>
-      </div>
-      <div className="mt-4">
-        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-sky-700">{title}</p>
-        <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{description}</p>
-      </div>
-    </div>
-  );
-}
-
 function BadgeGlyph({ icon }: { icon: BadgeIcon }) {
   switch (icon) {
     case "stack":
@@ -1405,14 +1325,14 @@ function ProfileBadgeCard({
           shell:
             isBestestestBadge
               ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.99)_0%,rgba(244,114,182,0.36)_20%,rgba(168,85,247,0.34)_44%,rgba(91,33,182,0.46)_68%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.42),0_0_34px_rgba(168,85,247,0.24),0_24px_52px_rgba(91,33,182,0.38),inset_0_1px_0_rgba(255,255,255,0.24)]"
-              : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.44)_20%,rgba(245,158,11,0.3)_42%,rgba(120,53,15,0.42)_66%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.5),0_0_34px_rgba(251,191,36,0.26),0_24px_52px_rgba(120,53,15,0.38),inset_0_1px_0_rgba(255,255,255,0.28)]",
+              : "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.4)_18%,rgba(125,211,252,0.32)_38%,rgba(37,99,235,0.34)_62%,rgba(8,47,73,0.9)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(125,211,252,0.42),0_0_34px_rgba(56,189,248,0.24),0_24px_52px_rgba(30,64,175,0.34),inset_0_1px_0_rgba(255,255,255,0.28)]",
           icon: isBestestestBadge
             ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_24px_rgba(244,114,182,0.46)]"
-            : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_72%,#78350f_100%)] text-amber-950 shadow-[0_0_24px_rgba(251,191,36,0.56)]",
-          meta: isBestestestBadge ? "text-amber-100" : "text-amber-950/90",
+            : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_24px_rgba(56,189,248,0.42)]",
+          meta: isBestestestBadge ? "text-amber-100" : "text-sky-950/90",
           aura: isBestestestBadge
             ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(244,114,182,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(244,114,182,0.1)_0,rgba(244,114,182,0.1)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(168,85,247,0.24),transparent_60%)] after:blur-xl after:content-['']"
-            : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(255,236,179,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(255,215,0,0.08)_0,rgba(255,215,0,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(251,191,36,0.26),transparent_60%)] after:blur-xl after:content-['']",
+            : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(125,211,252,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(56,189,248,0.08)_0,rgba(56,189,248,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(56,189,248,0.24),transparent_60%)] after:blur-xl after:content-['']",
         }
       : {
           ...getBadgeToneClasses(badge.tone),
@@ -1477,7 +1397,7 @@ function ProfileBadgeCard({
           <p
             className={`text-xs font-black uppercase tracking-[0.13em] ${
               isCreatorBadge
-                ? "text-amber-950 drop-shadow-[0_1px_0_rgba(255,248,220,0.6)]"
+                ? "text-sky-950 drop-shadow-[0_1px_0_rgba(255,248,220,0.55)]"
                 : "drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"
             }`}
           >
@@ -1488,7 +1408,7 @@ function ProfileBadgeCard({
               locked
                 ? "text-slate-600"
                 : isCreatorBadge
-                  ? "text-amber-950/90"
+                  ? "text-sky-950/90"
                   : isLegendaryManualBadge
                     ? "text-amber-50/90"
                     : "text-slate-700"
@@ -1536,7 +1456,7 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
               isLegendaryManualBadge
                 ? isBestestestBadge
                   ? "bg-[radial-gradient(circle_at_30%_28%,#fff1f2_0%,#f9a8d4_16%,#f472b6_38%,#a855f7_60%,#581c87_82%,#111827_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.58),0_0_16px_rgba(168,85,247,0.52),0_12px_24px_rgba(91,33,182,0.38)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(244,114,182,0.52),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
-                  : "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#facc15_42%,#f59e0b_62%,#78350f_82%,#111827_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.62),0_0_16px_rgba(251,191,36,0.62),0_12px_24px_rgba(120,53,15,0.36)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(251,191,36,0.58),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
+                  : "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#7dd3fc_42%,#2563eb_64%,#1e3a8a_84%,#082f49_100%)] text-sky-950 shadow-[0_0_0_1px_rgba(125,211,252,0.58),0_0_16px_rgba(56,189,248,0.54),0_12px_24px_rgba(30,64,175,0.34)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(56,189,248,0.54),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
                 : tone.icon
             }`}
             title={badge.title}
@@ -1674,6 +1594,8 @@ export default function HomePage() {
   const [activeFeaturedBadgeKey, setActiveFeaturedBadgeKey] = useState<string | null>(
     null
   );
+  const [badgeGalleryTab, setBadgeGalleryTab] =
+    useState<BadgeGalleryTab>("milestones");
   const [galleryPage, setGalleryPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFullLinkConfetti, setShowFullLinkConfetti] = useState(false);
@@ -1690,19 +1612,15 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
-  const [leaderboardTab, setLeaderboardTab] = useState<
-    "daily" | "friends" | "yesterday" | "all-time"
-  >("daily");
+  const [leaderboardScope, setLeaderboardScope] = useState<"all" | "friends">("all");
+  const [leaderboardView, setLeaderboardView] = useState<
+    "today" | "yesterday" | "all-time"
+  >("today");
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<AllTimeLeaderboardEntry[]>(
     []
   );
   const [allTimeLeaderboardLoading, setAllTimeLeaderboardLoading] = useState(false);
   const [allTimeLeaderboardError, setAllTimeLeaderboardError] = useState<string | null>(
-    null
-  );
-  const [friendsLeaderboard, setFriendsLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [friendsLeaderboardLoading, setFriendsLeaderboardLoading] = useState(false);
-  const [friendsLeaderboardError, setFriendsLeaderboardError] = useState<string | null>(
     null
   );
   const [publicProfileOpen, setPublicProfileOpen] = useState(false);
@@ -1726,6 +1644,12 @@ export default function HomePage() {
   const [friendSearchMessage, setFriendSearchMessage] = useState<string | null>(null);
   const [friendActionLoadingId, setFriendActionLoadingId] = useState<string | null>(null);
   const [friendActionError, setFriendActionError] = useState<string | null>(null);
+  const [friendTab, setFriendTab] = useState<"friends" | "pending" | "requests">(
+    "friends"
+  );
+  const [profileSectionTab, setProfileSectionTab] = useState<"profile" | "social">(
+    "profile"
+  );
   const [activePublicFeaturedBadgeKey, setActivePublicFeaturedBadgeKey] = useState<string | null>(
     null
   );
@@ -1759,10 +1683,35 @@ export default function HomePage() {
         leaderboard_finishes: 0,
         links_created: 0,
         longest_submission_streak: 0,
+        friends_count: 0,
+        friend_daily_wins: 0,
       },
     [session?.user?.stats]
   );
   const selfRecentSubmissions = selfProfile?.recent_submissions ?? [];
+  const friendLeaderboardUserIds = useMemo(() => {
+    if (!session?.user?.id) {
+      return new Set<string>();
+    }
+
+    return new Set([
+      session.user.id,
+      ...((friendOverview?.friends ?? []).map((friend) => friend.user_id)),
+    ]);
+  }, [friendOverview?.friends, session?.user?.id]);
+  const filteredYesterdayWinners = useMemo(() => {
+    const winners = homeRecap?.winners ?? [];
+
+    if (leaderboardScope !== "friends") {
+      return winners;
+    }
+
+    if (friendLeaderboardUserIds.size === 0) {
+      return [];
+    }
+
+    return winners.filter((entry) => friendLeaderboardUserIds.has(entry.user_id));
+  }, [friendLeaderboardUserIds, homeRecap?.winners, leaderboardScope]);
   const featuredBadgeKeys = useMemo(
     () =>
       ((session?.user?.featuredBadges ?? []) as string[])
@@ -1800,14 +1749,21 @@ export default function HomePage() {
       return 0;
     });
   }, [earnedBadgeMap, userBadges]);
+  const filteredGalleryBadges = useMemo(
+    () =>
+      publicBadgeDefinitions.filter(
+        (badgeDefinition) => getBadgeGalleryTab(badgeDefinition.key) === badgeGalleryTab
+      ),
+    [badgeGalleryTab, publicBadgeDefinitions]
+  );
   const galleryPageSize = 4;
-  const pagedGalleryBadges = publicBadgeDefinitions.slice(
+  const pagedGalleryBadges = filteredGalleryBadges.slice(
     galleryPage * galleryPageSize,
     (galleryPage + 1) * galleryPageSize
   );
   const galleryPageCount = Math.max(
     1,
-    Math.ceil(publicBadgeDefinitions.length / galleryPageSize)
+    Math.ceil(filteredGalleryBadges.length / galleryPageSize)
   );
   const featuredBadges = featuredBadgeDraft
     .map((badgeKey) => earnedBadgeMap.get(badgeKey))
@@ -1957,9 +1913,13 @@ export default function HomePage() {
 
   useEffect(() => {
     setGalleryPage((current) =>
-      clampPageIndex(current, publicBadgeDefinitions.length, galleryPageSize)
+      clampPageIndex(current, filteredGalleryBadges.length, galleryPageSize)
     );
-  }, [galleryPageSize, publicBadgeDefinitions.length]);
+  }, [filteredGalleryBadges.length, galleryPageSize]);
+
+  useEffect(() => {
+    setGalleryPage(0);
+  }, [badgeGalleryTab]);
 
   useEffect(() => {
     setAvatarOptionPage((current) =>
@@ -2240,14 +2200,6 @@ export default function HomePage() {
   const activePuzzleDate = String(
     puzzleData?.puzzle?.puzzle_date ?? selectedDate
   ).slice(0, 10);
-  const leaderboardHeading =
-    leaderboardTab === "all-time"
-      ? "All-Time Standings"
-      : leaderboardTab === "friends"
-        ? `${formatPuzzleDateLabel(activePuzzleDate)} Friends`
-      : leaderboardTab === "yesterday" && homeRecap?.puzzle_date
-        ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Yesterday`
-        : `${formatPuzzleDateLabel(activePuzzleDate)} Leaderboard`;
   function formatPuzzleDateLabel(dateValue: string) {
     const [year, month, day] = dateValue.split("-").map(Number);
     if (!year || !month || !day) return dateValue;
@@ -2258,6 +2210,31 @@ export default function HomePage() {
       year: "numeric",
     });
   }
+  const leaderboardHeading =
+    leaderboardView === "all-time"
+      ? leaderboardScope === "friends"
+        ? "Friends All-Time Standings"
+        : "All-Time Standings"
+      : leaderboardView === "yesterday" && homeRecap?.puzzle_date
+        ? leaderboardScope === "friends"
+          ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Friends`
+          : `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Leaderboard`
+      : leaderboardScope === "friends"
+          ? `${formatPuzzleDateLabel(activePuzzleDate)} Friends`
+          : `${formatPuzzleDateLabel(activePuzzleDate)} Leaderboard`;
+  const showFriendsLeaderboardScope = Boolean(signedInUsername);
+  const currentLeaderboardEmptyMessage =
+    leaderboardScope === "friends"
+      ? leaderboardView === "today"
+        ? "No friend scores yet for today's puzzle. Add exact usernames in your profile to build your friends board."
+        : leaderboardView === "yesterday"
+          ? "None of your friends finished in yesterday's top 10."
+          : "No all-time friend finishes yet."
+      : leaderboardView === "today"
+        ? "No leaderboard entries yet for this puzzle."
+        : leaderboardView === "yesterday"
+          ? "No finalized top 10 is available yet."
+          : "No all-time leaderboard data yet.";
   const availableDates = puzzleData?.available_dates ?? [];
   const sortedAvailableDates = [...availableDates].sort();
   const minPuzzleDate = sortedAvailableDates[0] ?? "2026-03-15";
@@ -2301,8 +2278,25 @@ export default function HomePage() {
   const slotRuleMap = useMemo(() => {
     return new Map(slotRules.map((rule) => [Number(rule.slot_number), rule]));
   }, [slotRules]);
+  const positionOverlayEnabled = Boolean(puzzleData?.puzzle.position_overlay_enabled);
   function getPairKey(playerId1: string, playerId2: string) {
     return [String(playerId1), String(playerId2)].sort().join("|");
+  }
+
+  function getPositionOverlayLabel(slotNumber: number) {
+    return POSITION_OVERLAY_BY_SLOT[slotNumber] ?? null;
+  }
+
+  function playerMatchesPositionOverlay(player: PlayerOption, slotNumber: number) {
+    if (!positionOverlayEnabled) return true;
+    const overlayValue = getPositionOverlayLabel(slotNumber);
+    if (!overlayValue) return true;
+    const positionValue = String(player.primary_position ?? "").toUpperCase();
+    return (
+      overlayValue === "FLEX"
+        ? ["RB", "WR", "TE"].includes(positionValue)
+        : positionValue === overlayValue
+    );
   }
 
   function getPlayerLabel(player: PlayerOption) {
@@ -2323,6 +2317,14 @@ export default function HomePage() {
   }
 
   function getSlotPlaceholder(rule: SlotRule) {
+    const overlayValue = getPositionOverlayLabel(Number(rule.slot_number));
+    if (
+      positionOverlayEnabled &&
+      overlayValue &&
+      rule.parameter_type !== "position"
+    ) {
+      return `Choose a ${overlayValue} for ${rule.display_text}...`;
+    }
     switch (rule.parameter_type) {
       case "position":
         return `Choose a ${rule.display_text}...`;
@@ -2994,36 +2996,31 @@ export default function HomePage() {
 
     return details;
   }, [nodes, pairMap, playerMap, relationshipType]);
-  const activeLinkSummaryByPlayer = useMemo(() => {
-    const summaryMap = new Map<
-      string,
-      Array<{
-        pairKey: string;
-        otherPlayerName: string;
-      }>
-    >();
+  const selectedLineupEntriesBySlot = useMemo(() => {
+    return [...nodes]
+      .sort((a, b) => a.node_id - b.node_id)
+      .map((node) => {
+        const player = playerMap.get(node.player_id);
+        if (!player) {
+          return null;
+        }
 
-    activeLinkDetails.forEach((detail) => {
-      const playerAId = String(detail.playerA.player_id);
-      const playerBId = String(detail.playerB.player_id);
-
-      const playerAEntries = summaryMap.get(playerAId) ?? [];
-      playerAEntries.push({
-        pairKey: detail.pairKey,
-        otherPlayerName: detail.playerB.player_name,
-      });
-      summaryMap.set(playerAId, playerAEntries);
-
-      const playerBEntries = summaryMap.get(playerBId) ?? [];
-      playerBEntries.push({
-        pairKey: detail.pairKey,
-        otherPlayerName: detail.playerA.player_name,
-      });
-      summaryMap.set(playerBId, playerBEntries);
-    });
-
-    return summaryMap;
-  }, [activeLinkDetails]);
+        return {
+          nodeId: node.node_id,
+          player,
+          slotLabel: getSlotRule(node.node_id).display_text,
+        };
+      })
+      .filter(
+        (
+          entry
+        ): entry is {
+          nodeId: number;
+          player: PlayerOption;
+          slotLabel: string;
+        } => Boolean(entry)
+      );
+  }, [nodes, playerMap, slotRuleMap]);
   const activeSlotRule = getSlotRule(activeNodeId);
 
   const totalPossibleLinks = nodePairs.length;
@@ -3399,50 +3396,8 @@ export default function HomePage() {
   ]);
 
   useEffect(() => {
-    if (!leaderboardOpen || submitted) return;
-
-    const controller = new AbortController();
-
-    async function loadLeaderboard() {
-      try {
-        setLeaderboardLoading(true);
-        setLeaderboardError(null);
-
-        const leaderboardResponse = await fetch(
-          `/api/leaderboard?date=${encodeURIComponent(activePuzzleDate)}&limit=10`,
-          {
-            cache: "no-store",
-            signal: controller.signal,
-          }
-        );
-
-        if (!leaderboardResponse.ok) {
-          const body = await leaderboardResponse.text();
-          throw new Error(body || "Failed to load leaderboard");
-        }
-
-        const leaderboardJson: { leaderboard: LeaderboardEntry[] } =
-          await leaderboardResponse.json();
-        if (controller.signal.aborted) return;
-        setLeaderboard(leaderboardJson.leaderboard ?? []);
-      } catch (error) {
-        if ((error as Error).name === "AbortError") return;
-        console.error(error);
-        setLeaderboardError((error as Error).message);
-      } finally {
-        if (!controller.signal.aborted) {
-          setLeaderboardLoading(false);
-        }
-      }
-    }
-
-    loadLeaderboard();
-    return () => controller.abort();
-  }, [activePuzzleDate, leaderboardOpen, submitted]);
-
-  useEffect(() => {
-    if (!leaderboardOpen || leaderboardTab !== "all-time") return;
-    if (allTimeLeaderboard.length > 0) return;
+    if (!leaderboardOpen || leaderboardView !== "all-time") return;
+    if (leaderboardScope === "friends" && !signedInUsername) return;
 
     const controller = new AbortController();
 
@@ -3451,10 +3406,15 @@ export default function HomePage() {
         setAllTimeLeaderboardLoading(true);
         setAllTimeLeaderboardError(null);
 
-        const leaderboardResponse = await fetch(`/api/leaderboard?scope=all-time&limit=25`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        const leaderboardResponse = await fetch(
+          leaderboardScope === "friends"
+            ? `/api/leaderboard?scope=friends&view=all-time&limit=25`
+            : `/api/leaderboard?scope=all-time&limit=25`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
 
         if (!leaderboardResponse.ok) {
           const body = await leaderboardResponse.text();
@@ -3478,20 +3438,23 @@ export default function HomePage() {
 
     void loadAllTimeLeaderboard();
     return () => controller.abort();
-  }, [leaderboardOpen, leaderboardTab, allTimeLeaderboard.length]);
+  }, [leaderboardOpen, leaderboardScope, leaderboardView, signedInUsername]);
 
   useEffect(() => {
-    if (!leaderboardOpen || leaderboardTab !== "friends" || !signedInUsername) return;
+    if (!leaderboardOpen || leaderboardView !== "today") return;
+    if (leaderboardScope === "friends" && !signedInUsername) return;
 
     const controller = new AbortController();
 
-    async function loadFriendsLeaderboard() {
+    async function loadLeaderboardForScope() {
       try {
-        setFriendsLeaderboardLoading(true);
-        setFriendsLeaderboardError(null);
+        setLeaderboardLoading(true);
+        setLeaderboardError(null);
 
         const response = await fetch(
-          `/api/leaderboard?scope=friends&date=${encodeURIComponent(activePuzzleDate)}&limit=25`,
+          `/api/leaderboard?${
+            leaderboardScope === "friends" ? "scope=friends&" : ""
+          }date=${encodeURIComponent(activePuzzleDate)}&limit=25`,
           {
             cache: "no-store",
             signal: controller.signal,
@@ -3505,22 +3468,28 @@ export default function HomePage() {
 
         const json: { leaderboard: LeaderboardEntry[] } = await response.json();
         if (!controller.signal.aborted) {
-          setFriendsLeaderboard(json.leaderboard ?? []);
+          setLeaderboard(json.leaderboard ?? []);
         }
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
-        setFriendsLeaderboardError((error as Error).message);
+        setLeaderboardError((error as Error).message);
       } finally {
         if (!controller.signal.aborted) {
-          setFriendsLeaderboardLoading(false);
+          setLeaderboardLoading(false);
         }
       }
     }
 
-    void loadFriendsLeaderboard();
+    void loadLeaderboardForScope();
     return () => controller.abort();
-  }, [activePuzzleDate, leaderboardOpen, leaderboardTab, signedInUsername]);
+  }, [activePuzzleDate, leaderboardOpen, leaderboardScope, leaderboardView, signedInUsername]);
+
+  useEffect(() => {
+    if (!signedInUsername && leaderboardScope === "friends") {
+      setLeaderboardScope("all");
+    }
+  }, [leaderboardScope, signedInUsername]);
 
   function handleSubmit() {
     if (!canSubmit) return;
@@ -3763,8 +3732,9 @@ export default function HomePage() {
         await handleFriendSearch();
       }
 
-      if (leaderboardTab === "friends") {
-        setFriendsLeaderboard([]);
+      if (leaderboardScope === "friends") {
+        setLeaderboard([]);
+        setAllTimeLeaderboard([]);
       }
     } catch (error) {
       setFriendActionError((error as Error).message);
@@ -3839,8 +3809,7 @@ export default function HomePage() {
       label: string;
       value: string;
     },
-    slotLabel?: string,
-    linkPartners?: string[]
+    slotLabel?: string
   ) {
     return (
       <div
@@ -3874,18 +3843,6 @@ export default function HomePage() {
                 })}
               </p>
             </div>
-            {linkPartners && linkPartners.length > 0 ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {linkPartners.map((name) => (
-                  <span
-                    key={`${player.player_id}-${name}`}
-                    className={`inline-flex items-center rounded-full border px-2 py-1 font-[family-name:var(--font-display)] text-[9px] uppercase tracking-[0.06em] ${accentClasses.border} ${accentClasses.label} bg-white/80 sm:text-[8px] sm:tracking-[0.04em]`}
-                  >
-                    {relationshipLabel}: {name}
-                  </span>
-                ))}
-              </div>
-            ) : null}
           </div>
         </div>
         <div className="hidden shrink-0 text-right sm:block">
@@ -3915,6 +3872,7 @@ export default function HomePage() {
 
       return (
         playerMatchesSlotRule(candidate, slotRule) &&
+        playerMatchesPositionOverlay(candidate, nodeId) &&
         !nodes.some(
           (selectedNode) =>
             selectedNode.node_id !== nodeId &&
@@ -3947,6 +3905,11 @@ export default function HomePage() {
             }`}
           >
             {renderSlotRuleTitle(slotRule)}
+            {positionOverlayEnabled && slotRule.parameter_type !== "position" ? (
+              <p className="mt-1 inline-flex rounded-full border border-white/75 bg-white/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_2px_4px_rgba(15,23,42,0.18)] sm:text-[8px]">
+                {getPositionOverlayLabel(nodeId)}
+              </p>
+            ) : null}
           </div>
 
           <div className="p-4">
@@ -4332,22 +4295,19 @@ export default function HomePage() {
                   Your Lineup
                 </p>
                 <div className="mt-4 space-y-3">
-                  {selectedPlayersByFantasyPoints.map((player) =>
+                  {selectedLineupEntriesBySlot.map((entry) =>
                     renderLineupEntry(
-                      player,
+                      entry.player,
                       {
                         border: "border-sky-100",
                         label: "text-sky-700/80",
                         value: "text-sky-700",
                       },
-                      undefined,
-                      (activeLinkSummaryByPlayer.get(String(player.player_id)) ?? []).map(
-                        (entry) => entry.otherPlayerName
-                      )
+                      entry.slotLabel
                     )
                   )}
                 </div>
-                <div className="mt-5 grid gap-3 md:grid-cols-4">
+                <div className="mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
                     <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
                       Base
@@ -4408,7 +4368,7 @@ export default function HomePage() {
                         )
                       )}
                     </div>
-                    <div className="mt-5 grid gap-3 md:grid-cols-4">
+                    <div className="mt-5 grid grid-cols-2 gap-3">
                       <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
                         <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
                           Base
@@ -5137,46 +5097,6 @@ export default function HomePage() {
           </>
         )}
 
-        <section className="mx-auto mt-8 max-w-[1080px]">
-          <div className="rounded-[34px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] p-5 shadow-[0_8px_0_rgba(125,211,252,0.08),0_14px_32px_rgba(125,211,252,0.12)] md:p-7">
-            <div className="max-w-2xl">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-sky-700">
-                Logo Ideas
-              </p>
-              <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl text-sky-900 md:text-4xl">
-                Five-Node Graph Marks
-              </h2>
-              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-base">
-                A few cleaner logo directions built around the actual Five Wide graph:
-                five nodes, full connections, and a simple football-diagram feel.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <GraphLogoCard
-                title="Formation"
-                description="The simplest version: five spread nodes with every line active."
-                variant="formation"
-              />
-              <GraphLogoCard
-                title="Shield"
-                description="A darker app-icon option with the graph sitting inside a crest."
-                variant="shield"
-              />
-              <GraphLogoCard
-                title="Playbook"
-                description="A cleaner play-sheet angle with route lines instead of the full mesh."
-                variant="playbook"
-              />
-              <GraphLogoCard
-                title="Spark"
-                description="The same graph mark with a little extra energy in the center."
-                variant="spark"
-              />
-            </div>
-          </div>
-        </section>
-
         <div className="mx-auto mt-6 max-w-[1080px] px-2 text-center">
           <p className="text-[11px] font-semibold leading-5 text-slate-500 md:text-xs">
             NFL player and stats data for this project is loaded via{" "}
@@ -5368,34 +5288,67 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-                    <div className="space-y-4">
+                  <div className="flex justify-center">
+                    <div className="inline-flex items-center gap-2 rounded-full border-[3px] border-sky-200 bg-sky-50/80 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setProfileSectionTab("profile")}
+                        className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                          profileSectionTab === "profile"
+                            ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_8px_16px_rgba(56,189,248,0.16)]"
+                            : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/70"
+                        }`}
+                      >
+                        Profile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfileSectionTab("social")}
+                        className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                          profileSectionTab === "social"
+                            ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_8px_16px_rgba(56,189,248,0.16)]"
+                            : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/70"
+                        }`}
+                      >
+                        Social
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`grid gap-6 ${
+                      profileSectionTab === "social"
+                        ? "md:grid-cols-1"
+                        : "md:grid-cols-[240px_1fr]"
+                    }`}
+                  >
+                    <div className={profileSectionTab === "social" ? "hidden" : "space-y-4"}>
                       <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
                         <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                           Stats
                         </p>
-                        <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-3">
-                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
-                            <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
+                        <div className="mt-4 grid gap-2">
+                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-3 py-2.5 text-center">
+                            <p className="text-[9px] font-black uppercase leading-tight tracking-[0.05em] text-sky-700">
                               Puzzles Submitted
                             </p>
-                            <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
+                            <p className="mt-1 text-xl font-black text-slate-900">
                               {userStats.puzzles_submitted}
                             </p>
                           </div>
-                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
-                            <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
+                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-3 py-2.5 text-center">
+                            <p className="text-[9px] font-black uppercase leading-tight tracking-[0.05em] text-sky-700">
                               Leaderboards Made
                             </p>
-                            <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
+                            <p className="mt-1 text-xl font-black text-slate-900">
                               {userStats.leaderboard_finishes}
                             </p>
                           </div>
-                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
-                            <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
+                          <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-3 py-2.5 text-center">
+                            <p className="text-[9px] font-black uppercase leading-tight tracking-[0.05em] text-sky-700">
                               Links Created
                             </p>
-                            <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
+                            <p className="mt-1 text-xl font-black text-slate-900">
                               {userStats.links_created}
                             </p>
                           </div>
@@ -5435,7 +5388,13 @@ export default function HomePage() {
                     </div>
 
                     <div className="space-y-5">
-                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                    <div
+                      className={
+                        profileSectionTab === "social"
+                          ? "rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4"
+                          : "hidden"
+                      }
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
@@ -5578,17 +5537,55 @@ export default function HomePage() {
                           {friendActionError ?? friendOverviewError}
                         </div>
                       ) : null}
+                      <div className="mt-4 rounded-[18px] border-[3px] border-sky-100 bg-sky-50/60 p-2">
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setFriendTab("friends")}
+                            className={`rounded-[14px] px-2 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                              friendTab === "friends"
+                                ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_6px_14px_rgba(125,211,252,0.18)]"
+                                : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/80"
+                            }`}
+                          >
+                            Friends
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFriendTab("pending")}
+                            className={`rounded-[14px] px-2 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                              friendTab === "pending"
+                                ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_6px_14px_rgba(125,211,252,0.18)]"
+                                : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/80"
+                            }`}
+                          >
+                            Pending
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFriendTab("requests")}
+                            className={`rounded-[14px] px-2 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                              friendTab === "requests"
+                                ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_6px_14px_rgba(125,211,252,0.18)]"
+                                : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/80"
+                            }`}
+                          >
+                            Requests
+                          </button>
+                        </div>
+                      </div>
                       <div className="mt-4 space-y-3">
-                        <div>
+                        {friendOverviewLoading && !friendOverview ? (
+                          <div className="rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-4 text-center text-xs font-semibold text-slate-600">
+                            Loading friends...
+                          </div>
+                        ) : friendTab === "friends" ? (
+                          <div>
                           <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
                             Your Friends
                           </p>
                           <div className="mt-2 space-y-2">
-                            {friendOverviewLoading && !friendOverview ? (
-                              <div className="rounded-[16px] border-[3px] border-sky-100 bg-white/85 px-3 py-4 text-center text-xs font-semibold text-slate-600">
-                                Loading friends...
-                              </div>
-                            ) : friendOverview?.friends.length ? (
+                            {friendOverview?.friends.length ? (
                               friendOverview.friends.map((friend) => (
                                 <div
                                   key={`friend-${friend.user_id}`}
@@ -5623,18 +5620,71 @@ export default function HomePage() {
                             )}
                           </div>
                         </div>
-                        {friendOverview?.incoming_requests.length ? (
+                        ) : friendTab === "requests" ? (
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
                               Incoming Requests
                             </p>
                             <div className="mt-2 space-y-2">
-                              {friendOverview.incoming_requests.map((friend) => (
-                                <div
-                                  key={`incoming-${friend.request_id}`}
-                                  className="rounded-[16px] border-[3px] border-emerald-100 bg-emerald-50/70 px-3 py-2"
-                                >
-                                  <div className="flex items-center gap-3">
+                              {friendOverview?.incoming_requests.length ? (
+                                friendOverview.incoming_requests.map((friend) => (
+                                  <div
+                                    key={`incoming-${friend.request_id}`}
+                                    className="rounded-[16px] border-[3px] border-emerald-100 bg-emerald-50/70 px-3 py-2"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <ProfileAvatar
+                                        style={friend.avatar_style}
+                                        bg={friend.avatar_bg}
+                                        accent={friend.avatar_accent}
+                                        border={friend.avatar_border}
+                                        size="sm"
+                                      />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-black text-slate-900">
+                                          {friend.username}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-2 flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleFriendAction("accept", friend.user_id)}
+                                        disabled={friendActionLoadingId === `accept:${friend.user_id}`}
+                                        className="rounded-full border-[2px] border-emerald-300 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                                      >
+                                        Accept
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleFriendAction("decline", friend.user_id)}
+                                        disabled={friendActionLoadingId === `decline:${friend.user_id}`}
+                                        className="rounded-full border-[2px] border-slate-200 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
+                                      >
+                                        Decline
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="rounded-[16px] border-[3px] border-dashed border-emerald-200 bg-emerald-50/50 px-3 py-4 text-center text-xs font-semibold text-slate-500">
+                                  No incoming requests right now.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              Sent Requests
+                            </p>
+                            <div className="mt-2 space-y-2">
+                              {friendOverview?.outgoing_requests.length ? (
+                                friendOverview.outgoing_requests.map((friend) => (
+                                  <div
+                                    key={`outgoing-${friend.request_id}`}
+                                    className="flex items-center gap-3 rounded-[16px] border-[3px] border-slate-100 bg-slate-50/70 px-3 py-2"
+                                  >
                                     <ProfileAvatar
                                       style={friend.avatar_style}
                                       bg={friend.avatar_bg}
@@ -5647,69 +5697,149 @@ export default function HomePage() {
                                         {friend.username}
                                       </p>
                                     </div>
-                                  </div>
-                                  <div className="mt-2 flex gap-2">
                                     <button
                                       type="button"
-                                      onClick={() => void handleFriendAction("accept", friend.user_id)}
-                                      disabled={friendActionLoadingId === `accept:${friend.user_id}`}
-                                      className="rounded-full border-[2px] border-emerald-300 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                                      onClick={() => void handleFriendAction("cancel", friend.user_id)}
+                                      disabled={friendActionLoadingId === `cancel:${friend.user_id}`}
+                                      className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
                                     >
-                                      Accept
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => void handleFriendAction("decline", friend.user_id)}
-                                      disabled={friendActionLoadingId === `decline:${friend.user_id}`}
-                                      className="rounded-full border-[2px] border-slate-200 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
-                                    >
-                                      Decline
+                                      Cancel
                                     </button>
                                   </div>
+                                ))
+                              ) : (
+                                <div className="rounded-[16px] border-[3px] border-dashed border-slate-200 bg-slate-50/70 px-3 py-4 text-center text-xs font-semibold text-slate-500">
+                                  No pending friend requests sent.
                                 </div>
-                              ))}
+                              )}
                             </div>
                           </div>
-                        ) : null}
-                        {friendOverview?.outgoing_requests.length ? (
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                              Sent Requests
-                            </p>
-                            <div className="mt-2 space-y-2">
-                              {friendOverview.outgoing_requests.map((friend) => (
-                                <div
-                                  key={`outgoing-${friend.request_id}`}
-                                  className="flex items-center gap-3 rounded-[16px] border-[3px] border-slate-100 bg-slate-50/70 px-3 py-2"
-                                >
-                                  <ProfileAvatar
-                                    style={friend.avatar_style}
-                                    bg={friend.avatar_bg}
-                                    accent={friend.avatar_accent}
-                                    border={friend.avatar_border}
-                                    size="sm"
-                                  />
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-black text-slate-900">
-                                      {friend.username}
-                                    </p>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleFriendAction("cancel", friend.user_id)}
-                                    disabled={friendActionLoadingId === `cancel:${friend.user_id}`}
-                                    className="rounded-full border-[2px] border-slate-200 bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
+                        )}
                       </div>
                     </div>
-                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
+                    <div
+                      className={
+                        profileSectionTab === "profile"
+                          ? "rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4"
+                          : "hidden"
+                      }
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                            Badge Gallery
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-slate-600">
+                            Public badges unlock through play. Locked badges stay grey until you earn them.
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                          {
+                            filteredGalleryBadges.filter((badgeDefinition) =>
+                              earnedBadgeMap.has(badgeDefinition.key)
+                            ).length
+                          }
+                          /
+                          {filteredGalleryBadges.length}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {[
+                          ["milestones", "Milestones"],
+                          ["links", "Links"],
+                          ["leaderboard", "Leaderboard"],
+                          ["social", "Social"],
+                          ["profile", "Profile"],
+                        ].map(([tabKey, label]) => (
+                          <button
+                            key={tabKey}
+                            type="button"
+                            onClick={() => setBadgeGalleryTab(tabKey as BadgeGalleryTab)}
+                            className={`rounded-full border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                              badgeGalleryTab === tabKey
+                                ? "border-sky-300 bg-sky-100 text-sky-800"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        {pagedGalleryBadges.length ? pagedGalleryBadges.map((badgeDefinition) => {
+                          const earnedBadge = earnedBadgeMap.get(badgeDefinition.key);
+                          const isFeatured = featuredBadgeDraft.includes(badgeDefinition.key);
+
+                          return earnedBadge ? (
+                            <ProfileBadgeCard
+                              key={`gallery-${badgeDefinition.key}`}
+                              badge={earnedBadge}
+                              actionLabel={isFeatured ? "Featured" : "Feature"}
+                              onAction={() => handleToggleFeaturedBadge(badgeDefinition.key)}
+                              actionDisabled={!isFeatured && featuredBadgeDraft.length >= 3}
+                            />
+                          ) : (
+                            <ProfileBadgeCard
+                              key={`gallery-${badgeDefinition.key}`}
+                              badge={{
+                                badgeKey: badgeDefinition.key,
+                                title: badgeDefinition.title,
+                                description: badgeDefinition.description,
+                                tone: badgeDefinition.tone,
+                                icon: badgeDefinition.icon,
+                                awardedAt: "",
+                              }}
+                              locked
+                              helperText={getBadgeProgressLabel(
+                                badgeDefinition,
+                                userStats
+                              )}
+                            />
+                          );
+                        }) : (
+                          <div className="md:col-span-2 rounded-[18px] border-[3px] border-dashed border-sky-200 bg-sky-50/60 px-4 py-6 text-center text-sm font-semibold text-slate-500">
+                            No badges in this category yet.
+                          </div>
+                        )}
+                      </div>
+                      {filteredGalleryBadges.length > galleryPageSize ? (
+                        <div className="mt-4 flex justify-center">
+                          <div className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
+                            <button
+                              type="button"
+                              onClick={() => setGalleryPage((current) => Math.max(0, current - 1))}
+                              disabled={galleryPage === 0}
+                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                            >
+                              Prev
+                            </button>
+                            <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                              {galleryPage + 1}/{galleryPageCount}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setGalleryPage((current) =>
+                                  Math.min(galleryPageCount - 1, current + 1)
+                                )
+                              }
+                              disabled={galleryPage >= galleryPageCount - 1}
+                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div
+                      className={
+                        profileSectionTab === "profile"
+                          ? "rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4"
+                          : "hidden"
+                      }
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
@@ -5787,7 +5917,7 @@ export default function HomePage() {
                                     size="sm"
                                   />
                                 </div>
-                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-800 sm:mt-3 sm:text-xs">
+                                <p className="mt-2 min-h-[1.75rem] px-1 text-[8px] font-semibold uppercase leading-[1.05] tracking-[0.02em] text-slate-800 sm:mt-3 sm:min-h-[2rem] sm:text-[10px] sm:font-bold">
                                   {formatAvatarOptionLabel(optionKey)}
                                 </p>
                               </button>
@@ -5851,7 +5981,7 @@ export default function HomePage() {
                                   </span>
                                 </span>
                               </div>
-                              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-800 sm:mt-3 sm:text-xs">
+                              <p className="mt-2 min-h-[1.75rem] px-1 text-[8px] font-semibold uppercase leading-[1.05] tracking-[0.02em] text-slate-800 sm:mt-3 sm:min-h-[2rem] sm:text-[10px] sm:font-bold">
                                 {formatAvatarOptionLabel(optionKey)}
                               </p>
                             </button>
@@ -5881,90 +6011,6 @@ export default function HomePage() {
                                 )
                               }
                               disabled={avatarOptionPage >= avatarOptionPageCount - 1}
-                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                            >
-                              Next
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="rounded-[26px] border-[3px] border-sky-100 bg-white/90 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
-                            Badge Gallery
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-slate-600">
-                            Public badges unlock through play. Locked badges stay grey until you earn them.
-                          </p>
-                        </div>
-                        <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                          {
-                            publicBadgeDefinitions.filter((badgeDefinition) =>
-                              earnedBadgeMap.has(badgeDefinition.key)
-                            ).length
-                          }
-                          /
-                          {publicBadgeDefinitions.length}
-                        </span>
-                      </div>
-                      <div className="mt-4 grid gap-3 md:grid-cols-2">
-                        {pagedGalleryBadges.map((badgeDefinition) => {
-                          const earnedBadge = earnedBadgeMap.get(badgeDefinition.key);
-                          const isFeatured = featuredBadgeDraft.includes(badgeDefinition.key);
-
-                          return earnedBadge ? (
-                            <ProfileBadgeCard
-                              key={`gallery-${badgeDefinition.key}`}
-                              badge={earnedBadge}
-                              actionLabel={isFeatured ? "Featured" : "Feature"}
-                              onAction={() => handleToggleFeaturedBadge(badgeDefinition.key)}
-                              actionDisabled={!isFeatured && featuredBadgeDraft.length >= 3}
-                            />
-                          ) : (
-                            <ProfileBadgeCard
-                              key={`gallery-${badgeDefinition.key}`}
-                              badge={{
-                                badgeKey: badgeDefinition.key,
-                                title: badgeDefinition.title,
-                                description: badgeDefinition.description,
-                                tone: badgeDefinition.tone,
-                                icon: badgeDefinition.icon,
-                                awardedAt: "",
-                              }}
-                              locked
-                              helperText={getBadgeProgressLabel(
-                                badgeDefinition,
-                                userStats
-                              )}
-                            />
-                          );
-                        })}
-                      </div>
-                      {publicBadgeDefinitions.length > galleryPageSize ? (
-                        <div className="mt-4 flex justify-center">
-                          <div className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-1 py-1">
-                            <button
-                              type="button"
-                              onClick={() => setGalleryPage((current) => Math.max(0, current - 1))}
-                              disabled={galleryPage === 0}
-                              className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
-                            >
-                              Prev
-                            </button>
-                            <span className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                              {galleryPage + 1}/{galleryPageCount}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setGalleryPage((current) =>
-                                  Math.min(galleryPageCount - 1, current + 1)
-                                )
-                              }
-                              disabled={galleryPage >= galleryPageCount - 1}
                               className="rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 disabled:opacity-35"
                             >
                               Next
@@ -6090,28 +6136,28 @@ export default function HomePage() {
                           <p className="text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                             Stats
                           </p>
-                          <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-3">
-                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
-                              <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
+                          <div className="mt-4 grid gap-2">
+                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-3 py-2.5 text-center">
+                              <p className="text-[9px] font-black uppercase leading-tight tracking-[0.05em] text-sky-700">
                                 Puzzles Submitted
                               </p>
-                              <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
+                              <p className="mt-1 text-xl font-black text-slate-900">
                                 {publicProfile.stats.puzzles_submitted}
                               </p>
                             </div>
-                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
-                              <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
+                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-3 py-2.5 text-center">
+                              <p className="text-[9px] font-black uppercase leading-tight tracking-[0.05em] text-sky-700">
                                 Leaderboards Made
                               </p>
-                              <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
+                              <p className="mt-1 text-xl font-black text-slate-900">
                                 {publicProfile.stats.leaderboard_finishes}
                               </p>
                             </div>
-                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-2.5 py-2.5 text-center md:rounded-[18px] md:px-4 md:py-3 md:text-left">
-                              <p className="text-[8px] font-black uppercase tracking-[0.06em] text-sky-700 md:text-[10px] md:tracking-[0.08em]">
+                            <div className="rounded-[16px] border border-sky-100 bg-sky-50/70 px-3 py-2.5 text-center">
+                              <p className="text-[9px] font-black uppercase leading-tight tracking-[0.05em] text-sky-700">
                                 Links Created
                               </p>
-                              <p className="mt-1 text-xl font-black text-slate-900 md:text-2xl">
+                              <p className="mt-1 text-xl font-black text-slate-900">
                                 {publicProfile.stats.links_created}
                               </p>
                             </div>
@@ -6202,49 +6248,62 @@ export default function HomePage() {
                   ×
                 </button>
 
-                <div className="mt-4 inline-flex max-w-full flex-nowrap rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
+                {showFriendsLeaderboardScope ? (
+                  <div className="mt-4 flex justify-center">
+                    <div className="inline-flex max-w-full flex-nowrap rounded-full border-[3px] border-sky-200 bg-[linear-gradient(180deg,#f8fdff_0%,#e0f2fe_100%)] p-1 shadow-[0_8px_20px_rgba(56,189,248,0.16)]">
+                      <button
+                        type="button"
+                        onClick={() => setLeaderboardScope("all")}
+                        className={`rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
+                          leaderboardScope === "all"
+                            ? "bg-[linear-gradient(180deg,#60a5fa_0%,#2563eb_100%)] text-white shadow-[0_6px_14px_rgba(37,99,235,0.24)]"
+                            : "text-sky-700"
+                        }`}
+                      >
+                        All Players
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLeaderboardScope("friends")}
+                        className={`rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
+                          leaderboardScope === "friends"
+                            ? "bg-[linear-gradient(180deg,#60a5fa_0%,#2563eb_100%)] text-white shadow-[0_6px_14px_rgba(37,99,235,0.24)]"
+                            : "text-sky-700"
+                        }`}
+                      >
+                        Friends
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="mt-3 inline-flex max-w-full flex-nowrap rounded-full border-[3px] border-amber-200 bg-white p-1 shadow-[0_8px_20px_rgba(245,158,11,0.12)]">
                   <button
                     type="button"
-                    onClick={() => setLeaderboardTab("daily")}
+                    onClick={() => setLeaderboardView("today")}
                     className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
-                      leaderboardTab === "daily"
+                      leaderboardView === "today"
                         ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
                         : "text-amber-700"
                     }`}
                   >
-                    Daily Puzzle
+                    Today&apos;s Puzzle
                   </button>
-                  {signedInUsername ? (
-                    <button
-                      type="button"
-                      onClick={() => setLeaderboardTab("friends")}
-                      className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
-                        leaderboardTab === "friends"
-                          ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
-                          : "text-amber-700"
-                      }`}
-                    >
-                      Friends
-                    </button>
-                  ) : null}
-                  {homeRecap?.winners?.length ? (
-                    <button
-                      type="button"
-                      onClick={() => setLeaderboardTab("yesterday")}
-                      className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
-                        leaderboardTab === "yesterday"
-                          ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
-                          : "text-amber-700"
-                      }`}
-                    >
-                      Yesterday
-                    </button>
-                  ) : null}
                   <button
                     type="button"
-                    onClick={() => setLeaderboardTab("all-time")}
+                    onClick={() => setLeaderboardView("yesterday")}
                     className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
-                      leaderboardTab === "all-time"
+                      leaderboardView === "yesterday"
+                        ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
+                        : "text-amber-700"
+                    }`}
+                  >
+                    Yesterday
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeaderboardView("all-time")}
+                    className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.06em] transition sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
+                      leaderboardView === "all-time"
                         ? "bg-[linear-gradient(180deg,#f59e0b_0%,#d97706_100%)] text-white shadow-[0_6px_14px_rgba(217,119,6,0.24)]"
                         : "text-amber-700"
                     }`}
@@ -6254,7 +6313,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-5 max-h-[70vh] overflow-y-auto pr-1">
-                  {leaderboardTab === "daily" ? leaderboardError ? (
+                  {leaderboardView === "today" ? leaderboardError ? (
                     <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
                       {leaderboardError}
                     </div>
@@ -6296,59 +6355,15 @@ export default function HomePage() {
                     </div>
                   ) : (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                      No leaderboard entries yet for this puzzle.
+                      {currentLeaderboardEmptyMessage}
                     </div>
-                  ) : leaderboardTab === "friends" ? friendsLeaderboardError ? (
-                    <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-                      {friendsLeaderboardError}
-                    </div>
-                  ) : friendsLeaderboardLoading ? (
+                  ) : leaderboardView === "yesterday" ? homeRecapLoading ? (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                      Loading friends leaderboard...
+                      Loading yesterday&apos;s leaderboard...
                     </div>
-                  ) : friendsLeaderboard.length > 0 ? (
+                  ) : filteredYesterdayWinners.length > 0 ? (
                     <div className="space-y-3">
-                      {friendsLeaderboard.map((entry, index) => (
-                        <button
-                          type="button"
-                          key={`friend-${entry.submission_id}`}
-                          onClick={() => void openPublicProfile(entry.user_id)}
-                          className="flex w-full flex-col items-start gap-2 rounded-[18px] border-[3px] border-amber-100 bg-white/90 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-[0_12px_28px_rgba(245,158,11,0.12)] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4"
-                        >
-                          <div className="min-w-0 w-full sm:w-auto">
-                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
-                              #{index + 1}
-                            </p>
-                            <p className="mt-1 truncate text-sm font-bold text-slate-900">
-                              {entry.display_name}
-                            </p>
-                            <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
-                          </div>
-                          <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">
-                            <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
-                              Total Points
-                            </p>
-                            <p className="mt-1 text-base font-black text-amber-700 sm:text-lg">
-                              {Number(entry.final_score).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                      No friend scores yet for this puzzle. Add exact usernames in your profile to build your friends board.
-                    </div>
-                  ) : leaderboardTab === "yesterday" ? homeRecapLoading ? (
-                    <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                      Loading yesterday&apos;s top 10...
-                    </div>
-                  ) : homeRecap && homeRecap.winners.length > 0 ? (
-                    <div className="space-y-3">
-                      {homeRecap.winners.map((entry) => (
+                      {filteredYesterdayWinners.map((entry) => (
                         <button
                           type="button"
                           key={`${entry.user_id}-${entry.placement}`}
@@ -6380,7 +6395,7 @@ export default function HomePage() {
                     </div>
                   ) : (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                      No finalized top 10 yet.
+                      {currentLeaderboardEmptyMessage}
                     </div>
                   ) : allTimeLeaderboardError ? (
                     <div className="rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
@@ -6424,7 +6439,7 @@ export default function HomePage() {
                     </div>
                   ) : (
                     <div className="rounded-[18px] border-[3px] border-amber-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                      No all-time finishes yet.
+                      {currentLeaderboardEmptyMessage}
                     </div>
                   )}
                 </div>
@@ -6497,8 +6512,11 @@ export default function HomePage() {
                   Add together the fantasy points from your 5 selected players during the active time period.
                 </p>
                 <p>
+                  Those fantasy points are based on each player&apos;s actual fantasy production inside the puzzle window, using the season totals stored for this project. In other words, every player first brings a raw point total from the selected era, and only after that does the link multiplier boost the lineup.
+                </p>
+                <p>
                   <span className="font-bold text-sky-900">Multiplier:</span>{" "}
-                  The multiplier is based on your active links. More links means a bigger boost on top of your base score, and a fully connected 10-link lineup now caps at a clean <span className="font-semibold text-sky-900">2.00x</span>.
+                  The multiplier is based on your active links. Each active link adds a clean <span className="font-semibold text-sky-900">+20%</span> to your base score, so a fully connected 10-link lineup reaches <span className="font-semibold text-sky-900">3.00x</span>.
                 </p>
                 <p>
                   Example: with the current curve, {activeLinkCount} active links gives you a{" "}

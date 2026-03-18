@@ -9,35 +9,66 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
   try {
     const scope = request.nextUrl.searchParams.get("scope");
+    const view = request.nextUrl.searchParams.get("view");
     const requestedDate = request.nextUrl.searchParams.get("date");
     const limit = Math.min(
       Math.max(Number(request.nextUrl.searchParams.get("limit") ?? 10), 1),
       25
     );
 
-    if (scope === "all-time") {
+    if (scope === "all-time" || (scope === "friends" && view === "all-time")) {
+      let friendUserIds: string[] = [];
+
+      if (scope === "friends") {
+        const session = await auth();
+        const userId = session?.user?.id;
+
+        if (!userId) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        friendUserIds = [userId, ...(await getAcceptedFriendUserIds(userId))];
+      }
+
       const allTimeResult = await pool.query(
-        `
-        SELECT
-          au.user_id::text AS user_id,
-          au.username AS display_name,
-          COUNT(*)::int AS top_10_finishes,
-          MIN(dlf.placement)::int AS best_finish,
-          MAX(dlf.awarded_at) AS latest_finish_at,
-          COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
-        FROM daily_leaderboard_finish dlf
-        JOIN app_user au
-          ON dlf.user_id = au.user_id
-        GROUP BY au.user_id, au.username, au.featured_badges
-        ORDER BY COUNT(*) DESC, MIN(dlf.placement) ASC, MAX(dlf.awarded_at) DESC, au.username ASC
-        LIMIT $1
-        `,
-        [limit]
+        scope === "friends"
+          ? `
+            SELECT
+              au.user_id::text AS user_id,
+              au.username AS display_name,
+              COUNT(*)::int AS top_10_finishes,
+              MIN(dlf.placement)::int AS best_finish,
+              MAX(dlf.awarded_at) AS latest_finish_at,
+              COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
+            FROM daily_leaderboard_finish dlf
+            JOIN app_user au
+              ON dlf.user_id = au.user_id
+            WHERE dlf.user_id = ANY($1::bigint[])
+            GROUP BY au.user_id, au.username, au.featured_badges
+            ORDER BY COUNT(*) DESC, MIN(dlf.placement) ASC, MAX(dlf.awarded_at) DESC, au.username ASC
+            LIMIT $2
+            `
+          : `
+            SELECT
+              au.user_id::text AS user_id,
+              au.username AS display_name,
+              COUNT(*)::int AS top_10_finishes,
+              MIN(dlf.placement)::int AS best_finish,
+              MAX(dlf.awarded_at) AS latest_finish_at,
+              COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
+            FROM daily_leaderboard_finish dlf
+            JOIN app_user au
+              ON dlf.user_id = au.user_id
+            GROUP BY au.user_id, au.username, au.featured_badges
+            ORDER BY COUNT(*) DESC, MIN(dlf.placement) ASC, MAX(dlf.awarded_at) DESC, au.username ASC
+            LIMIT $1
+            `,
+        scope === "friends" ? [friendUserIds.map(Number), limit] : [limit]
       );
 
       return NextResponse.json({
         leaderboard: allTimeResult.rows,
-        scope: "all-time",
+        scope: scope === "friends" ? "friends" : "all-time",
       });
     }
 

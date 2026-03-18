@@ -14,6 +14,14 @@ type SlotRule = {
   display_text: string;
 };
 
+const POSITION_OVERLAY_BY_SLOT: Record<number, string> = {
+  1: "QB",
+  2: "RB",
+  3: "WR",
+  4: "TE",
+  5: "FLEX",
+};
+
 type CandidatePlayer = {
   player_id: string;
   player_name: string;
@@ -57,7 +65,7 @@ type OptimalLineupResult = {
   final_score: number;
 };
 
-const OPTIMAL_CACHE_VERSION = "v3";
+const OPTIMAL_CACHE_VERSION = "v5";
 
 const SLOT_LIMITS: Record<string, number> = {
   any: 18,
@@ -76,7 +84,8 @@ function buildConfigSignature(
   puzzleId: string | number,
   themeRule: string,
   relationshipRule: { relationship_type: string; bonus_pct?: number | null },
-  slotRules: SlotRule[]
+  slotRules: SlotRule[],
+  positionOverlayEnabled: boolean
 ) {
   const slotSignature = slotRules
     .map(
@@ -91,6 +100,7 @@ function buildConfigSignature(
     themeRule,
     relationshipRule.relationship_type,
     String(relationshipRule.bonus_pct ?? 5),
+    positionOverlayEnabled ? "overlay:on" : "overlay:off",
     slotSignature,
   ].join("::");
 }
@@ -131,6 +141,20 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
   }
 }
 
+function playerMatchesPositionOverlay(
+  player: CandidatePlayer,
+  slotNumber: number,
+  positionOverlayEnabled: boolean
+) {
+  if (!positionOverlayEnabled) return true;
+  const overlayValue = POSITION_OVERLAY_BY_SLOT[slotNumber];
+  if (!overlayValue) return true;
+  const positionValue = String(player.primary_position ?? "").toUpperCase();
+  return overlayValue === "FLEX"
+    ? ["RB", "WR", "TE"].includes(positionValue)
+    : positionValue === overlayValue;
+}
+
 function relationshipPasses(
   relationshipType: string,
   pair: PairRelationship | undefined
@@ -169,7 +193,7 @@ export async function GET(request: NextRequest) {
     const puzzleResult = requestedDate
       ? await pool.query(
           `
-          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id
+          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
           FROM daily_puzzle
           WHERE puzzle_date = $1
             AND sport = 'nfl'
@@ -179,7 +203,7 @@ export async function GET(request: NextRequest) {
           [requestedDate]
         )
       : await pool.query(`
-          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id
+          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
           FROM daily_puzzle
           WHERE published_flag = true
             AND sport = 'nfl'
@@ -238,6 +262,7 @@ export async function GET(request: NextRequest) {
       display_text: "Teammates",
       bonus_pct: 5,
     };
+    const positionOverlayEnabled = Boolean(puzzle.position_overlay_enabled);
 
     const defaultSlotRules: SlotRule[] = [1, 2, 3, 4, 5].map((slotNumber) => ({
       slot_number: slotNumber,
@@ -254,7 +279,8 @@ export async function GET(request: NextRequest) {
       puzzle.puzzle_id,
       themeRule,
       relationshipRule,
-      slotRules
+      slotRules,
+      positionOverlayEnabled
     );
 
     const cacheResult = await pool.query(
@@ -396,7 +422,15 @@ export async function GET(request: NextRequest) {
       return {
         ...rule,
         candidates: players
-          .filter((player) => playerMatchesSlotRule(player, rule))
+          .filter(
+            (player) =>
+              playerMatchesSlotRule(player, rule) &&
+              playerMatchesPositionOverlay(
+                player,
+                Number(rule.slot_number),
+                positionOverlayEnabled
+              )
+          )
           .slice(0, limit),
       };
     });

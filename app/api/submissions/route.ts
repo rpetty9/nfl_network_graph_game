@@ -14,6 +14,14 @@ type SlotRule = {
   parameter_value: string | null;
 };
 
+const POSITION_OVERLAY_BY_SLOT: Record<number, string> = {
+  1: "QB",
+  2: "RB",
+  3: "WR",
+  4: "TE",
+  5: "FLEX",
+};
+
 type CandidatePlayer = {
   player_id: string;
   player_name: string;
@@ -131,6 +139,20 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
     default:
       return true;
   }
+}
+
+function playerMatchesPositionOverlay(
+  player: CandidatePlayer,
+  slotNumber: number,
+  positionOverlayEnabled: boolean
+) {
+  if (!positionOverlayEnabled) return true;
+  const overlayValue = POSITION_OVERLAY_BY_SLOT[slotNumber];
+  if (!overlayValue) return true;
+  const positionValue = String(player.primary_position ?? "").toUpperCase();
+  return overlayValue === "FLEX"
+    ? ["RB", "WR", "TE"].includes(positionValue)
+    : positionValue === overlayValue;
 }
 
 function relationshipPasses(
@@ -257,7 +279,7 @@ async function loadPuzzleContext(requestedDate: string | null) {
   const puzzleResult = requestedDate
     ? await pool.query(
         `
-        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id
+        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
         FROM daily_puzzle
         WHERE puzzle_date = $1
           AND sport = 'nfl'
@@ -267,7 +289,7 @@ async function loadPuzzleContext(requestedDate: string | null) {
         [requestedDate]
       )
     : await pool.query(`
-        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id
+        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
         FROM daily_puzzle
         WHERE published_flag = true
           AND sport = 'nfl'
@@ -334,6 +356,7 @@ async function loadPuzzleContext(requestedDate: string | null) {
             parameter_type: slotNumber === 5 ? "position" : "any",
             parameter_value: slotNumber === 5 ? "FLEX" : "ANY",
           })),
+    positionOverlayEnabled: Boolean(puzzle.position_overlay_enabled),
   };
 }
 
@@ -610,7 +633,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Lineup must contain 5 slots" }, { status: 400 });
     }
 
-    const { puzzle, themeRule, relationshipRule, slotRules } =
+    const { puzzle, themeRule, relationshipRule, slotRules, positionOverlayEnabled } =
       await loadPuzzleContext(requestedDate);
     const players = await loadPlayersForTheme(themeRule);
     const playerMap = new Map(players.map((player) => [String(player.player_id), player]));
@@ -632,6 +655,9 @@ export async function POST(request: NextRequest) {
       }
       if (!playerMatchesSlotRule(player, rule)) {
         throw new Error("Player does not satisfy slot rule");
+      }
+      if (!playerMatchesPositionOverlay(player, slotNumber, positionOverlayEnabled)) {
+        throw new Error("Player does not satisfy slot position rule");
       }
 
       selectedIds.add(playerId);

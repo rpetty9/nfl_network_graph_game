@@ -234,6 +234,7 @@ export async function GET(request: NextRequest) {
         ...puzzle,
         puzzle_date:
           formatDateValue(puzzle.puzzle_date) ?? String(puzzle.puzzle_date),
+        position_overlay_enabled: Boolean(puzzle.position_overlay_enabled),
       },
       theme,
       eligibility_filter: eligibilityFilter,
