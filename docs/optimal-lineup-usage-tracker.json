@@ -1,0 +1,2112 @@
+{
+  "updated_through": "2026-04-27",
+  "days": [
+    {
+      "puzzle_date": "2026-03-15",
+      "title": "2020-2025 Stars",
+      "theme": "2020-2025 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "QB",
+          "player_name": "Patrick Mahomes",
+          "player_id": "7873",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "RB",
+          "player_name": "Christian McCaffrey",
+          "player_id": "7506",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Cooper Kupp",
+          "player_id": "7597",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "George Kittle",
+          "player_id": "7508",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "Alvin Kamara",
+          "player_id": "7595",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-16",
+      "title": "2015-2020 Playmakers",
+      "theme": "2015-2020 Seasons",
+      "link": "same_franchise",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "AFC",
+          "player_name": "Ben Roethlisberger",
+          "player_id": "2922",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "NFC",
+          "player_name": "Aaron Rodgers",
+          "player_id": "3325",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "TE",
+          "player_name": "Eric Ebron",
+          "player_id": "6408",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "WR",
+          "player_name": "Antonio Brown",
+          "player_id": "4941",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Russell Wilson",
+          "player_id": "5597",
+          "primary_position": "QB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-17",
+      "title": "2016 Snapshot",
+      "theme": "2016 Season",
+      "link": "teammates",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "AFC",
+          "player_name": "Matt Ryan",
+          "player_id": "4167",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Giants",
+          "player_name": "Russell Wilson",
+          "player_id": "5597",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Eagles",
+          "player_name": "Julio Jones",
+          "player_id": "5202",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Commanders",
+          "player_name": "Marcus Mariota",
+          "player_id": "6820",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Cowboys",
+          "player_name": "DeMarco Murray",
+          "player_id": "5235",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-18",
+      "title": "2010s Stars",
+      "theme": "2025 Season",
+      "link": "same_college",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Lions",
+          "player_name": "Jameson Williams",
+          "player_id": "9832",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Eagles",
+          "player_name": "Jalen Hurts",
+          "player_id": "8862",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Ravens",
+          "player_name": "Derrick Henry",
+          "player_id": "7133",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Panthers",
+          "player_name": "Bryce Young",
+          "player_id": "10001",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Jahmyr Gibbs",
+          "player_id": "9992",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-19",
+      "title": "2025 Draft Class Pulse",
+      "theme": "2025 Season",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Rams",
+          "player_name": "Puka Nacua",
+          "player_id": "9985",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Seahawks",
+          "player_name": "Zach Charbonnet",
+          "player_id": "10006",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Falcons",
+          "player_name": "Bijan Robinson",
+          "player_id": "9909",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Lions",
+          "player_name": "Jahmyr Gibbs",
+          "player_id": "9992",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Jaxon Smith-Njigba",
+          "player_id": "9910",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-20",
+      "title": "2012 Snapshot",
+      "theme": "2020-2025 Seasons",
+      "link": "non_super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Eagles",
+          "player_name": "D'Andre Swift",
+          "player_id": "8724",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Chiefs",
+          "player_name": "DeAndre Hopkins",
+          "player_id": "6036",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Seahawks",
+          "player_name": "DK Metcalf",
+          "player_id": "8363",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Rams",
+          "player_name": "Davante Adams",
+          "player_id": "6461",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Buccaneers",
+          "player_name": "Baker Mayfield",
+          "player_id": "8077",
+          "primary_position": "QB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-21",
+      "title": "2010-2019 Greats",
+      "theme": "2010s Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "QB",
+          "player_name": "Josh Freeman",
+          "player_id": "4670",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "RB",
+          "player_name": "Arian Foster",
+          "player_id": "4720",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Mike Wallace",
+          "player_id": "4484",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "Brandon Pettigrew",
+          "player_id": "4581",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "LeSean McCoy",
+          "player_id": "4526",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-22",
+      "title": "2015-2025 Modern Era",
+      "theme": "2015-2025 Seasons",
+      "link": "teammates",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "AFC East",
+          "player_name": "Josh Allen",
+          "player_id": "8008",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "NFC North",
+          "player_name": "Aaron Rodgers",
+          "player_id": "3325",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "AFC South",
+          "player_name": "Stefon Diggs",
+          "player_id": "6903",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "WR",
+          "player_name": "Adam Thielen",
+          "player_id": "6427",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "NFC East",
+          "player_name": "Kirk Cousins",
+          "player_id": "5769",
+          "primary_position": "QB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-23",
+      "title": "2020-2025 Stars",
+      "theme": "2020-2025 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Alabama",
+          "player_name": "Jalen Hurts",
+          "player_id": "8862",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Georgia",
+          "player_name": "D'Andre Swift",
+          "player_id": "8724",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "LSU",
+          "player_name": "Justin Jefferson",
+          "player_id": "8752",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Ohio State",
+          "player_name": "Joe Burrow",
+          "player_id": "8795",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Notre Dame",
+          "player_name": "Cole Kmet",
+          "player_id": "8735",
+          "primary_position": "TE"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-24",
+      "title": "2006-2015 Prime Years",
+      "theme": "2006-2015 Seasons",
+      "link": "super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "QB",
+          "player_name": "Drew Brees",
+          "player_id": "1967",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "WR",
+          "player_name": "Marques Colston",
+          "player_id": "3568",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "RB",
+          "player_name": "Marshawn Lynch",
+          "player_id": "3843",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "Rob Gronkowski",
+          "player_id": "4838",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "WR",
+          "player_name": "Reggie Wayne",
+          "player_id": "1923",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-25",
+      "title": "Championship Core",
+      "theme": "2020-2025 Seasons",
+      "link": "super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "QB",
+          "player_name": "Patrick Mahomes",
+          "player_id": "7873",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "RB",
+          "player_name": "Saquon Barkley",
+          "player_id": "8005",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Tyreek Hill",
+          "player_id": "7171",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "Travis Kelce",
+          "player_id": "6310",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "A.J. Brown",
+          "player_id": "8376",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-26",
+      "title": "Historic Champions",
+      "theme": "2006-2015 Seasons",
+      "link": "super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Tennessee",
+          "player_name": "Peyton Manning",
+          "player_id": "463",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Jacksonville",
+          "player_name": "Chad Henne",
+          "player_id": "4260",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Penn State",
+          "player_name": "Jordan Norwood",
+          "player_id": "5176",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Florida",
+          "player_name": "Percy Harvin",
+          "player_id": "4506",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "USC",
+          "player_name": "Reggie Bush",
+          "player_id": "3484",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-27",
+      "title": "2020-2022 Same College I",
+      "theme": "2020-2022 Seasons",
+      "link": "same_college",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Alabama",
+          "player_name": "Jalen Hurts",
+          "player_id": "8862",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Oklahoma",
+          "player_name": "CeeDee Lamb",
+          "player_id": "8766",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Ravens",
+          "player_name": "Mark Andrews",
+          "player_id": "7973",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Bengals",
+          "player_name": "Joe Mixon",
+          "player_id": "7591",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Kyler Murray",
+          "player_id": "8314",
+          "primary_position": "QB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-28",
+      "title": "2015-2025 Draft Class Stack",
+      "theme": "2015-2025 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Chiefs",
+          "player_name": "Patrick Mahomes",
+          "player_id": "7873",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Packers",
+          "player_name": "Aaron Jones",
+          "player_id": "7699",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Buccaneers",
+          "player_name": "Chris Godwin Jr.",
+          "player_id": "7668",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Raiders",
+          "player_name": "Zay Jones",
+          "player_id": "7586",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Christian McCaffrey",
+          "player_id": "7506",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-29",
+      "title": "2024-2025 Seasons Same Draft Class",
+      "theme": "2024-2025 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Kentucky",
+          "player_name": "Ray Davis",
+          "player_id": "10339",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Broncos",
+          "player_name": "Bo Nix",
+          "player_id": "10311",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Brian Thomas Jr.",
+          "player_id": "10342",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "Brock Bowers",
+          "player_id": "10269",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Chargers",
+          "player_name": "Ladd McConkey",
+          "player_id": "10352",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-30",
+      "title": "2010-2014 Seasons Same Franchise",
+      "theme": "2010-2014 Seasons",
+      "link": "same_franchise",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Ravens",
+          "player_name": "Joe Flacco",
+          "player_id": "4176",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "RB",
+          "player_name": "Jamaal Charles",
+          "player_id": "4209",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Wes Welker",
+          "player_id": "2794",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "Vernon Davis",
+          "player_id": "3488",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "Demaryius Thomas",
+          "player_id": "4948",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-03-31",
+      "title": "2015-2019 Seasons Same College",
+      "theme": "2015-2019 Seasons",
+      "link": "same_college",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Colts",
+          "player_name": "Andrew Luck",
+          "player_id": "5659",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "RB",
+          "player_name": "Christian McCaffrey",
+          "player_id": "7506",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Doug Baldwin",
+          "player_id": "5293",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "Austin Hooper",
+          "player_id": "7095",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "Zach Ertz",
+          "player_id": "5956",
+          "primary_position": "TE"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-01",
+      "title": "2010-2019 Seasons Same Draft Class",
+      "theme": "2010-2019 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Any",
+          "player_name": "Matthew Stafford",
+          "player_id": "4474",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "AFC West",
+          "player_name": "LeSean McCoy",
+          "player_id": "4526",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Texans",
+          "player_name": "Arian Foster",
+          "player_id": "4720",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "South Carolina",
+          "player_name": "Jared Cook",
+          "player_id": "4590",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "Michael Crabtree",
+          "player_id": "4669",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-02",
+      "title": "2023 Season Same Franchise",
+      "theme": "2023 Season",
+      "link": "same_franchise",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Tennessee",
+          "player_name": "Joshua Dobbs",
+          "player_id": "8101",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "AFC",
+          "player_name": "Josh Allen",
+          "player_id": "8008",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Patriots",
+          "player_name": "Stefon Diggs",
+          "player_id": "6903",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Texans",
+          "player_name": "DeAndre Hopkins",
+          "player_id": "6036",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "NFC",
+          "player_name": "Christian McCaffrey",
+          "player_id": "7506",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-03",
+      "title": "2025 Season Day 3 Pick",
+      "theme": "2025 Season",
+      "link": "day_3_pick",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "QB",
+          "player_name": "Dak Prescott",
+          "player_id": "7186",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "NFC",
+          "player_name": "Kyren Williams",
+          "player_id": "9810",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Amon-Ra St. Brown",
+          "player_id": "9189",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Any",
+          "player_name": "Puka Nacua",
+          "player_id": "9985",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "AFC",
+          "player_name": "Chase Brown",
+          "player_id": "10027",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-04",
+      "title": "2006-2010 Seasons Same Draft Round",
+      "theme": "2006-2010 Seasons",
+      "link": "same_draft_round",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Ohio State",
+          "player_name": "Ted Ginn",
+          "player_id": "3840",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Titans",
+          "player_name": "Andre Johnson",
+          "player_id": "2490",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Larry Fitzgerald",
+          "player_id": "2874",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "AFC South",
+          "player_name": "Reggie Wayne",
+          "player_id": "1923",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "LaDainian Tomlinson",
+          "player_id": "1784",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-05",
+      "title": "2015-2020 Seasons Same Draft Class",
+      "theme": "2015-2020 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Chargers",
+          "player_name": "Keenan Allen",
+          "player_id": "6070",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Chiefs",
+          "player_name": "DeAndre Hopkins",
+          "player_id": "6036",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "North Carolina",
+          "player_name": "Giovani Bernard",
+          "player_id": "5998",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "West Virginia",
+          "player_name": "Tavon Austin",
+          "player_id": "6014",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Browns",
+          "player_name": "Case Keenum",
+          "player_id": "6187",
+          "primary_position": "QB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-06",
+      "title": "2000-2025 Seasons Same Draft Class",
+      "theme": "2000-2025 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Cowboys",
+          "player_name": "Terrell Owens",
+          "player_id": "559",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "WR",
+          "player_name": "Randy Moss",
+          "player_id": "540",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Chiefs",
+          "player_name": "Thomas Jones",
+          "player_id": "928",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Bears",
+          "player_name": "Muhsin Muhammad",
+          "player_id": "542",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "TE",
+          "player_name": "Tony Gonzalez",
+          "player_id": "285",
+          "primary_position": "TE"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-07",
+      "title": "2015-2020 Seasons Same Draft Class",
+      "theme": "2015-2020 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Any",
+          "player_name": "Todd Gurley",
+          "player_id": "6893",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "WR",
+          "player_name": "Stefon Diggs",
+          "player_id": "6903",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "NFC",
+          "player_name": "Jameis Winston",
+          "player_id": "6716",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Alabama",
+          "player_name": "Amari Cooper",
+          "player_id": "6718",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "Melvin Gordon",
+          "player_id": "6792",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-08",
+      "title": "2025 Season Same Position",
+      "theme": "2025 Season",
+      "link": "same_position",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Vanderbilt",
+          "player_name": "Ray Davis",
+          "player_id": "10339",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "AFC South",
+          "player_name": "Jonathan Taylor",
+          "player_id": "8711",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Georgia",
+          "player_name": "James Cook",
+          "player_id": "9543",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Michigan State",
+          "player_name": "Kenneth Walker III",
+          "player_id": "9666",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "AFC West",
+          "player_name": "Josh Jacobs",
+          "player_id": "8390",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-09",
+      "title": "2000-2005 Seasons Same Franchise",
+      "theme": "2000-2005 Seasons",
+      "link": "same_franchise",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "QB",
+          "player_name": "Jeff Garcia",
+          "player_id": "267",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Titans",
+          "player_name": "Randy Moss",
+          "player_id": "540",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Ravens",
+          "player_name": "Derrick Mason",
+          "player_id": "473",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Cowboys",
+          "player_name": "Terrell Owens",
+          "player_id": "559",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Donovan McNabb",
+          "player_id": "504",
+          "primary_position": "QB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-10",
+      "title": "2000-2009 Seasons Non-First-Round Pick",
+      "theme": "2000-2009 Seasons",
+      "link": "non_first_round_pick",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Any",
+          "player_name": "Tom Brady",
+          "player_id": "1588",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "TE",
+          "player_name": "Jason Witten",
+          "player_id": "2520",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "QB",
+          "player_name": "Drew Brees",
+          "player_id": "1967",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Wisconsin",
+          "player_name": "Owen Daniels",
+          "player_id": "3598",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "NFC West",
+          "player_name": "Brian Westbrook",
+          "player_id": "2143",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-11",
+      "title": "2006-2010 Seasons Non-Super Bowl Winner",
+      "theme": "2006-2010 Seasons",
+      "link": "non_super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "QB",
+          "player_name": "Philip Rivers",
+          "player_id": "3030",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "TE",
+          "player_name": "Antonio Gates",
+          "player_id": "2551",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "AFC West",
+          "player_name": "LaDainian Tomlinson",
+          "player_id": "1784",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Miami",
+          "player_name": "Frank Gore",
+          "player_id": "3202",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Flex",
+          "player_name": "Larry Fitzgerald",
+          "player_id": "2874",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-12",
+      "title": "2006-2010 Seasons Same Draft Round",
+      "theme": "2006-2010 Seasons",
+      "link": "same_draft_round",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "AFC",
+          "player_name": "LaDainian Tomlinson",
+          "player_id": "1784",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Arkansas",
+          "player_name": "Darren McFadden",
+          "player_id": "4168",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Georgia",
+          "player_name": "Benjamin Watson",
+          "player_id": "2878",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Raiders",
+          "player_name": "Carson Palmer",
+          "player_id": "2774",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "NFC South",
+          "player_name": "Steven Jackson",
+          "player_id": "2810",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-13",
+      "title": "2023-2025 Seasons Same Draft Round",
+      "theme": "2023-2025 Seasons",
+      "link": "same_draft_round",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "AFC East",
+          "player_name": "Josh Allen",
+          "player_id": "8008",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Florida",
+          "player_name": "Kyle Pitts",
+          "player_id": "9192",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "TE",
+          "player_name": "David Njoku",
+          "player_id": "7582",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "California",
+          "player_name": "Jared Goff",
+          "player_id": "7386",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Raiders",
+          "player_name": "Josh Jacobs",
+          "player_id": "8390",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-14",
+      "title": "2011-2015 Seasons Non-Super Bowl Winner",
+      "theme": "2011-2015 Seasons",
+      "link": "non_super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Maryland",
+          "player_name": "Darrius Heyward-Bey",
+          "player_id": "4499",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Ohio State",
+          "player_name": "Brian Hartline",
+          "player_id": "4541",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Browns",
+          "player_name": "Joe Flacco",
+          "player_id": "4176",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "RB",
+          "player_name": "Matt Forte",
+          "player_id": "4197",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "WR",
+          "player_name": "Calvin Johnson",
+          "player_id": "3834",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-15",
+      "title": "2024 Season Non-Super Bowl Winner",
+      "theme": "2024 Season",
+      "link": "non_super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Utah",
+          "player_name": "Dalton Kincaid",
+          "player_id": "9948",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "NFC",
+          "player_name": "Jayden Daniels",
+          "player_id": "10350",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Any",
+          "player_name": "Lamar Jackson",
+          "player_id": "7990",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Flex",
+          "player_name": "Ja'Marr Chase",
+          "player_id": "9160",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Panthers",
+          "player_name": "Chuba Hubbard",
+          "player_id": "9118",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-16",
+      "title": "2021 Season Same Franchise",
+      "theme": "2021 Season",
+      "link": "same_franchise",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Cardinals",
+          "player_name": "James Conner",
+          "player_id": "7533",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "TCU",
+          "player_name": "Jalen Reagor",
+          "player_id": "8776",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "WR",
+          "player_name": "Mike Williams",
+          "player_id": "7738",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Packers",
+          "player_name": "Aaron Rodgers",
+          "player_id": "3325",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "RB",
+          "player_name": "Najee Harris",
+          "player_id": "9158",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-17",
+      "title": "2000-2005 Seasons Same Draft Class",
+      "theme": "2000-2005 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Rams",
+          "player_name": "Marshall Faulk",
+          "player_id": "241",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Any",
+          "player_name": "Peyton Manning",
+          "player_id": "463",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "NFC",
+          "player_name": "Tiki Barber",
+          "player_id": "39",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Browns",
+          "player_name": "Kevin Johnson",
+          "player_id": "385",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "AFC",
+          "player_name": "Marvin Harrison",
+          "player_id": "323",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-18",
+      "title": "2015-2020 Seasons Same Franchise",
+      "theme": "2015-2020 Seasons",
+      "link": "same_franchise",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Rams",
+          "player_name": "Ryan Fitzpatrick",
+          "player_id": "3408",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "NFC",
+          "player_name": "Tom Brady",
+          "player_id": "1588",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "AFC",
+          "player_name": "Antonio Brown",
+          "player_id": "4941",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Saints",
+          "player_name": "Brandin Cooks",
+          "player_id": "6364",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Nebraska",
+          "player_name": "Rex Burkhead",
+          "player_id": "6550",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-19",
+      "title": "2000-2005 Seasons Same Draft Class",
+      "theme": "2000-2005 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Jaguars",
+          "player_name": "Torry Holt",
+          "player_id": "351",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "NFC",
+          "player_name": "Tiki Barber",
+          "player_id": "39",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "NFC North",
+          "player_name": "Daunte Culpepper",
+          "player_id": "177",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Flex",
+          "player_name": "Marvin Harrison",
+          "player_id": "323",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "AFC North",
+          "player_name": "Priest Holmes",
+          "player_id": "349",
+          "primary_position": "RB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-20",
+      "title": "2015-2020 Seasons Same Draft Class",
+      "theme": "2015-2020 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "NFC",
+          "player_name": "Mike Evans",
+          "player_id": "6414",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "AFC",
+          "player_name": "Davante Adams",
+          "player_id": "6461",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "AFC North",
+          "player_name": "Jarvis Landry",
+          "player_id": "6407",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "QB",
+          "player_name": "Derek Carr",
+          "player_id": "6373",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Saints",
+          "player_name": "Brandin Cooks",
+          "player_id": "6364",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-21",
+      "title": "2013-2020 Seasons Same Draft Class",
+      "theme": "2013-2020 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Ohio State",
+          "player_name": "Terrelle Pryor",
+          "player_id": "5435",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Alabama",
+          "player_name": "Julio Jones",
+          "player_id": "5202",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "NFC North",
+          "player_name": "Andy Dalton",
+          "player_id": "5218",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Flex",
+          "player_name": "A.J. Green",
+          "player_id": "5200",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Cam Newton",
+          "player_id": "5197",
+          "primary_position": "QB"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-22",
+      "title": "2025 Season Day 3 Pick",
+      "theme": "2025 Season",
+      "link": "day_3_pick",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Steelers",
+          "player_name": "Kenneth Gainwell",
+          "player_id": "9169",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "AFC West",
+          "player_name": "Troy Franklin",
+          "player_id": "10394",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Ravens",
+          "player_name": "Darren Waller",
+          "player_id": "6840",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "TE",
+          "player_name": "Jake Ferguson",
+          "player_id": "9696",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Puka Nacua",
+          "player_id": "9985",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-23",
+      "title": "2022 Season Same Franchise",
+      "theme": "2022 Season",
+      "link": "same_franchise",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Ohio State",
+          "player_name": "Parris Campbell",
+          "player_id": "8362",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "NFC",
+          "player_name": "Saquon Barkley",
+          "player_id": "8005",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Duke",
+          "player_name": "Daniel Jones",
+          "player_id": "8394",
+          "primary_position": "QB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "AFC",
+          "player_name": "A.J. Brown",
+          "player_id": "8376",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "AFC West",
+          "player_name": "Evan Engram",
+          "player_id": "7579",
+          "primary_position": "TE"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-24",
+      "title": "2015-2020 Seasons Super Bowl Winner",
+      "theme": "2015-2020 Seasons",
+      "link": "super_bowl_winner",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "NFC North",
+          "player_name": "Zach Ertz",
+          "player_id": "5956",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Vikings",
+          "player_name": "Jerick McKinnon",
+          "player_id": "6406",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Minnesota",
+          "player_name": "Eric Decker",
+          "player_id": "4928",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "NFC West",
+          "player_name": "Emmanuel Sanders",
+          "player_id": "4849",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "South Carolina",
+          "player_name": "Alshon Jeffery",
+          "player_id": "5576",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-25",
+      "title": "2020-2025 Seasons Same Draft Class",
+      "theme": "2020-2025 Seasons",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Arizona State",
+          "player_name": "Brandon Aiyuk",
+          "player_id": "8815",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Oregon",
+          "player_name": "Juwan Johnson",
+          "player_id": "8959",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Patriots",
+          "player_name": "Antonio Gibson",
+          "player_id": "8755",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "AFC West",
+          "player_name": "Jerry Jeudy",
+          "player_id": "8783",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Any",
+          "player_name": "Justin Jefferson",
+          "player_id": "8752",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-26",
+      "title": "2010-2015 Seasons Day 3 Pick",
+      "theme": "2010-2015 Seasons",
+      "link": "day_3_pick",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Any",
+          "player_name": "Brandon Marshall",
+          "player_id": "3600",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Texas Christian",
+          "player_name": "Jeremy Kerley",
+          "player_id": "5265",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Bills",
+          "player_name": "Steve Johnson",
+          "player_id": "4333",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "Cardinals",
+          "player_name": "Alfred Morris",
+          "player_id": "5578",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Tennessee",
+          "player_name": "Denarius Moore",
+          "player_id": "5263",
+          "primary_position": "WR"
+        }
+      ]
+    },
+    {
+      "puzzle_date": "2026-04-27",
+      "title": "2023 Season Same Draft Class",
+      "theme": "2023 Season",
+      "link": "same_draft_class",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "AFC West",
+          "player_name": "Isiah Pacheco",
+          "player_id": "9530",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "Georgia",
+          "player_name": "James Cook",
+          "player_id": "9543",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "NFC",
+          "player_name": "Rachaad White",
+          "player_id": "9546",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "AFC North",
+          "player_name": "George Pickens",
+          "player_id": "9542",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "Ohio State",
+          "player_name": "Chris Olave",
+          "player_id": "9537",
+          "primary_position": "WR"
+        }
+      ]
+    }
+  ],
+  "running_player_counts": {
+    "Patrick Mahomes": 3,
+    "Christian McCaffrey": 4,
+    "Cooper Kupp": 1,
+    "George Kittle": 1,
+    "Alvin Kamara": 1,
+    "Ben Roethlisberger": 1,
+    "Aaron Rodgers": 3,
+    "Eric Ebron": 1,
+    "Antonio Brown": 2,
+    "Russell Wilson": 2,
+    "Matt Ryan": 1,
+    "Julio Jones": 2,
+    "Marcus Mariota": 1,
+    "DeMarco Murray": 1,
+    "Jameson Williams": 1,
+    "Jalen Hurts": 3,
+    "Derrick Henry": 1,
+    "Bryce Young": 1,
+    "Jahmyr Gibbs": 2,
+    "Puka Nacua": 3,
+    "Zach Charbonnet": 1,
+    "Bijan Robinson": 1,
+    "Jaxon Smith-Njigba": 1,
+    "D'Andre Swift": 2,
+    "DeAndre Hopkins": 3,
+    "DK Metcalf": 1,
+    "Davante Adams": 2,
+    "Baker Mayfield": 1,
+    "Josh Freeman": 1,
+    "Arian Foster": 2,
+    "Mike Wallace": 1,
+    "Brandon Pettigrew": 1,
+    "LeSean McCoy": 2,
+    "Josh Allen": 3,
+    "Stefon Diggs": 3,
+    "Adam Thielen": 1,
+    "Kirk Cousins": 1,
+    "Justin Jefferson": 2,
+    "Joe Burrow": 1,
+    "Cole Kmet": 1,
+    "Drew Brees": 2,
+    "Marques Colston": 1,
+    "Marshawn Lynch": 1,
+    "Rob Gronkowski": 1,
+    "Reggie Wayne": 2,
+    "Saquon Barkley": 2,
+    "Tyreek Hill": 1,
+    "Travis Kelce": 1,
+    "A.J. Brown": 2,
+    "Peyton Manning": 2,
+    "Chad Henne": 1,
+    "Jordan Norwood": 1,
+    "Percy Harvin": 1,
+    "Reggie Bush": 1,
+    "CeeDee Lamb": 1,
+    "Mark Andrews": 1,
+    "Joe Mixon": 1,
+    "Kyler Murray": 1,
+    "Aaron Jones": 1,
+    "Chris Godwin Jr.": 1,
+    "Zay Jones": 1,
+    "Ray Davis": 2,
+    "Bo Nix": 1,
+    "Brian Thomas Jr.": 1,
+    "Brock Bowers": 1,
+    "Ladd McConkey": 1,
+    "Joe Flacco": 2,
+    "Jamaal Charles": 1,
+    "Wes Welker": 1,
+    "Vernon Davis": 1,
+    "Demaryius Thomas": 1,
+    "Andrew Luck": 1,
+    "Doug Baldwin": 1,
+    "Austin Hooper": 1,
+    "Zach Ertz": 2,
+    "Matthew Stafford": 1,
+    "Jared Cook": 1,
+    "Michael Crabtree": 1,
+    "Joshua Dobbs": 1,
+    "Dak Prescott": 1,
+    "Kyren Williams": 1,
+    "Amon-Ra St. Brown": 1,
+    "Chase Brown": 1,
+    "Ted Ginn": 1,
+    "Andre Johnson": 1,
+    "Larry Fitzgerald": 2,
+    "LaDainian Tomlinson": 3,
+    "Keenan Allen": 1,
+    "Giovani Bernard": 1,
+    "Tavon Austin": 1,
+    "Case Keenum": 1,
+    "Terrell Owens": 2,
+    "Randy Moss": 2,
+    "Thomas Jones": 1,
+    "Muhsin Muhammad": 1,
+    "Tony Gonzalez": 1,
+    "Todd Gurley": 1,
+    "Jameis Winston": 1,
+    "Amari Cooper": 1,
+    "Melvin Gordon": 1,
+    "Jonathan Taylor": 1,
+    "James Cook": 2,
+    "Kenneth Walker III": 1,
+    "Josh Jacobs": 2,
+    "Jeff Garcia": 1,
+    "Derrick Mason": 1,
+    "Donovan McNabb": 1,
+    "Tom Brady": 2,
+    "Jason Witten": 1,
+    "Owen Daniels": 1,
+    "Brian Westbrook": 1,
+    "Philip Rivers": 1,
+    "Antonio Gates": 1,
+    "Frank Gore": 1,
+    "Darren McFadden": 1,
+    "Benjamin Watson": 1,
+    "Carson Palmer": 1,
+    "Steven Jackson": 1,
+    "Kyle Pitts": 1,
+    "David Njoku": 1,
+    "Jared Goff": 1,
+    "Darrius Heyward-Bey": 1,
+    "Brian Hartline": 1,
+    "Matt Forte": 1,
+    "Calvin Johnson": 1,
+    "Dalton Kincaid": 1,
+    "Jayden Daniels": 1,
+    "Lamar Jackson": 1,
+    "Ja'Marr Chase": 1,
+    "Chuba Hubbard": 1,
+    "James Conner": 1,
+    "Jalen Reagor": 1,
+    "Mike Williams": 1,
+    "Najee Harris": 1,
+    "Marshall Faulk": 1,
+    "Tiki Barber": 2,
+    "Kevin Johnson": 1,
+    "Marvin Harrison": 2,
+    "Ryan Fitzpatrick": 1,
+    "Brandin Cooks": 2,
+    "Rex Burkhead": 1,
+    "Torry Holt": 1,
+    "Daunte Culpepper": 1,
+    "Priest Holmes": 1,
+    "Mike Evans": 1,
+    "Jarvis Landry": 1,
+    "Derek Carr": 1,
+    "Terrelle Pryor": 1,
+    "Andy Dalton": 1,
+    "A.J. Green": 1,
+    "Cam Newton": 1,
+    "Kenneth Gainwell": 1,
+    "Troy Franklin": 1,
+    "Darren Waller": 1,
+    "Jake Ferguson": 1,
+    "Parris Campbell": 1,
+    "Daniel Jones": 1,
+    "Evan Engram": 1,
+    "Jerick McKinnon": 1,
+    "Eric Decker": 1,
+    "Emmanuel Sanders": 1,
+    "Alshon Jeffery": 1,
+    "Brandon Aiyuk": 1,
+    "Juwan Johnson": 1,
+    "Antonio Gibson": 1,
+    "Jerry Jeudy": 1,
+    "Brandon Marshall": 1,
+    "Jeremy Kerley": 1,
+    "Steve Johnson": 1,
+    "Alfred Morris": 1,
+    "Denarius Moore": 1,
+    "Isiah Pacheco": 1,
+    "Rachaad White": 1,
+    "George Pickens": 1,
+    "Chris Olave": 1
+  },
+  "running_time_period_counts": {
+    "2020-2025 Seasons": 5,
+    "2015-2020 Seasons": 6,
+    "2016 Season": 1,
+    "2025 Season": 5,
+    "2010s Seasons": 1,
+    "2015-2025 Seasons": 2,
+    "2006-2015 Seasons": 2,
+    "2020-2022 Seasons": 1,
+    "2024-2025 Seasons": 1,
+    "2010-2014 Seasons": 1,
+    "2015-2019 Seasons": 1,
+    "2010-2019 Seasons": 1,
+    "2023 Season": 2,
+    "2006-2010 Seasons": 3,
+    "2000-2025 Seasons": 1,
+    "2000-2005 Seasons": 3,
+    "2000-2009 Seasons": 1,
+    "2023-2025 Seasons": 1,
+    "2011-2015 Seasons": 1,
+    "2024 Season": 1,
+    "2021 Season": 1,
+    "2013-2020 Seasons": 1,
+    "2022 Season": 1,
+    "2010-2015 Seasons": 1
+  },
+  "running_link_counts": {
+    "same_draft_class": 16,
+    "same_franchise": 7,
+    "teammates": 2,
+    "same_college": 3,
+    "non_super_bowl_winner": 4,
+    "super_bowl_winner": 4,
+    "day_3_pick": 3,
+    "same_draft_round": 3,
+    "same_position": 1,
+    "non_first_round_pick": 1
+  }
+}

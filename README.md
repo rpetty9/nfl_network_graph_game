@@ -100,7 +100,10 @@ Top-10 leaderboard badges can be awarded automatically through:
 
 - `/api/cron/award-leaderboard`
 
-The included [vercel.json](./vercel.json) schedules that endpoint daily at `06:05 UTC`, which is safely after midnight in `America/Chicago` year-round and awards the previous Chicago puzzle date.
+The included [vercel.json](./vercel.json) schedules that endpoint at `05:01 UTC` and `06:01 UTC`.
+The route only performs the automatic award during the `12:01-12:10 AM America/Chicago` window, so this combination cleanly covers both daylight saving time and standard time.
+
+Automatic runs also backfill any missed prior puzzle dates that have registered submissions but have not yet been written into `daily_leaderboard_finish`.
 
 Set `CRON_SECRET` in Vercel so the cron route only accepts authorized requests.
 

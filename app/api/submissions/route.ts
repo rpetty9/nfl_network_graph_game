@@ -3,6 +3,11 @@ import { auth } from "@/auth";
 import { awardBadgesForSubmission } from "@/lib/users";
 import { pool } from "@/lib/db";
 import { getLinkMultiplier } from "@/lib/scoring";
+import { ensureTestingSubmissionTables, requireTestingAdmin } from "@/lib/testing";
+import {
+  lineupSatisfiesPuzzleRules,
+  playerAllowedByPuzzleRules,
+} from "@/lib/puzzle-rules";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,14 +17,6 @@ type SlotRule = {
   display_text: string;
   parameter_type: string;
   parameter_value: string | null;
-};
-
-const POSITION_OVERLAY_BY_SLOT: Record<number, string> = {
-  1: "QB",
-  2: "RB",
-  3: "WR",
-  4: "TE",
-  5: "FLEX",
 };
 
 type CandidatePlayer = {
@@ -47,6 +44,8 @@ type PairRelationship = {
   same_draft_class_flag: boolean;
   same_draft_round_flag?: boolean;
   both_undrafted_flag?: boolean;
+  both_non_first_round_pick_flag?: boolean;
+  both_day_3_pick_flag?: boolean;
   both_super_bowl_winner_flag?: boolean;
   both_non_super_bowl_winner_flag?: boolean;
   both_played_packers_flag?: boolean;
@@ -141,20 +140,6 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
   }
 }
 
-function playerMatchesPositionOverlay(
-  player: CandidatePlayer,
-  slotNumber: number,
-  positionOverlayEnabled: boolean
-) {
-  if (!positionOverlayEnabled) return true;
-  const overlayValue = POSITION_OVERLAY_BY_SLOT[slotNumber];
-  if (!overlayValue) return true;
-  const positionValue = String(player.primary_position ?? "").toUpperCase();
-  return overlayValue === "FLEX"
-    ? ["RB", "WR", "TE"].includes(positionValue)
-    : positionValue === overlayValue;
-}
-
 function relationshipPasses(
   relationshipType: string,
   pair: PairRelationship | undefined
@@ -174,6 +159,10 @@ function relationshipPasses(
       return pair.same_draft_round_flag === true;
     case "both_undrafted":
       return pair.both_undrafted_flag === true;
+    case "non_first_round_pick":
+      return pair.both_non_first_round_pick_flag === true;
+    case "day_3_pick":
+      return pair.both_day_3_pick_flag === true;
     case "super_bowl_winner":
       return pair.both_super_bowl_winner_flag === true;
     case "non_super_bowl_winner":
@@ -205,12 +194,13 @@ async function loadExistingSubmission(input: {
   requestedDate: string | null;
   registeredUserId: string | null;
   clientToken: string | null;
+  testingMode?: boolean;
 }) {
   if (!input.registeredUserId && !input.clientToken) {
     throw new Error("Missing submission identity");
   }
 
-  const { puzzle } = await loadPuzzleContext(input.requestedDate);
+  const { puzzle } = await loadPuzzleContext(input.requestedDate, input.testingMode);
   const identityClause = input.registeredUserId
     ? "user_id = $2"
     : "client_token = $2";
@@ -221,7 +211,7 @@ async function loadExistingSubmission(input: {
   const submissionResult = await pool.query<ExistingSubmissionRow>(
     `
     SELECT
-      submission_id::text,
+      ${input.testingMode ? "testing_submission_id" : "submission_id"}::text AS submission_id,
       display_name,
       base_score::text,
       active_links::text,
@@ -229,9 +219,10 @@ async function loadExistingSubmission(input: {
       final_score::text,
       optimal_final_score::text,
       percent_of_optimal::text
-    FROM puzzle_submission
+    FROM ${input.testingMode ? "testing_submission" : "puzzle_submission"}
     WHERE puzzle_id = $1
       AND ${identityClause}
+    ORDER BY submitted_at DESC
     LIMIT 1
     `,
     [puzzle.puzzle_id, identityValue]
@@ -247,8 +238,8 @@ async function loadExistingSubmission(input: {
     SELECT
       slot_number,
       player_id::text
-    FROM puzzle_submission_player
-    WHERE submission_id = $1
+    FROM ${input.testingMode ? "testing_submission_player" : "puzzle_submission_player"}
+    WHERE ${input.testingMode ? "testing_submission_id" : "submission_id"} = $1
     ORDER BY slot_number
     `,
     [Number(submission.submission_id)]
@@ -275,21 +266,28 @@ async function loadExistingSubmission(input: {
   };
 }
 
-async function loadPuzzleContext(requestedDate: string | null) {
+async function loadPuzzleContext(
+  requestedDate: string | null,
+  testingMode = false
+) {
   const puzzleResult = requestedDate
     ? await pool.query(
         `
-        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
+        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
         FROM daily_puzzle
         WHERE puzzle_date = $1
           AND sport = 'nfl'
-          AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
+          ${
+            testingMode
+              ? ""
+              : "AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)"
+          }
         LIMIT 1
         `,
         [requestedDate]
       )
     : await pool.query(`
-        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
+        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
         FROM daily_puzzle
         WHERE published_flag = true
           AND sport = 'nfl'
@@ -345,7 +343,7 @@ async function loadPuzzleContext(requestedDate: string | null) {
     relationshipRule: relationshipRuleResult.rows[0] ?? {
       relationship_type: "teammates",
       display_text: "Teammates",
-      bonus_pct: 5,
+      bonus_pct: 10,
     },
     slotRules:
       slotRulesResult.rows.length > 0
@@ -357,6 +355,7 @@ async function loadPuzzleContext(requestedDate: string | null) {
             parameter_value: slotNumber === 5 ? "FLEX" : "ANY",
           })),
     positionOverlayEnabled: Boolean(puzzle.position_overlay_enabled),
+    qbExclusionEnabled: Boolean(puzzle.qb_exclusion_enabled),
   };
 }
 
@@ -574,6 +573,8 @@ async function loadRelationships(playerIds: number[], themeRule: string) {
       END AS same_draft_class_flag,
       CASE WHEN p1.draft_round IS NOT NULL AND p1.draft_round = p2.draft_round THEN true ELSE false END AS same_draft_round_flag,
         CASE WHEN COALESCE(p1.undrafted_flag, false) = true AND COALESCE(p2.undrafted_flag, false) = true THEN true ELSE false END AS both_undrafted_flag,
+        CASE WHEN p1.draft_round IS NOT NULL AND p2.draft_round IS NOT NULL AND p1.draft_round > 1 AND p2.draft_round > 1 THEN true ELSE false END AS both_non_first_round_pick_flag,
+        CASE WHEN p1.draft_round BETWEEN 4 AND 7 AND p2.draft_round BETWEEN 4 AND 7 THEN true ELSE false END AS both_day_3_pick_flag,
         CASE WHEN COALESCE(p1.super_bowl_win_count, 0) > 0 AND COALESCE(p2.super_bowl_win_count, 0) > 0 THEN true ELSE false END AS both_super_bowl_winner_flag,
         CASE WHEN COALESCE(p1.super_bowl_win_count, 0) = 0 AND COALESCE(p2.super_bowl_win_count, 0) = 0 THEN true ELSE false END AS both_non_super_bowl_winner_flag,
         CASE WHEN EXISTS (
@@ -599,6 +600,13 @@ async function loadRelationships(playerIds: number[], themeRule: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    let testingMode = false;
+    try {
+      testingMode = await requireTestingAdmin(request);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const session = await auth();
     const registeredUserId =
       session?.user?.id && /^\d+$/.test(session.user.id) ? session.user.id : null;
@@ -633,8 +641,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Lineup must contain 5 slots" }, { status: 400 });
     }
 
-    const { puzzle, themeRule, relationshipRule, slotRules, positionOverlayEnabled } =
-      await loadPuzzleContext(requestedDate);
+    if (testingMode) {
+      await ensureTestingSubmissionTables(pool);
+    }
+
+    const {
+      puzzle,
+      themeRule,
+      relationshipRule,
+      slotRules,
+      positionOverlayEnabled,
+      qbExclusionEnabled,
+    } =
+      await loadPuzzleContext(requestedDate, testingMode);
     const players = await loadPlayersForTheme(themeRule);
     const playerMap = new Map(players.map((player) => [String(player.player_id), player]));
     const slotRuleMap = new Map(slotRules.map((rule) => [Number(rule.slot_number), rule]));
@@ -656,13 +675,40 @@ export async function POST(request: NextRequest) {
       if (!playerMatchesSlotRule(player, rule)) {
         throw new Error("Player does not satisfy slot rule");
       }
-      if (!playerMatchesPositionOverlay(player, slotNumber, positionOverlayEnabled)) {
-        throw new Error("Player does not satisfy slot position rule");
+      if (
+        !playerAllowedByPuzzleRules(player.primary_position, {
+          positionLockEnabled: positionOverlayEnabled,
+          qbExclusionEnabled,
+        })
+      ) {
+        throw new Error(
+          qbExclusionEnabled
+            ? "Quarterbacks are not allowed for this puzzle."
+            : "Player does not satisfy the puzzle lineup rule."
+        );
       }
 
       selectedIds.add(playerId);
       return { slotNumber, player, rule };
     });
+
+    if (
+      !lineupSatisfiesPuzzleRules(
+        resolvedLineup.map((entry) => entry.player.primary_position),
+        {
+          positionLockEnabled: positionOverlayEnabled,
+          qbExclusionEnabled,
+        }
+      )
+    ) {
+      throw new Error(
+        positionOverlayEnabled
+          ? "This puzzle requires exactly one QB, RB, WR, and TE, plus one extra RB/WR/TE in any slot."
+          : qbExclusionEnabled
+            ? "Quarterbacks are not allowed for this puzzle."
+            : "Lineup does not satisfy the puzzle rules."
+      );
+    }
 
     const pairRelationships = await loadRelationships(
       resolvedLineup.map((entry) => Number(entry.player.player_id)),
@@ -699,7 +745,7 @@ export async function POST(request: NextRequest) {
     );
     const multiplier = getLinkMultiplier(
       activeLinks,
-      Number(relationshipRule.bonus_pct ?? 5)
+      Number(relationshipRule.bonus_pct ?? 10)
     );
     const finalScore = baseScore * multiplier;
     const percentOfOptimal =
@@ -710,7 +756,7 @@ export async function POST(request: NextRequest) {
     const displayName = registeredUsername ?? makeDisplayName();
     const submissionResult = await pool.query(
       `
-      INSERT INTO puzzle_submission (
+      INSERT INTO ${testingMode ? "testing_submission" : "puzzle_submission"} (
         puzzle_id,
         user_id,
         client_token,
@@ -719,11 +765,11 @@ export async function POST(request: NextRequest) {
         active_links,
         multiplier,
         final_score,
-        optimal_final_score,
-        percent_of_optimal
-      )
+      optimal_final_score,
+      percent_of_optimal
+    )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING submission_id, display_name
+      RETURNING ${testingMode ? "testing_submission_id" : "submission_id"} AS submission_id, display_name
       `,
       [
         puzzle.puzzle_id,
@@ -743,8 +789,8 @@ export async function POST(request: NextRequest) {
 
     await pool.query(
       `
-      INSERT INTO puzzle_submission_player (
-        submission_id,
+      INSERT INTO ${testingMode ? "testing_submission_player" : "puzzle_submission_player"} (
+        ${testingMode ? "testing_submission_id" : "submission_id"},
         slot_number,
         player_id,
         fantasy_points
@@ -765,7 +811,7 @@ export async function POST(request: NextRequest) {
     );
 
     const awardedBadges =
-      registeredUserId != null
+      !testingMode && registeredUserId != null
         ? await awardBadgesForSubmission({
             userId: registeredUserId,
             activeLinks,
@@ -798,6 +844,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    let testingMode = false;
+    try {
+      testingMode = await requireTestingAdmin(request);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const session = await auth();
     const registeredUserId =
       session?.user?.id && /^\d+$/.test(session.user.id) ? session.user.id : null;
@@ -810,6 +863,7 @@ export async function GET(request: NextRequest) {
       requestedDate,
       registeredUserId,
       clientToken,
+      testingMode,
     });
 
     if (!submission) {

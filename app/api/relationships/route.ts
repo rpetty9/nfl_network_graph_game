@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { requireTestingAdmin } from "@/lib/testing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
+    let testingMode = false;
+    try {
+      testingMode = await requireTestingAdmin(request);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const requestedDate = request.nextUrl.searchParams.get("date");
     const ids = request.nextUrl.searchParams
       .getAll("playerId")
@@ -25,7 +33,11 @@ export async function GET(request: NextRequest) {
           FROM daily_puzzle
           WHERE puzzle_date = $1
             AND sport = 'nfl'
-            AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
+            ${
+              testingMode
+                ? ""
+                : "AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)"
+            }
           LIMIT 1
           `,
           [requestedDate]
@@ -158,6 +170,20 @@ export async function GET(request: NextRequest) {
           THEN true
           ELSE false
         END AS both_undrafted_flag,
+        CASE
+          WHEN p1.draft_round IS NOT NULL
+           AND p2.draft_round IS NOT NULL
+           AND p1.draft_round > 1
+           AND p2.draft_round > 1
+          THEN true
+          ELSE false
+        END AS both_non_first_round_pick_flag,
+        CASE
+          WHEN p1.draft_round BETWEEN 4 AND 7
+           AND p2.draft_round BETWEEN 4 AND 7
+          THEN true
+          ELSE false
+        END AS both_day_3_pick_flag,
         CASE
           WHEN COALESCE(p1.super_bowl_win_count, 0) > 0
            AND COALESCE(p2.super_bowl_win_count, 0) > 0

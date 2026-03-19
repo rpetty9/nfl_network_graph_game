@@ -2,7 +2,15 @@
   "crons": [
     {
       "path": "/api/cron/award-leaderboard",
-      "schedule": "5 6 * * *"
+      "schedule": "1 5 * * *"
+    },
+    {
+      "path": "/api/cron/award-leaderboard",
+      "schedule": "1 6 * * *"
+    },
+    {
+      "path": "/api/cron/dev-puzzle-queue",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

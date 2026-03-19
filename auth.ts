@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { getUserByGoogleSubject, getUserById, upsertGoogleUser } from "@/lib/users";
+import { isAdminUser } from "@/lib/admin";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -62,6 +63,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.badges = appUser.badges;
             token.stats = appUser.stats;
             token.needsUsername = !appUser.username;
+            token.isAdmin = isAdminUser({
+              username: appUser.username,
+              email: appUser.email,
+            });
           }
         }
 
@@ -81,6 +86,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.badges = refreshedUser.badges;
           token.stats = refreshedUser.stats;
           token.needsUsername = !refreshedUser.username;
+          token.isAdmin = isAdminUser({
+            username: refreshedUser.username,
+            email: refreshedUser.email,
+          });
         }
         return token;
       }
@@ -99,6 +108,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.badges = appUser.badges;
           token.stats = appUser.stats;
           token.needsUsername = !appUser.username;
+          token.isAdmin = isAdminUser({
+            username: appUser.username,
+            email: appUser.email,
+          });
         }
       }
 
@@ -142,6 +155,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 friend_daily_wins: 0,
               };
         session.user.needsUsername = Boolean(token.needsUsername);
+        session.user.isAdmin = Boolean(token.isAdmin);
       }
 
       return session;

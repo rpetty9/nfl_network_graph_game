@@ -15,17 +15,14 @@ type HomeRecapRow = {
 
 export async function GET() {
   try {
-    const latestFinishedResult = await pool.query<{ puzzle_date: string }>(
+    const yesterdayResult = await pool.query<{ puzzle_date: string }>(
       `
-      SELECT MAX(dp.puzzle_date)::text AS puzzle_date
-      FROM daily_leaderboard_finish dlf
-      JOIN daily_puzzle dp
-        ON dp.puzzle_id = dlf.puzzle_id
+      SELECT (((NOW() AT TIME ZONE 'America/Chicago')::date) - INTERVAL '1 day')::date::text AS puzzle_date
       `
     );
 
-    const latestFinishedDate = latestFinishedResult.rows[0]?.puzzle_date;
-    if (!latestFinishedDate) {
+    const yesterdayDate = yesterdayResult.rows[0]?.puzzle_date;
+    if (!yesterdayDate) {
       return NextResponse.json({ recap: null });
     }
 
@@ -50,22 +47,30 @@ export async function GET() {
       ORDER BY dlf.placement ASC, ps.final_score DESC, ps.submitted_at ASC
       LIMIT 10
       `,
-      [latestFinishedDate]
+      [yesterdayDate]
     );
 
     return NextResponse.json({
-      recap: {
-        puzzle_date: latestFinishedDate,
-        winners: recapResult.rows.map((row) => ({
-          user_id: row.user_id,
-          display_name: row.display_name,
-          placement: Number(row.placement),
-          final_score: Number(row.final_score),
-          featured_badges: Array.isArray(row.featured_badges)
-            ? row.featured_badges.filter((badge): badge is string => typeof badge === "string")
-            : [],
-        })),
-      },
+      recap:
+        recapResult.rows.length > 0
+          ? {
+              puzzle_date: yesterdayDate,
+              winners: recapResult.rows.map((row) => ({
+                user_id: row.user_id,
+                display_name: row.display_name,
+                placement: Number(row.placement),
+                final_score: Number(row.final_score),
+                featured_badges: Array.isArray(row.featured_badges)
+                  ? row.featured_badges.filter(
+                      (badge): badge is string => typeof badge === "string"
+                    )
+                  : [],
+              })),
+            }
+          : {
+              puzzle_date: yesterdayDate,
+              winners: [],
+            },
     });
   } catch (error) {
     console.error("Home recap route failed:", error);

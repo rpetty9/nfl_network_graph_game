@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { getLinkMultiplier } from "@/lib/scoring";
+import { requireTestingAdmin } from "@/lib/testing";
+import {
+  lineupSatisfiesPuzzleRules,
+  partialLineupCanStillSatisfyPuzzleRules,
+  playerAllowedByPuzzleRules,
+} from "@/lib/puzzle-rules";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,14 +18,6 @@ type SlotRule = {
   parameter_type: string;
   parameter_value: string | null;
   display_text: string;
-};
-
-const POSITION_OVERLAY_BY_SLOT: Record<number, string> = {
-  1: "QB",
-  2: "RB",
-  3: "WR",
-  4: "TE",
-  5: "FLEX",
 };
 
 type CandidatePlayer = {
@@ -48,6 +46,8 @@ type PairRelationship = {
   same_draft_class_flag: boolean;
   same_draft_round_flag?: boolean;
   both_undrafted_flag?: boolean;
+  both_non_first_round_pick_flag?: boolean;
+  both_day_3_pick_flag?: boolean;
   both_super_bowl_winner_flag?: boolean;
   both_non_super_bowl_winner_flag?: boolean;
   both_played_packers_flag?: boolean;
@@ -85,7 +85,8 @@ function buildConfigSignature(
   themeRule: string,
   relationshipRule: { relationship_type: string; bonus_pct?: number | null },
   slotRules: SlotRule[],
-  positionOverlayEnabled: boolean
+  positionOverlayEnabled: boolean,
+  qbExclusionEnabled: boolean
 ) {
   const slotSignature = slotRules
     .map(
@@ -99,8 +100,9 @@ function buildConfigSignature(
     String(puzzleId),
     themeRule,
     relationshipRule.relationship_type,
-    String(relationshipRule.bonus_pct ?? 5),
+    String(relationshipRule.bonus_pct ?? 10),
     positionOverlayEnabled ? "overlay:on" : "overlay:off",
+    qbExclusionEnabled ? "qb:off" : "qb:on",
     slotSignature,
   ].join("::");
 }
@@ -141,20 +143,6 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
   }
 }
 
-function playerMatchesPositionOverlay(
-  player: CandidatePlayer,
-  slotNumber: number,
-  positionOverlayEnabled: boolean
-) {
-  if (!positionOverlayEnabled) return true;
-  const overlayValue = POSITION_OVERLAY_BY_SLOT[slotNumber];
-  if (!overlayValue) return true;
-  const positionValue = String(player.primary_position ?? "").toUpperCase();
-  return overlayValue === "FLEX"
-    ? ["RB", "WR", "TE"].includes(positionValue)
-    : positionValue === overlayValue;
-}
-
 function relationshipPasses(
   relationshipType: string,
   pair: PairRelationship | undefined
@@ -174,6 +162,10 @@ function relationshipPasses(
       return pair.same_draft_round_flag === true;
     case "both_undrafted":
       return pair.both_undrafted_flag === true;
+    case "non_first_round_pick":
+      return pair.both_non_first_round_pick_flag === true;
+    case "day_3_pick":
+      return pair.both_day_3_pick_flag === true;
     case "super_bowl_winner":
       return pair.both_super_bowl_winner_flag === true;
     case "non_super_bowl_winner":
@@ -187,23 +179,38 @@ function relationshipPasses(
   }
 }
 
+function combinationsOfTwo(count: number) {
+  return count > 1 ? (count * (count - 1)) / 2 : 0;
+}
+
 export async function GET(request: NextRequest) {
   try {
+    let testingMode = false;
+    try {
+      testingMode = await requireTestingAdmin(request);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const requestedDate = request.nextUrl.searchParams.get("date");
     const puzzleResult = requestedDate
       ? await pool.query(
           `
-          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
+          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
           FROM daily_puzzle
           WHERE puzzle_date = $1
             AND sport = 'nfl'
-            AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
+            ${
+              testingMode
+                ? ""
+                : "AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)"
+            }
           LIMIT 1
           `,
           [requestedDate]
         )
       : await pool.query(`
-          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled
+          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
           FROM daily_puzzle
           WHERE published_flag = true
             AND sport = 'nfl'
@@ -260,9 +267,10 @@ export async function GET(request: NextRequest) {
     const relationshipRule = relationshipRuleResult.rows[0] ?? {
       relationship_type: "teammates",
       display_text: "Teammates",
-      bonus_pct: 5,
+      bonus_pct: 10,
     };
     const positionOverlayEnabled = Boolean(puzzle.position_overlay_enabled);
+    const qbExclusionEnabled = Boolean(puzzle.qb_exclusion_enabled);
 
     const defaultSlotRules: SlotRule[] = [1, 2, 3, 4, 5].map((slotNumber) => ({
       slot_number: slotNumber,
@@ -280,7 +288,8 @@ export async function GET(request: NextRequest) {
       themeRule,
       relationshipRule,
       slotRules,
-      positionOverlayEnabled
+      positionOverlayEnabled,
+      qbExclusionEnabled
     );
 
     const cacheResult = await pool.query(
@@ -425,15 +434,21 @@ export async function GET(request: NextRequest) {
           .filter(
             (player) =>
               playerMatchesSlotRule(player, rule) &&
-              playerMatchesPositionOverlay(
-                player,
-                Number(rule.slot_number),
-                positionOverlayEnabled
-              )
+              playerAllowedByPuzzleRules(player.primary_position, {
+                positionLockEnabled: positionOverlayEnabled,
+                qbExclusionEnabled,
+              })
           )
           .slice(0, limit),
       };
     });
+
+    if (positionOverlayEnabled && qbExclusionEnabled) {
+      return NextResponse.json(
+        { error: "One-of-each lock cannot be combined with No QBs." },
+        { status: 500 }
+      );
+    }
 
     if (slotCandidates.some((slot) => slot.candidates.length === 0)) {
       return NextResponse.json(
@@ -555,6 +570,20 @@ export async function GET(request: NextRequest) {
                   ELSE false
                  END AS both_undrafted_flag,
                  CASE
+                   WHEN p1.draft_round IS NOT NULL
+                    AND p2.draft_round IS NOT NULL
+                    AND p1.draft_round > 1
+                    AND p2.draft_round > 1
+                   THEN true
+                   ELSE false
+                 END AS both_non_first_round_pick_flag,
+                 CASE
+                   WHEN p1.draft_round BETWEEN 4 AND 7
+                    AND p2.draft_round BETWEEN 4 AND 7
+                   THEN true
+                   ELSE false
+                 END AS both_day_3_pick_flag,
+                 CASE
                    WHEN COALESCE(p1.super_bowl_win_count, 0) > 0
                     AND COALESCE(p2.super_bowl_win_count, 0) > 0
                    THEN true
@@ -627,14 +656,35 @@ export async function GET(request: NextRequest) {
     const chosen = new Map<number, CandidatePlayer>();
     const usedIds = new Set<string>();
 
-    function search(index: number, currentBase: number) {
+    function search(index: number, currentBase: number, currentActiveLinks: number) {
+      const remainingSlots = orderedSlots.length - index;
+      const chosenCount = chosen.size;
       const optimisticBase = currentBase + (remainingMaxBase[index] ?? 0);
-      const optimisticScore = optimisticBase * getLinkMultiplier(
+      const optimisticMaxLinks = Math.min(
         10,
-        Number(relationshipRule.bonus_pct ?? 5)
+        currentActiveLinks +
+          chosenCount * remainingSlots +
+          combinationsOfTwo(remainingSlots)
+      );
+      const optimisticScore = optimisticBase * getLinkMultiplier(
+        optimisticMaxLinks,
+        Number(relationshipRule.bonus_pct ?? 10)
       );
 
       if (best && optimisticScore <= best.final_score) {
+        return;
+      }
+
+      if (
+        !partialLineupCanStillSatisfyPuzzleRules(
+          Array.from(chosen.values()).map((player) => player.primary_position),
+          orderedSlots.length - index,
+          {
+            positionLockEnabled: positionOverlayEnabled,
+            qbExclusionEnabled,
+          }
+        )
+      ) {
         return;
       }
 
@@ -645,27 +695,30 @@ export async function GET(request: NextRequest) {
           player: chosen.get(rule.slot_number)!,
         }));
 
-        let activeLinks = 0;
-        for (let a = 0; a < lineup.length; a += 1) {
-          for (let b = a + 1; b < lineup.length; b += 1) {
-            const pair = pairMap.get(
-              getPairKey(lineup[a].player.player_id, lineup[b].player.player_id)
-            );
-            if (relationshipPasses(relationshipRule.relationship_type, pair)) {
-              activeLinks += 1;
+        if (
+          !lineupSatisfiesPuzzleRules(
+            lineup.map((entry) => entry.player.primary_position),
+            {
+              positionLockEnabled: positionOverlayEnabled,
+              qbExclusionEnabled,
             }
-          }
+          )
+        ) {
+          return;
         }
 
         const finalScore =
           currentBase *
-          getLinkMultiplier(activeLinks, Number(relationshipRule.bonus_pct ?? 5));
+          getLinkMultiplier(
+            currentActiveLinks,
+            Number(relationshipRule.bonus_pct ?? 10)
+          );
 
         if (!best || finalScore > best.final_score) {
           best = {
             lineup,
             base_score: currentBase,
-            active_links: activeLinks,
+            active_links: currentActiveLinks,
             final_score: finalScore,
           };
         }
@@ -676,15 +729,29 @@ export async function GET(request: NextRequest) {
       for (const candidate of slot.candidates) {
         if (usedIds.has(candidate.player_id)) continue;
 
+        let addedLinks = 0;
+        for (const existing of chosen.values()) {
+          const pair = pairMap.get(
+            getPairKey(existing.player_id, candidate.player_id)
+          );
+          if (relationshipPasses(relationshipRule.relationship_type, pair)) {
+            addedLinks += 1;
+          }
+        }
+
         usedIds.add(candidate.player_id);
         chosen.set(slot.slot_number, candidate);
-        search(index + 1, currentBase + Number(candidate.fantasy_points));
+        search(
+          index + 1,
+          currentBase + Number(candidate.fantasy_points),
+          currentActiveLinks + addedLinks
+        );
         chosen.delete(slot.slot_number);
         usedIds.delete(candidate.player_id);
       }
     }
 
-    search(0, 0);
+    search(0, 0, 0);
 
     if (!best) {
       return NextResponse.json(
@@ -713,9 +780,11 @@ export async function GET(request: NextRequest) {
       optimal_active_links: bestResult.active_links,
       optimal_multiplier: getLinkMultiplier(
         bestResult.active_links,
-        Number(relationshipRule.bonus_pct ?? 5)
+        Number(relationshipRule.bonus_pct ?? 10)
       ),
       optimal_final_score: bestResult.final_score,
+      position_overlay_enabled: positionOverlayEnabled,
+      qb_exclusion_enabled: qbExclusionEnabled,
     };
 
     await pool.query(

@@ -2,12 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { pool } from "@/lib/db";
 import { getAcceptedFriendUserIds } from "@/lib/users";
+import { ensureTestingSubmissionTables, requireTestingAdmin } from "@/lib/testing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
+    let testingMode = false;
+    try {
+      testingMode = await requireTestingAdmin(request);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (testingMode) {
+      await ensureTestingSubmissionTables(pool);
+    }
+
     const scope = request.nextUrl.searchParams.get("scope");
     const view = request.nextUrl.searchParams.get("view");
     const requestedDate = request.nextUrl.searchParams.get("date");
@@ -17,6 +29,13 @@ export async function GET(request: NextRequest) {
     );
 
     if (scope === "all-time" || (scope === "friends" && view === "all-time")) {
+      if (testingMode) {
+        return NextResponse.json({
+          leaderboard: [],
+          scope: scope === "friends" ? "friends" : "all-time",
+        });
+      }
+
       let friendUserIds: string[] = [];
 
       if (scope === "friends") {
@@ -91,7 +110,11 @@ export async function GET(request: NextRequest) {
           FROM daily_puzzle
           WHERE puzzle_date = $1
             AND sport = 'nfl'
-            AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
+            ${
+              testingMode
+                ? ""
+                : "AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)"
+            }
           LIMIT 1
           `,
           [requestedDate]
@@ -117,7 +140,7 @@ export async function GET(request: NextRequest) {
             `
             SELECT
               ps.user_id::text AS user_id,
-              ps.submission_id,
+              ${testingMode ? "ps.testing_submission_id" : "ps.submission_id"} AS submission_id,
               ps.display_name,
               ps.base_score,
               ps.active_links,
@@ -127,7 +150,7 @@ export async function GET(request: NextRequest) {
               ps.percent_of_optimal,
               ps.submitted_at,
               COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
-            FROM puzzle_submission ps
+            FROM ${testingMode ? "testing_submission" : "puzzle_submission"} ps
             JOIN app_user au
               ON ps.user_id = au.user_id
             WHERE ps.puzzle_id = $1
@@ -142,8 +165,8 @@ export async function GET(request: NextRequest) {
             `
             SELECT
               ps.user_id::text AS user_id,
-              ps.submission_id,
-              ps.display_name,
+              ${testingMode ? "ps.testing_submission_id" : "ps.submission_id"} AS submission_id,
+              COALESCE(au.username, ps.display_name) AS display_name,
               ps.base_score,
               ps.active_links,
               ps.multiplier,
@@ -152,11 +175,10 @@ export async function GET(request: NextRequest) {
               ps.percent_of_optimal,
               ps.submitted_at,
               COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
-            FROM puzzle_submission ps
-            JOIN app_user au
+            FROM ${testingMode ? "testing_submission" : "puzzle_submission"} ps
+            LEFT JOIN app_user au
               ON ps.user_id = au.user_id
             WHERE ps.puzzle_id = $1
-              AND ps.user_id IS NOT NULL
             ORDER BY ps.final_score DESC, ps.submitted_at ASC
             LIMIT $2
             `,

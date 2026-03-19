@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import {
   getBadgeDefinition,
@@ -19,6 +21,7 @@ import {
   type AvatarColor,
   type AvatarStyle,
 } from "@/lib/avatar";
+import { playerAllowedByPuzzleRules } from "@/lib/puzzle-rules";
 import { getLinkBonusPct, getLinkMultiplier } from "@/lib/scoring";
 
 type PuzzleResponse = {
@@ -32,6 +35,7 @@ type PuzzleResponse = {
     seed_value: string;
     published_flag: boolean;
     position_overlay_enabled?: boolean;
+    qb_exclusion_enabled?: boolean;
   };
   theme: {
     filter_id: string | number;
@@ -70,14 +74,6 @@ type SlotRule = {
   display_text: string;
 };
 
-const POSITION_OVERLAY_BY_SLOT: Record<number, string> = {
-  1: "QB",
-  2: "RB",
-  3: "WR",
-  4: "TE",
-  5: "FLEX",
-};
-
 type PlayerOption = {
   player_id: string;
   player_name: string;
@@ -109,6 +105,8 @@ type PairRelationship = {
   same_draft_class_flag: boolean;
   same_draft_round_flag?: boolean;
   both_undrafted_flag?: boolean;
+  both_non_first_round_pick_flag?: boolean;
+  both_day_3_pick_flag?: boolean;
   both_super_bowl_winner_flag?: boolean;
   both_non_super_bowl_winner_flag?: boolean;
   both_played_packers_flag?: boolean;
@@ -163,7 +161,7 @@ type SubmissionResponse = {
 };
 
 type LeaderboardEntry = {
-  user_id: string;
+  user_id: string | null;
   submission_id: number;
   display_name: string;
   base_score: number;
@@ -317,6 +315,10 @@ function getRelationshipTooltip(relationshipType: string, relationshipLabel: str
       return "A link activates if both players were selected in the same draft round.";
     case "both_undrafted":
       return "A link activates if both players entered the league as undrafted free agents.";
+    case "non_first_round_pick":
+      return "A link activates if both players were drafted after the first round.";
+    case "day_3_pick":
+      return "A link activates if both players were drafted on Day 3, meaning rounds 4 through 7.";
     case "both_super_bowl_winner":
       return "A link activates if both players won at least one Super Bowl in their careers.";
     case "both_non_super_bowl_winner":
@@ -456,7 +458,7 @@ function getNextBadgeGoals(input: {
         badge,
         progressLabel: `${Math.min(currentSubmissionLinks, 10)}/10`,
         progressRatio: Math.min(currentSubmissionLinks / 10, 1),
-        note: "Each active link adds +20%, and a fully connected lineup reaches 3.00x.",
+        note: "Each active link adds +10%, and a fully connected lineup reaches 2.00x.",
       });
     }
   }
@@ -863,13 +865,24 @@ function buildPuzzleUrl(dateValue: string) {
 const CLIENT_TOKEN_STORAGE_KEY = "five-wide-client-token";
 const SUBMITTED_DATES_STORAGE_KEY = "five-wide-submitted-dates";
 
-function getCurrentLocalDateIso() {
-  const now = new Date();
-  const offsetMs = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
+function getCurrentChicagoDateIso() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
-function buildNavigationUrl(dateValue: string, todayIso: string) {
+function buildNavigationUrl(
+  dateValue: string,
+  todayIso: string,
+  isTestingMode = false
+) {
+  if (isTestingMode) {
+    return `/testing?date=${encodeURIComponent(dateValue)}`;
+  }
+
   return dateValue === todayIso ? "/" : buildPuzzleUrl(dateValue);
 }
 
@@ -1536,7 +1549,9 @@ function RecentSubmissionList({
 }
 
 export default function HomePage() {
-  const todayIso = getCurrentLocalDateIso();
+  const pathname = usePathname();
+  const isTestingMode = pathname === "/testing";
+  const todayIso = getCurrentChicagoDateIso();
   const loadRequestRef = useRef(0);
   const relationshipRequestRef = useRef(0);
   const submissionRequestKeyRef = useRef<string | null>(null);
@@ -1550,7 +1565,7 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState(() => {
     if (typeof window === "undefined") return todayIso;
     const normalized = getDateFromLocation(window.location);
-    return normalized && isPlayablePuzzleDate(normalized, todayIso)
+    return normalized && (isTestingMode || isPlayablePuzzleDate(normalized, todayIso))
       ? normalized
       : todayIso;
   });
@@ -1660,7 +1675,13 @@ export default function HomePage() {
   const { data: session, status: sessionStatus, update: updateSession } =
     useSession();
   const signedInUsername = session?.user?.username ?? null;
+  const isAdmin = Boolean(session?.user?.isAdmin);
   const isTrackedAccountUser = Boolean(session?.user?.id && signedInUsername);
+  const withModeParam = useCallback(
+    (url: string) =>
+      isTestingMode ? `${url}${url.includes("?") ? "&" : "?"}testing=1` : url,
+    [isTestingMode]
+  );
   const [submissionViewMode, setSubmissionViewMode] = useState<
     "new" | "existing" | null
   >(null);
@@ -1841,19 +1862,21 @@ export default function HomePage() {
     if (typeof window === "undefined") return;
 
     const urlDate = getDateFromLocation(window.location);
+    const basePath = isTestingMode ? "/testing" : "/";
 
     if (
+      !isTestingMode &&
       (!urlDate || !isPlayablePuzzleDate(urlDate, todayIso)) &&
-      window.location.pathname !== "/"
+      window.location.pathname !== basePath
     ) {
-      window.history.replaceState({}, "", "/");
+      window.history.replaceState({}, "", basePath);
       return;
     }
 
-    if (urlDate === todayIso && window.location.pathname !== "/") {
-      window.history.replaceState({}, "", "/");
+    if (!isTestingMode && urlDate === todayIso && window.location.pathname !== basePath) {
+      window.history.replaceState({}, "", basePath);
     }
-  }, [todayIso]);
+  }, [isTestingMode, todayIso]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1932,13 +1955,13 @@ export default function HomePage() {
   }, [avatarEditorConfig.options.length, avatarEditorConfig.pageSize]);
 
   useEffect(() => {
-    if (isPlayablePuzzleDate(selectedDate, todayIso)) return;
+    if (isTestingMode || isPlayablePuzzleDate(selectedDate, todayIso)) return;
     setSelectedDate(todayIso);
 
     if (typeof window !== "undefined") {
-      window.history.replaceState({}, "", "/");
+      window.history.replaceState({}, "", isTestingMode ? "/testing" : "/");
     }
-  }, [selectedDate, todayIso]);
+  }, [isTestingMode, selectedDate, todayIso]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1957,21 +1980,20 @@ export default function HomePage() {
           submissionParams.set("client_token", browserClientToken);
         }
 
-        const shouldTryLoadSavedSubmission = Boolean(
-          isTrackedAccountUser || browserClientToken
-        );
+        const shouldTryLoadSavedSubmission =
+          !isTestingMode && Boolean(isTrackedAccountUser || browserClientToken);
 
         const [puzzleRes, playersRes, savedSubmissionRes] = await Promise.all([
-          fetch(`/api/puzzle${params}`, {
+          fetch(withModeParam(`/api/puzzle${params}`), {
             cache: "no-store",
             signal: controller.signal,
           }),
-          fetch(`/api/players${params}`, {
+          fetch(withModeParam(`/api/players${params}`), {
             cache: "no-store",
             signal: controller.signal,
           }),
           shouldTryLoadSavedSubmission
-            ? fetch(`/api/submissions?${submissionParams.toString()}`, {
+            ? fetch(withModeParam(`/api/submissions?${submissionParams.toString()}`), {
                 cache: "no-store",
                 signal: controller.signal,
               })
@@ -2009,12 +2031,14 @@ export default function HomePage() {
         setPuzzleData(puzzleJson);
         setPlayersData(playersJson);
         setAccountHasSubmittedForSelectedDate(
-          Boolean(
-            isTrackedAccountUser &&
-              (puzzleJson.viewer_has_submitted || savedSubmissionJson)
-          )
+          isTestingMode
+            ? false
+            : Boolean(
+                isTrackedAccountUser &&
+                  (puzzleJson.viewer_has_submitted || savedSubmissionJson)
+              )
         );
-        if (!isTrackedAccountUser) {
+        if (!isTrackedAccountUser && !isTestingMode) {
           if (savedSubmissionJson) {
             markBrowserSubmittedForDate(selectedDate);
           }
@@ -2073,21 +2097,25 @@ export default function HomePage() {
     signedInUsername,
     isTrackedAccountUser,
     browserClientToken,
+    isTestingMode,
+    withModeParam,
   ]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !selectedDate) return;
-    const nextPath = buildNavigationUrl(selectedDate, todayIso);
-    const currentPath = window.location.pathname;
+    const nextPath = buildNavigationUrl(selectedDate, todayIso, isTestingMode);
+    const currentPath = `${window.location.pathname}${window.location.search}`;
     if (currentPath === nextPath) return;
     window.history.replaceState({}, "", nextPath);
-  }, [selectedDate, todayIso]);
+  }, [isTestingMode, selectedDate, todayIso]);
 
   useEffect(() => {
     const handlePopState = () => {
       const urlDate = getDateFromLocation(window.location);
       const nextDate =
-        urlDate && isPlayablePuzzleDate(urlDate, todayIso) ? urlDate : todayIso;
+        urlDate && (isTestingMode || isPlayablePuzzleDate(urlDate, todayIso))
+          ? urlDate
+          : todayIso;
       if (nextDate !== selectedDate) {
         setSelectedDate(nextDate);
       }
@@ -2095,7 +2123,7 @@ export default function HomePage() {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [selectedDate, todayIso]);
+  }, [isTestingMode, selectedDate, todayIso]);
 
   useEffect(() => {
     if (!selectedDate && puzzleData?.puzzle?.puzzle_date) {
@@ -2123,7 +2151,7 @@ export default function HomePage() {
 
     async function loadRelationships() {
       try {
-        const response = await fetch(`/api/relationships?${params.toString()}`, {
+        const response = await fetch(withModeParam(`/api/relationships?${params.toString()}`), {
           cache: "no-store",
           signal: controller.signal,
         });
@@ -2154,7 +2182,7 @@ export default function HomePage() {
     loadRelationships();
 
     return () => controller.abort();
-  }, [nodes, selectedDate]);
+  }, [nodes, selectedDate, withModeParam]);
 
   const players = playersData?.players ?? [];
 
@@ -2189,7 +2217,7 @@ export default function HomePage() {
     relationshipType,
     relationshipLabel
   );
-  const bonusPct = puzzleData?.relationship_rule?.bonus_pct ?? 5;
+  const bonusPct = puzzleData?.relationship_rule?.bonus_pct ?? 10;
   const formattedPuzzleDate = puzzleData?.puzzle?.puzzle_date
     ? new Date(puzzleData.puzzle.puzzle_date).toLocaleDateString(undefined, {
         month: "short",
@@ -2220,8 +2248,8 @@ export default function HomePage() {
           ? `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Friends`
           : `${formatPuzzleDateLabel(homeRecap.puzzle_date)} Leaderboard`
       : leaderboardScope === "friends"
-          ? `${formatPuzzleDateLabel(activePuzzleDate)} Friends`
-          : `${formatPuzzleDateLabel(activePuzzleDate)} Leaderboard`;
+          ? `${formatPuzzleDateLabel(todayIso)} Friends`
+          : `${formatPuzzleDateLabel(todayIso)} Leaderboard`;
   const showFriendsLeaderboardScope = Boolean(signedInUsername);
   const currentLeaderboardEmptyMessage =
     leaderboardScope === "friends"
@@ -2242,13 +2270,13 @@ export default function HomePage() {
   const dateOptions = availableDates
     .filter(
       (dateValue) =>
-        isPlayablePuzzleDate(dateValue, maxPuzzleDate) &&
+        (isTestingMode || isPlayablePuzzleDate(dateValue, maxPuzzleDate)) &&
         dateValue >= minPuzzleDate
     )
     .sort();
   const renderedDateOptions =
     selectedDate &&
-    isPlayablePuzzleDate(selectedDate, maxPuzzleDate) &&
+    (isTestingMode || isPlayablePuzzleDate(selectedDate, maxPuzzleDate)) &&
     !dateOptions.includes(selectedDate)
       ? [selectedDate, ...dateOptions]
       : dateOptions;
@@ -2279,24 +2307,16 @@ export default function HomePage() {
     return new Map(slotRules.map((rule) => [Number(rule.slot_number), rule]));
   }, [slotRules]);
   const positionOverlayEnabled = Boolean(puzzleData?.puzzle.position_overlay_enabled);
+  const qbExclusionEnabled = Boolean(puzzleData?.puzzle.qb_exclusion_enabled);
   function getPairKey(playerId1: string, playerId2: string) {
     return [String(playerId1), String(playerId2)].sort().join("|");
   }
 
-  function getPositionOverlayLabel(slotNumber: number) {
-    return POSITION_OVERLAY_BY_SLOT[slotNumber] ?? null;
-  }
-
-  function playerMatchesPositionOverlay(player: PlayerOption, slotNumber: number) {
-    if (!positionOverlayEnabled) return true;
-    const overlayValue = getPositionOverlayLabel(slotNumber);
-    if (!overlayValue) return true;
-    const positionValue = String(player.primary_position ?? "").toUpperCase();
-    return (
-      overlayValue === "FLEX"
-        ? ["RB", "WR", "TE"].includes(positionValue)
-        : positionValue === overlayValue
-    );
+  function playerMatchesPuzzleLineupRules(player: PlayerOption) {
+    return playerAllowedByPuzzleRules(player.primary_position, {
+      positionLockEnabled: positionOverlayEnabled,
+      qbExclusionEnabled,
+    });
   }
 
   function getPlayerLabel(player: PlayerOption) {
@@ -2317,13 +2337,11 @@ export default function HomePage() {
   }
 
   function getSlotPlaceholder(rule: SlotRule) {
-    const overlayValue = getPositionOverlayLabel(Number(rule.slot_number));
-    if (
-      positionOverlayEnabled &&
-      overlayValue &&
-      rule.parameter_type !== "position"
-    ) {
-      return `Choose a ${overlayValue} for ${rule.display_text}...`;
+    if (qbExclusionEnabled) {
+      return `Choose a non-QB ${rule.display_text} player...`;
+    }
+    if (positionOverlayEnabled && rule.parameter_type !== "position") {
+      return `Choose a ${rule.display_text} player for the one-of-each lineup...`;
     }
     switch (rule.parameter_type) {
       case "position":
@@ -2804,6 +2822,10 @@ export default function HomePage() {
         return pair.same_draft_round_flag === true;
       case "both_undrafted":
         return pair.both_undrafted_flag === true;
+      case "non_first_round_pick":
+        return pair.both_non_first_round_pick_flag === true;
+      case "day_3_pick":
+        return pair.both_day_3_pick_flag === true;
       case "super_bowl_winner":
         return pair.both_super_bowl_winner_flag === true;
       case "non_super_bowl_winner":
@@ -3057,6 +3079,14 @@ export default function HomePage() {
   const linkBonusPct = getLinkBonusPct(activeLinkCount, bonusPct);
   const multiplier = getLinkMultiplier(activeLinkCount, bonusPct);
   const finalScore = baseFantasyPoints * multiplier;
+  const displayedBaseFantasyPoints = Number(
+    submissionResult?.base_score ?? baseFantasyPoints
+  );
+  const displayedActiveLinkCount = Number(
+    submissionResult?.active_links ?? activeLinkCount
+  );
+  const displayedMultiplier = Number(submissionResult?.multiplier ?? multiplier);
+  const displayedFinalScore = Number(submissionResult?.final_score ?? finalScore);
   const projectedPostSubmitStats = useMemo(() => {
     if (!isTrackedAccountUser || !submitted || submissionViewMode !== "new") {
       return userStats;
@@ -3090,16 +3120,20 @@ export default function HomePage() {
   const ringGlowStrength = 0.22 + liveEnergy * 0.5;
   const shellGlowStrength = 0.12 + liveEnergy * 0.34;
   const pulseDuration = Math.max(1.15, 2.4 - liveEnergy * 1.1);
-  const formattedFinalScore = finalScore.toLocaleString(undefined, {
+  const formattedFinalScore = displayedFinalScore.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  const optimalPercent = optimalLineup?.optimal_final_score
-    ? (finalScore / Number(optimalLineup.optimal_final_score)) * 100
+  const optimalPercent = submissionResult?.percent_of_optimal != null
+    ? Number(submissionResult.percent_of_optimal)
+    : optimalLineup?.optimal_final_score
+      ? (displayedFinalScore / Number(optimalLineup.optimal_final_score)) * 100
     : null;
-  const isLockedForSelectedDate = isTrackedAccountUser
-    ? accountHasSubmittedForSelectedDate
-    : hasSubmittedForSelectedDate;
+  const isLockedForSelectedDate = isTestingMode
+    ? false
+    : isTrackedAccountUser
+      ? accountHasSubmittedForSelectedDate
+      : hasSubmittedForSelectedDate;
   const isBoardLocked = submitted || isLockedForSelectedDate;
   const canSubmit =
     allFilled &&
@@ -3143,7 +3177,7 @@ export default function HomePage() {
         const params = selectedDate
           ? `?date=${encodeURIComponent(selectedDate)}`
           : "";
-        const response = await fetch(`/api/optimal-lineup${params}`, {
+        const response = await fetch(withModeParam(`/api/optimal-lineup${params}`), {
           cache: "no-store",
           signal: controller.signal,
         });
@@ -3169,7 +3203,7 @@ export default function HomePage() {
 
     loadOptimalLineup();
     return () => controller.abort();
-  }, [submitted, selectedDate]);
+  }, [submitted, selectedDate, withModeParam]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -3266,20 +3300,23 @@ export default function HomePage() {
 
     const controller = new AbortController();
     const optimalResult = optimalLineup;
+    const submissionDate = selectedDate;
     const submissionRequestKey =
       submissionViewMode === "new"
         ? JSON.stringify({
-            date: activePuzzleDate,
+            date: submissionDate,
             lineup: nodes.map((node) => ({
               slot_number: node.node_id,
               player_id: String(node.player_id),
             })),
           })
-        : `existing:${activePuzzleDate}`;
+        : `existing:${submissionDate}`;
 
     async function loadLeaderboardForSubmission() {
       const leaderboardResponse = await fetch(
-        `/api/leaderboard?date=${encodeURIComponent(activePuzzleDate)}&limit=10`,
+        withModeParam(
+          `/api/leaderboard?date=${encodeURIComponent(submissionDate)}&limit=10`
+        ),
         {
           cache: "no-store",
           signal: controller.signal,
@@ -3317,7 +3354,7 @@ export default function HomePage() {
           throw new Error("Unable to verify this browser for submission.");
         }
 
-        const saveResponse = await fetch("/api/submissions", {
+        const saveResponse = await fetch(withModeParam("/api/submissions"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -3341,7 +3378,7 @@ export default function HomePage() {
               ? body.error
               : "Failed to save submission";
 
-          if (saveResponse.status === 409) {
+          if (!isTestingMode && saveResponse.status === 409) {
             if (isTrackedAccountUser) {
               setAccountHasSubmittedForSelectedDate(true);
             } else {
@@ -3356,11 +3393,13 @@ export default function HomePage() {
         const saved: SubmissionResponse = await saveResponse.json();
         if (controller.signal.aborted) return;
         setSubmissionResult(saved);
-        if (isTrackedAccountUser) {
-          setAccountHasSubmittedForSelectedDate(true);
-        } else {
-          markBrowserSubmittedForDate(selectedDate);
-          setHasSubmittedForSelectedDate(true);
+        if (!isTestingMode) {
+          if (isTrackedAccountUser) {
+            setAccountHasSubmittedForSelectedDate(true);
+          } else {
+            markBrowserSubmittedForDate(selectedDate);
+            setHasSubmittedForSelectedDate(true);
+          }
         }
         if (session?.user?.id) {
           await updateSession();
@@ -3386,13 +3425,15 @@ export default function HomePage() {
   }, [
     submitted,
     optimalLineup,
-    activePuzzleDate,
+    selectedDate,
     nodes,
     browserClientToken,
     isTrackedAccountUser,
+    isTestingMode,
     submissionViewMode,
     session?.user?.id,
     updateSession,
+    withModeParam,
   ]);
 
   useEffect(() => {
@@ -3407,9 +3448,11 @@ export default function HomePage() {
         setAllTimeLeaderboardError(null);
 
         const leaderboardResponse = await fetch(
-          leaderboardScope === "friends"
-            ? `/api/leaderboard?scope=friends&view=all-time&limit=25`
-            : `/api/leaderboard?scope=all-time&limit=25`,
+          withModeParam(
+            leaderboardScope === "friends"
+              ? `/api/leaderboard?scope=friends&view=all-time&limit=25`
+              : `/api/leaderboard?scope=all-time&limit=25`
+          ),
           {
             cache: "no-store",
             signal: controller.signal,
@@ -3438,7 +3481,14 @@ export default function HomePage() {
 
     void loadAllTimeLeaderboard();
     return () => controller.abort();
-  }, [leaderboardOpen, leaderboardScope, leaderboardView, signedInUsername]);
+  }, [
+    isTestingMode,
+    leaderboardOpen,
+    leaderboardScope,
+    leaderboardView,
+    signedInUsername,
+    withModeParam,
+  ]);
 
   useEffect(() => {
     if (!leaderboardOpen || leaderboardView !== "today") return;
@@ -3452,9 +3502,11 @@ export default function HomePage() {
         setLeaderboardError(null);
 
         const response = await fetch(
-          `/api/leaderboard?${
-            leaderboardScope === "friends" ? "scope=friends&" : ""
-          }date=${encodeURIComponent(activePuzzleDate)}&limit=25`,
+          withModeParam(
+            `/api/leaderboard?${
+              leaderboardScope === "friends" ? "scope=friends&" : ""
+            }date=${encodeURIComponent(todayIso)}&limit=25`
+          ),
           {
             cache: "no-store",
             signal: controller.signal,
@@ -3483,7 +3535,15 @@ export default function HomePage() {
 
     void loadLeaderboardForScope();
     return () => controller.abort();
-  }, [activePuzzleDate, leaderboardOpen, leaderboardScope, leaderboardView, signedInUsername]);
+  }, [
+    isTestingMode,
+    leaderboardOpen,
+    leaderboardScope,
+    leaderboardView,
+    signedInUsername,
+    todayIso,
+    withModeParam,
+  ]);
 
   useEffect(() => {
     if (!signedInUsername && leaderboardScope === "friends") {
@@ -3510,7 +3570,7 @@ export default function HomePage() {
         params.set("client_token", browserClientToken);
       }
 
-      const response = await fetch(`/api/submissions?${params.toString()}`, {
+      const response = await fetch(withModeParam(`/api/submissions?${params.toString()}`), {
         cache: "no-store",
       });
 
@@ -3625,7 +3685,11 @@ export default function HomePage() {
     }
   }
 
-  async function openPublicProfile(userId: string) {
+  async function openPublicProfile(userId: string | null) {
+    if (!userId) {
+      return;
+    }
+
     try {
       setPublicProfileOpen(true);
       setPublicProfileLoading(true);
@@ -3872,7 +3936,7 @@ export default function HomePage() {
 
       return (
         playerMatchesSlotRule(candidate, slotRule) &&
-        playerMatchesPositionOverlay(candidate, nodeId) &&
+        playerMatchesPuzzleLineupRules(candidate) &&
         !nodes.some(
           (selectedNode) =>
             selectedNode.node_id !== nodeId &&
@@ -3903,13 +3967,8 @@ export default function HomePage() {
                 ? "border-amber-200 bg-[linear-gradient(90deg,#facc15_0%,#f59e0b_52%,#fde68a_100%)]"
                 : "border-sky-200 bg-[linear-gradient(90deg,#38bdf8_0%,#818cf8_48%,#7dd3fc_100%)]"
             }`}
-          >
-            {renderSlotRuleTitle(slotRule)}
-            {positionOverlayEnabled && slotRule.parameter_type !== "position" ? (
-              <p className="mt-1 inline-flex rounded-full border border-white/75 bg-white/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_2px_4px_rgba(15,23,42,0.18)] sm:text-[8px]">
-                {getPositionOverlayLabel(nodeId)}
-              </p>
-            ) : null}
+            >
+              {renderSlotRuleTitle(slotRule)}
           </div>
 
           <div className="p-4">
@@ -4082,7 +4141,7 @@ export default function HomePage() {
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               className="absolute right-5 top-5 z-20 hidden h-11 w-11 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28 md:inline-flex"
-              aria-label={`Open leaderboard for ${formatPuzzleDateLabel(activePuzzleDate)}`}
+              aria-label={`Open leaderboard for ${formatPuzzleDateLabel(todayIso)}`}
             >
               <svg
                 aria-hidden="true"
@@ -4159,7 +4218,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => setLeaderboardOpen(true)}
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full border-[2px] border-white/65 bg-white/20 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] backdrop-blur-sm transition hover:scale-105 hover:bg-white/28"
-                    aria-label={`Open leaderboard for ${formatPuzzleDateLabel(activePuzzleDate)}`}
+                    aria-label={`Open leaderboard for ${formatPuzzleDateLabel(todayIso)}`}
                   >
                     <svg
                       aria-hidden="true"
@@ -4222,7 +4281,7 @@ export default function HomePage() {
                   Base Fantasy Points
                 </p>
                 <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {baseFantasyPoints.toLocaleString(undefined, {
+                  {displayedBaseFantasyPoints.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -4234,7 +4293,7 @@ export default function HomePage() {
                   Active Links
                 </p>
                 <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {activeLinkCount}
+                  {displayedActiveLinkCount}
                 </p>
               </div>
 
@@ -4243,7 +4302,7 @@ export default function HomePage() {
                   Multiplier
                 </p>
                 <p className="mt-2 text-2xl font-extrabold text-emerald-900">
-                  {multiplier.toFixed(2)}x
+                  {displayedMultiplier.toFixed(2)}x
                 </p>
               </div>
             </div>
@@ -4313,7 +4372,7 @@ export default function HomePage() {
                       Base
                     </p>
                     <p className="mt-1 text-lg font-black text-slate-900">
-                      {baseFantasyPoints.toLocaleString(undefined, {
+                      {displayedBaseFantasyPoints.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -4324,7 +4383,7 @@ export default function HomePage() {
                       Active Links
                     </p>
                     <p className="mt-1 text-lg font-black text-slate-900">
-                      {activeLinkCount}
+                      {displayedActiveLinkCount}
                     </p>
                   </div>
                   <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
@@ -4332,7 +4391,7 @@ export default function HomePage() {
                       Multiplier
                     </p>
                     <p className="mt-1 text-lg font-black text-slate-900">
-                      {multiplier.toFixed(2)}x
+                      {displayedMultiplier.toFixed(2)}x
                     </p>
                   </div>
                   <div className="rounded-[18px] border-[3px] border-sky-200 bg-sky-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(125,211,252,0.12)]">
@@ -4340,7 +4399,7 @@ export default function HomePage() {
                       Total
                     </p>
                     <p className="mt-1 text-lg font-black text-sky-900">
-                      {Number(finalScore).toLocaleString(undefined, {
+                      {displayedFinalScore.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -4734,6 +4793,25 @@ export default function HomePage() {
                     {puzzleData.theme?.display_name ?? "Daily Time Period"}
                   </span>
                 </div>
+                <div className="inline-flex min-w-0 flex-col items-center justify-center gap-1 rounded-[18px] border-[2px] border-slate-200 bg-white/92 px-2 py-1.5 text-center shadow-[0_6px_16px_rgba(148,163,184,0.12)]">
+                  <span className="rounded-full bg-slate-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-slate-600">
+                    Players
+                  </span>
+                  <span className="min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-slate-700">
+                    {players.length} Available
+                  </span>
+                </div>
+                {qbExclusionEnabled ? (
+                  <div className="inline-flex min-w-0 items-center justify-center gap-1 rounded-[18px] border-[2px] border-rose-300 bg-[linear-gradient(180deg,#fff1f2_0%,#ffe4e6_100%)] px-2 py-1.5 text-center shadow-[0_6px_16px_rgba(244,63,94,0.14)]">
+                    <span className="rounded-full bg-rose-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-rose-700">
+                      Filter
+                    </span>
+                    <span className="relative min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-rose-800">
+                      No QBs
+                      <span className="absolute left-0 top-1/2 h-[1.5px] w-full -translate-y-1/2 rotate-[-12deg] bg-rose-700" />
+                    </span>
+                  </div>
+                ) : null}
               </div>
 
               <div className="absolute inset-x-4 top-4 z-40 hidden items-start justify-between gap-3 sm:flex">
@@ -4791,6 +4869,17 @@ export default function HomePage() {
                       {players.length} Available
                     </span>
                   </div>
+                  {qbExclusionEnabled ? (
+                    <div className="inline-flex min-w-0 items-center justify-center gap-1.5 self-end rounded-full border-[2px] border-rose-300 bg-[linear-gradient(180deg,#fff1f2_0%,#ffe4e6_100%)] px-2 py-1 text-center shadow-[0_6px_16px_rgba(244,63,94,0.14)] sm:gap-2 sm:px-4 sm:py-1.5">
+                      <span className="rounded-full bg-rose-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-rose-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
+                        Filter
+                      </span>
+                      <span className="relative min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-rose-800 sm:text-[10px] sm:tracking-[0.06em]">
+                        No QBs
+                        <span className="absolute left-0 top-1/2 h-[1.5px] w-full -translate-y-1/2 rotate-[-12deg] bg-rose-700" />
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -5013,9 +5102,7 @@ export default function HomePage() {
                               isFullyConnected ? "text-emerald-700" : "text-sky-700"
                             }`}
                           >
-                            {isFullyConnected
-                              ? `${multiplier.toFixed(2)}x multiplier`
-                              : `+${linkBonusPct.toFixed(1)}% total bonus`}
+                            {`${multiplier.toFixed(2)}x multiplier`}
                           </p>
 
                           <div
@@ -5542,7 +5629,7 @@ export default function HomePage() {
                           <button
                             type="button"
                             onClick={() => setFriendTab("friends")}
-                            className={`rounded-[14px] px-2 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                            className={`inline-flex min-w-0 items-center justify-center rounded-[14px] px-1.5 py-2 text-center text-[9px] font-black uppercase leading-tight tracking-[0.04em] whitespace-normal break-words transition sm:px-2 sm:text-[10px] sm:tracking-[0.08em] ${
                               friendTab === "friends"
                                 ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_6px_14px_rgba(125,211,252,0.18)]"
                                 : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/80"
@@ -5553,7 +5640,7 @@ export default function HomePage() {
                           <button
                             type="button"
                             onClick={() => setFriendTab("pending")}
-                            className={`rounded-[14px] px-2 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                            className={`inline-flex min-w-0 items-center justify-center rounded-[14px] px-1.5 py-2 text-center text-[9px] font-black uppercase leading-tight tracking-[0.04em] whitespace-normal break-words transition sm:px-2 sm:text-[10px] sm:tracking-[0.08em] ${
                               friendTab === "pending"
                                 ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_6px_14px_rgba(125,211,252,0.18)]"
                                 : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/80"
@@ -5564,7 +5651,7 @@ export default function HomePage() {
                           <button
                             type="button"
                             onClick={() => setFriendTab("requests")}
-                            className={`rounded-[14px] px-2 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition ${
+                            className={`inline-flex min-w-0 items-center justify-center rounded-[14px] px-1.5 py-2 text-center text-[9px] font-black uppercase leading-tight tracking-[0.04em] whitespace-normal break-words transition sm:px-2 sm:text-[10px] sm:tracking-[0.08em] ${
                               friendTab === "requests"
                                 ? "border-[3px] border-sky-300 bg-white text-sky-700 shadow-[0_6px_14px_rgba(125,211,252,0.18)]"
                                 : "border-[3px] border-transparent bg-transparent text-slate-500 hover:bg-white/80"
@@ -6516,7 +6603,7 @@ export default function HomePage() {
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Multiplier:</span>{" "}
-                  The multiplier is based on your active links. Each active link adds a clean <span className="font-semibold text-sky-900">+20%</span> to your base score, so a fully connected 10-link lineup reaches <span className="font-semibold text-sky-900">3.00x</span>.
+                  The multiplier is based on your active links. Each active link adds a clean <span className="font-semibold text-sky-900">+10%</span> to your base score, so a fully connected 10-link lineup reaches <span className="font-semibold text-sky-900">2.00x</span>.
                 </p>
                 <p>
                   Example: with the current curve, {activeLinkCount} active links gives you a{" "}
@@ -6526,6 +6613,13 @@ export default function HomePage() {
                 <p>
                   <span className="font-bold text-sky-900">Available Players:</span>{" "}
                   {players.length} players match today&apos;s overall theme and can appear across the five slot filters.
+                </p>
+                <p>
+                  <span className="font-bold text-sky-900">Behind the Scenes:</span>{" "}
+                  Even a single puzzle can sit inside a massive search space, so the
+                  optimizer does not brute force every possible puzzle shape. It uses
+                  pruning, staged search, and memory of dead combinations to skip
+                  impossible setups and focus on viable ones faster.
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Submission Rules:</span>{" "}
@@ -6660,6 +6754,42 @@ export default function HomePage() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+        {isAdmin && (
+          <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-4 z-[120]">
+            <div className="flex items-center gap-1 rounded-full border-[2px] border-sky-100 bg-white/95 p-1 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
+              <Link
+                href="/"
+                className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] ${
+                  pathname === "/"
+                    ? "bg-sky-300 text-slate-950"
+                    : "text-sky-700"
+                }`}
+              >
+                Production
+              </Link>
+              <Link
+                href="/dev"
+                className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] ${
+                  pathname === "/dev"
+                    ? "bg-sky-300 text-slate-950"
+                    : "text-sky-700"
+                }`}
+              >
+                Dev
+              </Link>
+              <Link
+                href="/testing"
+                className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] ${
+                  pathname === "/testing"
+                    ? "bg-sky-300 text-slate-950"
+                    : "text-sky-700"
+                }`}
+              >
+                Testing
+              </Link>
+            </div>
           </div>
         )}
       </div>

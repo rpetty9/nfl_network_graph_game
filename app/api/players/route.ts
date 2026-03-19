@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { requireTestingAdmin } from "@/lib/testing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
+    let testingMode = false;
+    try {
+      testingMode = await requireTestingAdmin(request);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const requestedDate = request.nextUrl.searchParams.get("date");
     const puzzleResult = requestedDate
       ? await pool.query(
@@ -14,7 +22,11 @@ export async function GET(request: NextRequest) {
           FROM daily_puzzle
           WHERE puzzle_date = $1
             AND sport = 'nfl'
-            AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
+            ${
+              testingMode
+                ? ""
+                : "AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)"
+            }
           LIMIT 1
           `,
           [requestedDate]

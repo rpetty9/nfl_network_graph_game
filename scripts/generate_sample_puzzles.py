@@ -48,6 +48,8 @@ LINKS = [
     "same_draft_class",
     "same_draft_round",
     "both_undrafted",
+    "non_first_round_pick",
+    "day_3_pick",
     "same_position",
 ]
 

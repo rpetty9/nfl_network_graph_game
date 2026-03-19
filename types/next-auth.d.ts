@@ -26,6 +26,7 @@ declare module "next-auth" {
         friend_daily_wins: number;
       };
       needsUsername: boolean;
+      isAdmin: boolean;
     };
   }
 }
@@ -51,5 +52,6 @@ declare module "next-auth/jwt" {
       friend_daily_wins: number;
     };
     needsUsername?: boolean;
+    isAdmin?: boolean;
   }
 }

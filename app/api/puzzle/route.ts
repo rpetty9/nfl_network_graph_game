@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { pool } from "@/lib/db";
+import { requireTestingAdmin } from "@/lib/testing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -26,6 +27,13 @@ function formatDateValue(value: unknown): string | null {
 
 export async function GET(request: NextRequest) {
   try {
+    let testingMode = false;
+    try {
+      testingMode = await requireTestingAdmin(request);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const session = await auth();
     const registeredUserId =
       session?.user?.id && /^\d+$/.test(session.user.id) ? session.user.id : null;
@@ -37,7 +45,11 @@ export async function GET(request: NextRequest) {
           FROM daily_puzzle
           WHERE puzzle_date = $1
             AND sport = 'nfl'
-            AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
+            ${
+              testingMode
+                ? ""
+                : "AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)"
+            }
           LIMIT 1
           `,
           [requestedDate]
@@ -130,8 +142,9 @@ export async function GET(request: NextRequest) {
     const eligibilityFilter = eligibilityResult.rows[0] ?? null;
     const multiplier = multiplierResult.rows[0] ?? null;
     const relationshipRule = relationshipRuleResult.rows[0] ?? null;
-    const viewerHasSubmittedResult = registeredUserId
-      ? await pool.query<{ has_submitted: boolean }>(
+    const viewerHasSubmittedResult =
+      registeredUserId && !testingMode
+        ? await pool.query<{ has_submitted: boolean }>(
           `
           SELECT EXISTS (
             SELECT 1
@@ -142,12 +155,16 @@ export async function GET(request: NextRequest) {
           `,
           [puzzle.puzzle_id, Number(registeredUserId)]
         )
-      : null;
+        : null;
     const availableDatesResult = await pool.query(`
       SELECT puzzle_date
       FROM daily_puzzle
       WHERE sport = 'nfl'
-        AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)
+        ${
+          testingMode
+            ? ""
+            : "AND puzzle_date <= ((NOW() AT TIME ZONE 'America/Chicago')::date)"
+        }
       ORDER BY puzzle_date DESC
     `);
 
@@ -235,6 +252,7 @@ export async function GET(request: NextRequest) {
         puzzle_date:
           formatDateValue(puzzle.puzzle_date) ?? String(puzzle.puzzle_date),
         position_overlay_enabled: Boolean(puzzle.position_overlay_enabled),
+        qb_exclusion_enabled: Boolean(puzzle.qb_exclusion_enabled),
       },
       theme,
       eligibility_filter: eligibilityFilter,
