@@ -246,6 +246,17 @@ type CachedOptimalLineupEntry = {
   previous_optimal_usage_count?: number | string | null;
 };
 
+type BestLineupResult = {
+  lineup: Array<{
+    slot_number: number;
+    slot_rule: SlotRule;
+    player: CandidatePlayer;
+  }>;
+  base_score: number;
+  active_links: number;
+  final_score: number;
+};
+
 type TrackerDayEntry = {
   puzzle_date: string;
   title: string;
@@ -1624,7 +1635,7 @@ export async function getDevPuzzleDetail(
               ? Number(payload.optimal_final_score)
               : null,
           optimal_lineup: Array.isArray(payload?.optimal_lineup)
-            ? payload.optimal_lineup.map((entry) => {
+            ? payload.optimal_lineup.map((entry: unknown) => {
                 const lineupEntry = entry as CachedOptimalLineupEntry;
                 return {
                   slot_number: Number(lineupEntry?.slot_number ?? 0),
@@ -3132,18 +3143,7 @@ export async function computePreviewPayload(
     remainingMaxBase[index] = slotMax + (remainingMaxBase[index + 1] ?? 0);
   }
 
-  let best:
-    | {
-        lineup: Array<{
-          slot_number: number;
-          slot_rule: SlotRule;
-          player: CandidatePlayer;
-        }>;
-        base_score: number;
-        active_links: number;
-        final_score: number;
-      }
-    | null = null;
+  let best: BestLineupResult | null = null;
 
   const chosen = new Map<number, CandidatePlayer>();
   const usedIds = new Set<string>();
@@ -3253,13 +3253,14 @@ export async function computePreviewPayload(
   if (!best) {
     throw new Error("Failed to compute optimal lineup.");
   }
+  const resolvedBest: BestLineupResult = best;
 
   const previousUsage = await loadPreviousUsageCounts(
     db,
-    best.lineup.map((entry) => String(entry.player.player_id))
+    resolvedBest.lineup.map((entry) => String(entry.player.player_id))
   );
 
-  const optimalLineupWithUsage = best.lineup.map((entry) => ({
+  const optimalLineupWithUsage = resolvedBest.lineup.map((entry) => ({
     ...entry,
     previous_optimal_usage_count:
       previousUsage.get(String(entry.player.player_id)) ?? 0,
@@ -3272,13 +3273,13 @@ export async function computePreviewPayload(
         relationship_rule: relationshipRule,
         candidate_pool_summary: [],
         optimal_lineup: optimalLineupWithUsage,
-        optimal_base_score: best.base_score,
-        optimal_active_links: best.active_links,
+        optimal_base_score: resolvedBest.base_score,
+        optimal_active_links: resolvedBest.active_links,
         optimal_multiplier: getLinkMultiplier(
-          best.active_links,
+          resolvedBest.active_links,
           Number(relationshipRule.bonus_pct ?? 10)
         ),
-        optimal_final_score: best.final_score,
+        optimal_final_score: resolvedBest.final_score,
         position_overlay_enabled: config.positionOverlayEnabled,
         qb_exclusion_enabled: config.qbExclusionEnabled,
       },
@@ -3307,13 +3308,13 @@ export async function computePreviewPayload(
       candidate_count: slot.candidates.length,
     })),
     optimal_lineup: optimalLineupWithUsage,
-    optimal_base_score: best.base_score,
-    optimal_active_links: best.active_links,
+    optimal_base_score: resolvedBest.base_score,
+    optimal_active_links: resolvedBest.active_links,
     optimal_multiplier: getLinkMultiplier(
-      best.active_links,
+      resolvedBest.active_links,
       Number(relationshipRule.bonus_pct ?? 10)
     ),
-    optimal_final_score: best.final_score,
+    optimal_final_score: resolvedBest.final_score,
     position_overlay_enabled: config.positionOverlayEnabled,
     qb_exclusion_enabled: config.qbExclusionEnabled,
   };
