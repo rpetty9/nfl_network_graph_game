@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 
 type RelationshipOption = {
@@ -560,6 +560,9 @@ export default function DevPuzzlePage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStatsResponse | null>(null);
   const [dashboardStatsLoading, setDashboardStatsLoading] = useState(false);
   const [dashboardStatsError, setDashboardStatsError] = useState<string | null>(null);
+  const [finalizeYesterdayLoading, setFinalizeYesterdayLoading] = useState(false);
+  const [finalizeYesterdayMessage, setFinalizeYesterdayMessage] = useState<string | null>(null);
+  const [finalizeYesterdayError, setFinalizeYesterdayError] = useState<string | null>(null);
   const [statsTrendDays, setStatsTrendDays] = useState<number>(14);
   const [approvalQueue, setApprovalQueue] = useState<ApprovalQueueResponse | null>(null);
   const [approvalQueueLoading, setApprovalQueueLoading] = useState(false);
@@ -856,6 +859,20 @@ export default function DevPuzzlePage() {
     };
   }, [devTab, isAdmin]);
 
+  const refreshDashboardStats = useCallback(
+    async (requestedDays = statsTrendDays) => {
+      const response = await fetch(`/api/admin/dev-puzzle/stats?days=${requestedDays}`, {
+        cache: "no-store",
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error ?? "Failed to load dashboard stats.");
+      }
+      setDashboardStats(json as DashboardStatsResponse);
+    },
+    [statsTrendDays]
+  );
+
   useEffect(() => {
     if (!isAdmin || devTab !== "stats") return;
     let cancelled = false;
@@ -864,15 +881,8 @@ export default function DevPuzzlePage() {
       try {
         setDashboardStatsLoading(true);
         setDashboardStatsError(null);
-        const response = await fetch(`/api/admin/dev-puzzle/stats?days=${statsTrendDays}`, {
-          cache: "no-store",
-        });
-        const json = await response.json();
-        if (!response.ok) {
-          throw new Error(json?.error ?? "Failed to load dashboard stats.");
-        }
         if (!cancelled) {
-          setDashboardStats(json as DashboardStatsResponse);
+          await refreshDashboardStats(statsTrendDays);
         }
       } catch (error) {
         if (!cancelled) {
@@ -889,7 +899,41 @@ export default function DevPuzzlePage() {
     return () => {
       cancelled = true;
     };
-  }, [devTab, isAdmin, statsTrendDays]);
+  }, [devTab, isAdmin, refreshDashboardStats, statsTrendDays]);
+
+  async function finalizeYesterdayLeaderboard() {
+    try {
+      setFinalizeYesterdayLoading(true);
+      setFinalizeYesterdayMessage(null);
+      setFinalizeYesterdayError(null);
+      const response = await fetch("/api/admin/finalize-yesterday", {
+        method: "POST",
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error ?? "Failed to finalize yesterday's leaderboard.");
+      }
+      setFinalizeYesterdayMessage(
+        json?.message ??
+          `Finalized yesterday's leaderboard for ${json?.target_date ?? "the previous day"}.`
+      );
+      await Promise.all([refreshDashboardStats(), appendOptimizerLog(
+        "run",
+        "Finalize Yesterday",
+        `Manual leaderboard finalize ran for ${json?.target_date ?? "yesterday"}.`,
+        {
+          target_date: json?.target_date ?? null,
+          placements_recorded: json?.placements_recorded ?? 0,
+          top_10_badges_awarded: json?.top_10_badges_awarded ?? 0,
+          top_10_x5_badges_awarded: json?.top_10_x5_badges_awarded ?? 0,
+        }
+      )]);
+    } catch (error) {
+      setFinalizeYesterdayError((error as Error).message);
+    } finally {
+      setFinalizeYesterdayLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!isAdmin || (devTab !== "optimizer" && devTab !== "approvals")) return;
@@ -2245,6 +2289,46 @@ export default function DevPuzzlePage() {
                   <p className="mt-2 text-sm text-slate-300">
                     Total top-10 finish records awarded so far.
                   </p>
+                </div>
+                <div className="lg:col-span-2 xl:col-span-4 rounded-[24px] border border-amber-300/20 bg-amber-400/10 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.32)] backdrop-blur-xl">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="max-w-3xl">
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-amber-200">
+                        Finalize Yesterday
+                      </p>
+                      <h3 className="mt-2 text-2xl font-black text-white">
+                        Manual failsafe for the overnight top-10 finalize
+                      </h3>
+                      <p className="mt-3 text-sm leading-6 text-slate-200">
+                        The app should automatically finalize the previous day at
+                        12:01 AM Chicago time. This button is only a backup if the
+                        nightly run is missed, so yesterday&apos;s top 10, badge awards,
+                        and all-time finish counts can be populated manually.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void finalizeYesterdayLeaderboard()}
+                      disabled={finalizeYesterdayLoading}
+                      className={`rounded-full px-5 py-3 text-sm font-black uppercase tracking-[0.14em] transition ${
+                        finalizeYesterdayLoading
+                          ? "cursor-wait bg-slate-700 text-slate-300"
+                          : "bg-amber-300 text-slate-950 hover:bg-amber-200"
+                      }`}
+                    >
+                      {finalizeYesterdayLoading ? "Finalizing..." : "Finalize Yesterday"}
+                    </button>
+                  </div>
+                  {finalizeYesterdayMessage ? (
+                    <div className="mt-4 rounded-[18px] border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
+                      {finalizeYesterdayMessage}
+                    </div>
+                  ) : null}
+                  {finalizeYesterdayError ? (
+                    <div className="mt-4 rounded-[18px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                      {finalizeYesterdayError}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="lg:col-span-2 xl:col-span-4 rounded-[24px] border border-white/10 bg-white/5 p-3 shadow-[0_24px_80px_rgba(2,6,23,0.32)] backdrop-blur-xl">
                   <div className="flex flex-wrap items-center justify-center gap-2">
