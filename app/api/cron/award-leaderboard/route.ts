@@ -90,6 +90,7 @@ async function loadAutomaticTargets(clientDate: string) {
         FROM puzzle_submission ps
         WHERE ps.puzzle_id = dp.puzzle_id
           AND ps.user_id IS NOT NULL
+          AND (ps.submitted_at AT TIME ZONE 'America/Chicago')::date = dp.puzzle_date
       )
       AND NOT EXISTS (
         SELECT 1
@@ -127,13 +128,16 @@ async function awardPuzzle(puzzleId: number) {
     `
     WITH ranked AS (
       SELECT
-        user_id,
+        ps.user_id,
         RANK() OVER (
-          ORDER BY final_score DESC, submitted_at ASC
+          ORDER BY ps.final_score DESC, ps.submitted_at ASC
         ) AS placement
-      FROM puzzle_submission
-      WHERE puzzle_id = $1
-        AND user_id IS NOT NULL
+      FROM puzzle_submission ps
+      JOIN daily_puzzle dp
+        ON dp.puzzle_id = ps.puzzle_id
+      WHERE ps.puzzle_id = $1
+        AND ps.user_id IS NOT NULL
+        AND (ps.submitted_at AT TIME ZONE 'America/Chicago')::date = dp.puzzle_date
     )
     SELECT user_id::text, placement
     FROM ranked

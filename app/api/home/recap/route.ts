@@ -72,6 +72,7 @@ export async function GET() {
                 ON au.user_id = ps.user_id
               WHERE dp.puzzle_date = $1
                 AND ps.user_id IS NOT NULL
+                AND (ps.submitted_at AT TIME ZONE 'America/Chicago')::date = dp.puzzle_date
               ORDER BY ps.final_score DESC, ps.submitted_at ASC
               LIMIT 10
               `,
