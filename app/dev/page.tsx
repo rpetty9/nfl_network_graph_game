@@ -1009,6 +1009,7 @@ export default function DevPuzzlePage() {
 
   useEffect(() => {
     if (!isAdmin || devTab !== "confirmed" || !selectedPuzzleId) return;
+    const puzzleId = selectedPuzzleId;
     let cancelled = false;
 
     async function loadPuzzleDetail() {
@@ -1016,7 +1017,7 @@ export default function DevPuzzlePage() {
         setPuzzleDetailLoading(true);
         setPuzzleDetailError(null);
         const response = await fetch(
-          `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(selectedPuzzleId)}`,
+          `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(puzzleId)}`,
           { cache: "no-store" }
         );
         const json = await response.json();
