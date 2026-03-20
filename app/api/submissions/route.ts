@@ -769,7 +769,10 @@ export async function POST(request: NextRequest) {
       percent_of_optimal
     )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING ${testingMode ? "testing_submission_id" : "submission_id"} AS submission_id, display_name
+      RETURNING
+        ${testingMode ? "testing_submission_id" : "submission_id"} AS submission_id,
+        display_name,
+        submitted_at
       `,
       [
         puzzle.puzzle_id,
@@ -821,8 +824,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       submission_id: submission.submission_id,
       display_name: submission.display_name,
+      base_score: baseScore,
+      active_links: activeLinks,
+      multiplier,
       final_score: finalScore,
+      optimal_final_score: optimalFinalScore,
       percent_of_optimal: percentOfOptimal,
+      submitted_at: submission.submitted_at,
       awarded_badges: awardedBadges,
     });
   } catch (error) {

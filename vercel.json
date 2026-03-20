@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/award-leaderboard",
       "schedule": "1 6 * * *"
-    },
-    {
-      "path": "/api/cron/dev-puzzle-queue",
-      "schedule": "*/10 * * * *"
     }
   ]
 }

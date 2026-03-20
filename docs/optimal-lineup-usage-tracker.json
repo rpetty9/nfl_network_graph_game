@@ -1,5 +1,5 @@
 {
-  "updated_through": "2026-04-27",
+  "updated_through": "2026-04-28",
   "days": [
     {
       "puzzle_date": "2026-03-15",
@@ -1892,6 +1892,49 @@
           "primary_position": "WR"
         }
       ]
+    },
+    {
+      "puzzle_date": "2026-04-28",
+      "title": "2006-2010 Seasons Same Draft Round",
+      "theme": "2006-2010 Seasons",
+      "link": "same_draft_round",
+      "optimal_players": [
+        {
+          "slot_number": 1,
+          "slot_rule": "Any",
+          "player_name": "Maurice Jones-Drew",
+          "player_id": "3518",
+          "primary_position": "RB"
+        },
+        {
+          "slot_number": 2,
+          "slot_rule": "AFC North",
+          "player_name": "Chad Johnson",
+          "player_id": "1823",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 3,
+          "slot_rule": "Notre Dame",
+          "player_name": "Anthony Fasano",
+          "player_id": "3515",
+          "primary_position": "TE"
+        },
+        {
+          "slot_number": 4,
+          "slot_rule": "AFC",
+          "player_name": "Anquan Boldin",
+          "player_id": "2506",
+          "primary_position": "WR"
+        },
+        {
+          "slot_number": 5,
+          "slot_rule": "NFC",
+          "player_name": "Greg Jennings",
+          "player_id": "3514",
+          "primary_position": "WR"
+        }
+      ]
     }
   ],
   "running_player_counts": {
@@ -2069,7 +2112,12 @@
     "Isiah Pacheco": 1,
     "Rachaad White": 1,
     "George Pickens": 1,
-    "Chris Olave": 1
+    "Chris Olave": 1,
+    "Maurice Jones-Drew": 1,
+    "Chad Johnson": 1,
+    "Anthony Fasano": 1,
+    "Anquan Boldin": 1,
+    "Greg Jennings": 1
   },
   "running_time_period_counts": {
     "2020-2025 Seasons": 5,
@@ -2085,7 +2133,7 @@
     "2015-2019 Seasons": 1,
     "2010-2019 Seasons": 1,
     "2023 Season": 2,
-    "2006-2010 Seasons": 3,
+    "2006-2010 Seasons": 4,
     "2000-2025 Seasons": 1,
     "2000-2005 Seasons": 3,
     "2000-2009 Seasons": 1,
@@ -2105,7 +2153,7 @@
     "non_super_bowl_winner": 4,
     "super_bowl_winner": 4,
     "day_3_pick": 3,
-    "same_draft_round": 3,
+    "same_draft_round": 4,
     "same_position": 1,
     "non_first_round_pick": 1
   }

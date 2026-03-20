@@ -153,6 +153,7 @@ type SubmissionResponse = {
   final_score: number;
   optimal_final_score?: number | null;
   percent_of_optimal: number | null;
+  submitted_at?: string;
   lineup?: Array<{
     slot_number: number;
     player_id: string;
@@ -182,6 +183,14 @@ type AllTimeLeaderboardEntry = {
   latest_finish_at: string;
   featured_badges?: BadgeKey[];
 };
+
+function compareLeaderboardEntries(a: LeaderboardEntry, b: LeaderboardEntry) {
+  if (b.final_score !== a.final_score) {
+    return b.final_score - a.final_score;
+  }
+
+  return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
+}
 
 type PublicProfileResponse = {
   profile: {
@@ -3312,7 +3321,7 @@ export default function HomePage() {
           })
         : `existing:${submissionDate}`;
 
-    async function loadLeaderboardForSubmission() {
+    async function loadLeaderboardForSubmission(savedSubmission?: SubmissionResponse | null) {
       const leaderboardResponse = await fetch(
         withModeParam(
           `/api/leaderboard?date=${encodeURIComponent(submissionDate)}&limit=10`
@@ -3331,7 +3340,44 @@ export default function HomePage() {
       const leaderboardJson: { leaderboard: LeaderboardEntry[] } =
         await leaderboardResponse.json();
       if (controller.signal.aborted) return;
-      setLeaderboard(leaderboardJson.leaderboard ?? []);
+
+      const fetchedLeaderboard = leaderboardJson.leaderboard ?? [];
+
+      if (!savedSubmission) {
+        setLeaderboard(fetchedLeaderboard);
+        return;
+      }
+
+      const savedEntry: LeaderboardEntry = {
+        user_id: session?.user?.id ?? null,
+        submission_id: savedSubmission.submission_id,
+        display_name: savedSubmission.display_name,
+        base_score: Number(savedSubmission.base_score ?? 0),
+        active_links: Number(savedSubmission.active_links ?? 0),
+        multiplier: Number(savedSubmission.multiplier ?? 1),
+        final_score: Number(savedSubmission.final_score),
+        optimal_final_score:
+          savedSubmission.optimal_final_score != null
+            ? Number(savedSubmission.optimal_final_score)
+            : null,
+        percent_of_optimal:
+          savedSubmission.percent_of_optimal != null
+            ? Number(savedSubmission.percent_of_optimal)
+            : null,
+        submitted_at: savedSubmission.submitted_at ?? new Date().toISOString(),
+        featured_badges: [],
+      };
+
+      const mergedLeaderboard = [
+        savedEntry,
+        ...fetchedLeaderboard.filter(
+          (entry) => entry.submission_id !== savedSubmission.submission_id
+        ),
+      ]
+        .sort(compareLeaderboardEntries)
+        .slice(0, 10);
+
+      setLeaderboard(mergedLeaderboard);
     }
 
     async function saveSubmissionAndLoadLeaderboard() {
@@ -3406,7 +3452,7 @@ export default function HomePage() {
           if (controller.signal.aborted) return;
         }
 
-        await loadLeaderboardForSubmission();
+        await loadLeaderboardForSubmission(saved);
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
@@ -5170,7 +5216,7 @@ export default function HomePage() {
                     onClick={() => setRulesOpen(true)}
                     className="sm:order-1 rounded-2xl border-[3px] border-sky-200 bg-white/90 px-6 py-4 text-sm font-bold text-sky-700 shadow-[0_8px_18px_rgba(125,211,252,0.14)] transition hover:-translate-y-0.5 hover:bg-sky-50"
                   >
-                    Rules
+                    Rules &amp; Info
                   </button>
                 </div>
                 {isLockedForSelectedDate && (
@@ -6613,13 +6659,6 @@ export default function HomePage() {
                 <p>
                   <span className="font-bold text-sky-900">Available Players:</span>{" "}
                   {players.length} players match today&apos;s overall theme and can appear across the five slot filters.
-                </p>
-                <p>
-                  <span className="font-bold text-sky-900">Behind the Scenes:</span>{" "}
-                  Even a single puzzle can sit inside a massive search space, so the
-                  optimizer does not brute force every possible puzzle shape. It uses
-                  pruning, staged search, and memory of dead combinations to skip
-                  impossible setups and focus on viable ones faster.
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Submission Rules:</span>{" "}
