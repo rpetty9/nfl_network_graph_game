@@ -50,12 +50,41 @@ export async function GET() {
       [yesterdayDate]
     );
 
+    const rows =
+      recapResult.rows.length > 0
+        ? recapResult.rows
+        : (
+            await pool.query<HomeRecapRow>(
+              `
+              SELECT
+                au.user_id::text,
+                au.username AS display_name,
+                ROW_NUMBER() OVER (
+                  ORDER BY ps.final_score DESC, ps.submitted_at ASC
+                )::text AS placement,
+                ps.final_score::text,
+                COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges,
+                dp.puzzle_date::text
+              FROM puzzle_submission ps
+              JOIN daily_puzzle dp
+                ON dp.puzzle_id = ps.puzzle_id
+              JOIN app_user au
+                ON au.user_id = ps.user_id
+              WHERE dp.puzzle_date = $1
+                AND ps.user_id IS NOT NULL
+              ORDER BY ps.final_score DESC, ps.submitted_at ASC
+              LIMIT 10
+              `,
+              [yesterdayDate]
+            )
+          ).rows;
+
     return NextResponse.json({
       recap:
-        recapResult.rows.length > 0
+        rows.length > 0
           ? {
               puzzle_date: yesterdayDate,
-              winners: recapResult.rows.map((row) => ({
+              winners: rows.map((row) => ({
                 user_id: row.user_id,
                 display_name: row.display_name,
                 placement: Number(row.placement),
