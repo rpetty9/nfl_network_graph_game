@@ -935,6 +935,7 @@ export default function DevPuzzlePage() {
 
   useEffect(() => {
     if (!isAdmin || devTab !== "approvals" || !selectedPendingPuzzleId) return;
+    const pendingPuzzleId = selectedPendingPuzzleId;
     let cancelled = false;
 
     async function loadApprovalDetail() {
@@ -942,7 +943,7 @@ export default function DevPuzzlePage() {
         setApprovalDetailLoading(true);
         setApprovalDetailError(null);
         const response = await fetch(
-          `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(selectedPendingPuzzleId)}`,
+          `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(pendingPuzzleId)}`,
           { cache: "no-store" }
         );
         const json = await response.json();
@@ -1753,12 +1754,13 @@ export default function DevPuzzlePage() {
 
   async function runPendingAction(action: "approve" | "reject") {
     if (!selectedPendingPuzzleId) return;
+    const pendingPuzzleId = selectedPendingPuzzleId;
     setApprovalActionLoading(true);
     setApprovalActionMessage(null);
     setApprovalDetailError(null);
     try {
       const response = await fetch(
-        `/api/admin/dev-puzzle/pending/${encodeURIComponent(selectedPendingPuzzleId)}/${action}`,
+        `/api/admin/dev-puzzle/pending/${encodeURIComponent(pendingPuzzleId)}/${action}`,
         {
           method: "POST",
         }
