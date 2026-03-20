@@ -1909,6 +1909,12 @@ export default function DevPuzzlePage() {
             maxAttemptsPerPuzzle: autoBuildMaxAttempts,
             forcePositionLock: positionOverlayEnabled,
             forceNoQbs: qbExclusionEnabled,
+            useAnchorSearch: true,
+            useSkeletonScoring: true,
+            useThresholdMemory: true,
+            anchorCount: 3,
+            stageWidth: 6,
+            beamWidth: 3,
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : "Preview failed.";
