@@ -1,12 +1,12 @@
 import type { Pool, PoolClient } from "pg";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { getLinkMultiplier } from "./scoring.ts";
+import { getLinkMultiplier } from "./scoring";
 import {
   lineupSatisfiesPuzzleRules,
   partialLineupCanStillSatisfyPuzzleRules,
   playerAllowedByPuzzleRules,
-} from "./puzzle-rules.ts";
+} from "./puzzle-rules";
 
 type DbClient = Pool | PoolClient;
 
