@@ -1037,8 +1037,12 @@ def refresh_career_bounds(conn: psycopg.Connection[Any]) -> None:
 
 def refresh_super_bowl_wins(conn: psycopg.Connection[Any]) -> None:
     winner_values = ", ".join(
-        f"({season}, '{team_abbr}')"
+        f"({season}, '{canonical_franchise_abbr(team_abbr) or team_abbr}')"
         for season, team_abbr in sorted(SUPER_BOWL_WINNERS_BY_SEASON.items())
+    )
+    team_abbr_to_franchise_case = "\n".join(
+        f"              WHEN '{alias}' THEN '{canonical}'"
+        for alias, canonical in sorted(FRANCHISE_ALIASES.items())
     )
 
     conn.execute("UPDATE player_dim SET super_bowl_win_count = 0")
@@ -1056,7 +1060,12 @@ def refresh_super_bowl_wins(conn: psycopg.Connection[Any]) -> None:
             ON pth.team_id = td.team_id
           JOIN winners w
             ON pth.season = w.season
-           AND td.team_abbr = w.team_abbr
+           AND COALESCE(
+                CASE UPPER(td.team_abbr)
+{team_abbr_to_franchise_case}
+                END,
+                UPPER(td.team_abbr)
+              ) = w.team_abbr
           GROUP BY pth.player_id
         )
         UPDATE player_dim p

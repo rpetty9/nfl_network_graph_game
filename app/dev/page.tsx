@@ -182,6 +182,105 @@ type DashboardStatsResponse = {
   }>;
 };
 
+type SubmissionInspectorResponse = {
+  lookup: {
+    username: string;
+    date: string;
+    mode: "production" | "testing";
+  };
+  puzzle: {
+    puzzle_id: string;
+    puzzle_date: string;
+    title: string;
+    theme_display_name: string;
+    theme_rule_logic_key: string;
+    relationship_rule: {
+      relationship_type: string;
+      display_text: string;
+      bonus_pct: number;
+    };
+    position_overlay_enabled: boolean;
+    qb_exclusion_enabled: boolean;
+    slot_rules: Array<{
+      slot_number: number;
+      display_text: string;
+      parameter_type: string;
+      parameter_value: string | null;
+      rule_name: string;
+    }>;
+  };
+  submission: {
+    submission_id: string;
+    display_name: string;
+    username: string | null;
+    submitted_at: string;
+    stored_base_score: number;
+    stored_active_links: number;
+    stored_multiplier: number;
+    stored_final_score: number;
+    optimal_final_score: number | null;
+    percent_of_optimal: number | null;
+    recomputed_base_score: number;
+    recomputed_active_links: number;
+    recomputed_multiplier: number;
+    recomputed_final_score: number;
+    lineup_rule_passes: boolean;
+  };
+  lineup: Array<{
+    slot_number: number;
+    slot_rule: {
+      slot_number: number;
+      display_text: string;
+      parameter_type: string;
+      parameter_value: string | null;
+      rule_name: string;
+    };
+    submitted_fantasy_points: number;
+    slot_match: boolean;
+    lineup_rule_match: boolean;
+    player: {
+      player_id: string;
+      player_name: string;
+      primary_position: string | null;
+      career_start_season: number | null;
+      career_end_season: number | null;
+      fantasy_points: number;
+      theme_start_season: number | null;
+      theme_end_season: number | null;
+      super_bowl_win_count: number | null;
+      draft_round: number | null;
+      draft_year: number | null;
+      undrafted_flag: boolean | null;
+      headshot_url: string | null;
+      player_colleges: string[];
+      theme_team_abbrs: string[];
+      theme_conferences: string[];
+      theme_divisions: string[];
+    };
+  }>;
+  pair_debug: Array<{
+    player_id_1: string;
+    player_name_1: string;
+    player_id_2: string;
+    player_name_2: string;
+    active_for_puzzle: boolean;
+    flags?: {
+      were_teammates_flag: boolean;
+      same_franchise_flag: boolean;
+      same_college_flag: boolean;
+      same_draft_class_flag: boolean;
+      same_draft_round_flag?: boolean;
+      both_undrafted_flag?: boolean;
+      both_non_first_round_pick_flag?: boolean;
+      both_day_3_pick_flag?: boolean;
+      both_super_bowl_winner_flag?: boolean;
+      both_non_super_bowl_winner_flag?: boolean;
+      both_played_packers_flag?: boolean;
+      same_position_flag?: boolean;
+    };
+  }>;
+};
+
 const STATS_TREND_WINDOWS = [
   { label: "14D", days: 14, subtitle: "Last 14 days" },
   { label: "1M", days: 30, subtitle: "Last month" },
@@ -555,8 +654,17 @@ export default function DevPuzzlePage() {
     MAX_AUTO_BUILD_ATTEMPTS
   );
   const [devTab, setDevTab] = useState<
-    "stats" | "builder" | "optimizer" | "approvals" | "confirmed"
-  >("stats");
+    "overview" | "create" | "review" | "inspector" | "schedule"
+  >("overview");
+  const [createView, setCreateView] = useState<"manual" | "automation">("manual");
+  const [inspectorUsername, setInspectorUsername] = useState("");
+  const [inspectorDate, setInspectorDate] = useState("");
+  const [inspectorMode, setInspectorMode] = useState<"production" | "testing">("testing");
+  const [inspectorLoading, setInspectorLoading] = useState(false);
+  const [inspectorError, setInspectorError] = useState<string | null>(null);
+  const [inspectorResult, setInspectorResult] = useState<SubmissionInspectorResponse | null>(
+    null
+  );
   const [dashboardStats, setDashboardStats] = useState<DashboardStatsResponse | null>(null);
   const [dashboardStatsLoading, setDashboardStatsLoading] = useState(false);
   const [dashboardStatsError, setDashboardStatsError] = useState<string | null>(null);
@@ -619,13 +727,25 @@ export default function DevPuzzlePage() {
 
   const filteredConfirmedPuzzleList = useMemo(
     () =>
-      confirmedPuzzleList.filter((puzzle) =>
-        puzzleScope === "future" ? puzzle.future_editable : !puzzle.future_editable
-      ),
+      [...confirmedPuzzleList]
+        .filter((puzzle) =>
+          puzzleScope === "future" ? puzzle.future_editable : !puzzle.future_editable
+        )
+        .sort((a, b) =>
+          puzzleScope === "future"
+            ? a.puzzle_date.localeCompare(b.puzzle_date)
+            : b.puzzle_date.localeCompare(a.puzzle_date)
+        ),
     [confirmedPuzzleList, puzzleScope]
   );
 
   const pendingPuzzleCount = approvalQueue?.pendingPuzzles.length ?? 0;
+  const needsApprovalAttention =
+    pendingPuzzleCount > 0 ||
+    Boolean(approvalQueue?.job?.last_error) ||
+    Boolean(approvalActionMessage);
+  const futurePuzzleCount = confirmedPuzzleList.filter((puzzle) => puzzle.future_editable).length;
+  const archivePuzzleCount = confirmedPuzzleList.length - futurePuzzleCount;
   const optimizerSessionMinutes = optimizerSessionStartedAt
     ? Math.max((optimizerClockMs - new Date(optimizerSessionStartedAt).getTime()) / 60000, 1 / 60)
     : 0;
@@ -834,7 +954,15 @@ export default function DevPuzzlePage() {
   }
 
   useEffect(() => {
-    if (!isAdmin || (devTab !== "optimizer" && devTab !== "approvals")) return;
+    if (
+      !isAdmin ||
+      !(
+        devTab === "review" ||
+        (devTab === "create" && createView === "automation")
+      )
+    ) {
+      return;
+    }
     let cancelled = false;
 
     async function loadOptimizerLog() {
@@ -857,7 +985,7 @@ export default function DevPuzzlePage() {
     return () => {
       cancelled = true;
     };
-  }, [devTab, isAdmin]);
+  }, [createView, devTab, isAdmin]);
 
   const refreshDashboardStats = useCallback(
     async (requestedDays = statsTrendDays) => {
@@ -874,7 +1002,7 @@ export default function DevPuzzlePage() {
   );
 
   useEffect(() => {
-    if (!isAdmin || devTab !== "stats") return;
+    if (!isAdmin || devTab !== "overview") return;
     let cancelled = false;
 
     async function loadDashboardStats() {
@@ -936,7 +1064,15 @@ export default function DevPuzzlePage() {
   }
 
   useEffect(() => {
-    if (!isAdmin || (devTab !== "optimizer" && devTab !== "approvals")) return;
+    if (
+      !isAdmin ||
+      !(
+        devTab === "review" ||
+        (devTab === "create" && createView === "automation")
+      )
+    ) {
+      return;
+    }
     let cancelled = false;
 
     async function loadApprovalQueue() {
@@ -975,10 +1111,10 @@ export default function DevPuzzlePage() {
     return () => {
       cancelled = true;
     };
-  }, [devTab, isAdmin]);
+  }, [createView, devTab, isAdmin]);
 
   useEffect(() => {
-    if (!isAdmin || devTab !== "approvals" || !selectedPendingPuzzleId) return;
+    if (!isAdmin || devTab !== "review" || !selectedPendingPuzzleId) return;
     const pendingPuzzleId = selectedPendingPuzzleId;
     let cancelled = false;
 
@@ -1016,7 +1152,7 @@ export default function DevPuzzlePage() {
   }, [devTab, isAdmin, selectedPendingPuzzleId]);
 
   useEffect(() => {
-    if (!isAdmin || devTab !== "confirmed") return;
+    if (!isAdmin || devTab !== "schedule") return;
     let cancelled = false;
 
     async function loadPuzzleList() {
@@ -1052,7 +1188,7 @@ export default function DevPuzzlePage() {
   }, [devTab, isAdmin]);
 
   useEffect(() => {
-    if (!isAdmin || devTab !== "confirmed" || !selectedPuzzleId) return;
+    if (!isAdmin || devTab !== "schedule" || !selectedPuzzleId) return;
     const puzzleId = selectedPuzzleId;
     let cancelled = false;
 
@@ -1089,7 +1225,7 @@ export default function DevPuzzlePage() {
   }, [devTab, isAdmin, selectedPuzzleId]);
 
   useEffect(() => {
-    if (devTab !== "confirmed") return;
+    if (devTab !== "schedule") return;
     setSelectedPuzzleId((current) =>
       current && filteredConfirmedPuzzleList.some((puzzle) => puzzle.puzzle_id === current)
         ? current
@@ -1870,6 +2006,36 @@ export default function DevPuzzlePage() {
     }
   }
 
+  async function handleInspectSubmission() {
+    if (!inspectorUsername.trim() || !inspectorDate) {
+      setInspectorError("Enter an exact username and puzzle date first.");
+      return;
+    }
+
+    try {
+      setInspectorLoading(true);
+      setInspectorError(null);
+      const params = new URLSearchParams({
+        username: inspectorUsername.trim(),
+        date: inspectorDate,
+        mode: inspectorMode,
+      });
+      const response = await fetch(`/api/admin/submission-inspector?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error ?? "Failed to inspect submission.");
+      }
+      setInspectorResult(json as SubmissionInspectorResponse);
+    } catch (error) {
+      setInspectorResult(null);
+      setInspectorError((error as Error).message);
+    } finally {
+      setInspectorLoading(false);
+    }
+  }
+
   function handleRandomizeSlots() {
     const nextSlotRuleIds = buildRandomSlotRuleIds(meta?.slotRules ?? []);
     if (!nextSlotRuleIds) {
@@ -2149,69 +2315,215 @@ export default function DevPuzzlePage() {
           </div>
         </div>
 
-        <div className="mb-6 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 shadow-[0_12px_32px_rgba(2,6,23,0.28)] backdrop-blur-xl">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 shadow-[0_12px_32px_rgba(2,6,23,0.28)] backdrop-blur-xl">
           <button
             type="button"
-            onClick={() => setDevTab("stats")}
+            onClick={() => setDevTab("overview")}
             className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
-              devTab === "stats"
+              devTab === "overview"
                 ? "bg-amber-300 text-slate-950"
                 : "text-slate-300"
             }`}
           >
-            Stats
+            Overview
           </button>
           <button
             type="button"
-            onClick={() => setDevTab("builder")}
+            onClick={() => setDevTab("create")}
             className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
-              devTab === "builder"
+              devTab === "create"
                 ? "bg-cyan-300 text-slate-950"
                 : "text-slate-300"
             }`}
           >
-            Single Builder
+            Create
           </button>
           <button
             type="button"
-            onClick={() => setDevTab("optimizer")}
+            onClick={() => setDevTab("review")}
             className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
-              devTab === "optimizer"
-                ? "bg-amber-300 text-slate-950"
-                : "text-slate-300"
-            }`}
-          >
-            Optimizer
-          </button>
-          <button
-            type="button"
-            onClick={() => setDevTab("approvals")}
-            className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
-              devTab === "approvals"
+              devTab === "review"
                 ? "bg-emerald-300 text-slate-950"
                 : "text-slate-300"
             }`}
           >
-            Approvals
+            Review
+          </button>
+          <button
+            type="button"
+            onClick={() => setDevTab("inspector")}
+            className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
+              devTab === "inspector"
+                ? "bg-violet-300 text-slate-950"
+                : "text-slate-300"
+            }`}
+          >
+            Inspector
+          </button>
+          <button
+            type="button"
+            onClick={() => setDevTab("schedule")}
+            className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
+              devTab === "schedule"
+                ? "bg-emerald-300 text-slate-950"
+                : "text-slate-300"
+            }`}
+          >
+            Schedule
             <span className="ml-2 rounded-full bg-slate-950/15 px-2 py-0.5 text-[10px]">
-              {pendingPuzzleCount}
+              {futurePuzzleCount}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setDevTab("confirmed")}
-            className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
-              devTab === "confirmed"
-                ? "bg-emerald-300 text-slate-950"
-                : "text-slate-300"
-            }`}
-          >
-            Confirmed
           </button>
         </div>
 
-        {devTab === "stats" ? (
-          <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+        {devTab === "create" ? (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-cyan-300/15 bg-cyan-300/8 px-4 py-4 shadow-[0_18px_48px_rgba(2,6,23,0.28)] backdrop-blur-xl">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-cyan-200">
+                Create Workspace
+              </p>
+              <p className="mt-1 text-sm text-slate-300">
+                Use Manual Builder for one-off puzzle work, or switch to Automation to keep the pending queue healthy.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/35 p-1">
+              <button
+                type="button"
+                onClick={() => setCreateView("manual")}
+                className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
+                  createView === "manual"
+                    ? "bg-cyan-300 text-slate-950"
+                    : "text-slate-300"
+                }`}
+              >
+                Manual Builder
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreateView("automation")}
+                className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
+                  createView === "automation"
+                    ? "bg-amber-300 text-slate-950"
+                    : "text-slate-300"
+                }`}
+              >
+                Automation
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {devTab === "overview" ? (
+          <div className="space-y-6">
+            <div className="grid gap-4 xl:grid-cols-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setDevTab("create");
+                  setCreateView("manual");
+                }}
+                className="rounded-[24px] border border-cyan-300/20 bg-cyan-300/10 p-5 text-left shadow-[0_20px_60px_rgba(2,6,23,0.32)] backdrop-blur-xl transition hover:border-cyan-200/40"
+              >
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-cyan-200">
+                  Create
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-white">Build A Puzzle</h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  Jump straight into the manual builder for one-off puzzle work.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDevTab("create");
+                  setCreateView("automation");
+                }}
+                className="rounded-[24px] border border-amber-300/20 bg-amber-300/10 p-5 text-left shadow-[0_20px_60px_rgba(2,6,23,0.32)] backdrop-blur-xl transition hover:border-amber-200/40"
+              >
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-amber-200">
+                  Automation
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-white">
+                  {approvalQueue?.job?.active_flag ? "Queue Running" : "Queue Stopped"}
+                </h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  {pendingPuzzleCount} pending puzzle{pendingPuzzleCount === 1 ? "" : "s"} in the review queue.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevTab("review")}
+                className="rounded-[24px] border border-emerald-300/20 bg-emerald-300/10 p-5 text-left shadow-[0_20px_60px_rgba(2,6,23,0.32)] backdrop-blur-xl transition hover:border-emerald-200/40"
+              >
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-200">
+                  Review
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-white">
+                  {pendingPuzzleCount} Waiting
+                </h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  Approve or reject pending puzzles before they enter the published schedule.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevTab("schedule")}
+                className="rounded-[24px] border border-fuchsia-300/20 bg-fuchsia-300/10 p-5 text-left shadow-[0_20px_60px_rgba(2,6,23,0.32)] backdrop-blur-xl transition hover:border-fuchsia-200/40"
+              >
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-fuchsia-200">
+                  Schedule
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-white">{futurePuzzleCount} Future</h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  {archivePuzzleCount} archived puzzle{archivePuzzleCount === 1 ? "" : "s"} available for reference.
+                </p>
+              </button>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-3">
+              <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_60px_rgba(2,6,23,0.32)] backdrop-blur-xl">
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                  Review Inbox
+                </p>
+                <p className="mt-2 text-3xl font-black text-white">{pendingPuzzleCount}</p>
+                <p className="mt-2 text-sm text-slate-300">
+                  Pending puzzle{pendingPuzzleCount === 1 ? "" : "s"} waiting for approval.
+                </p>
+                {approvalQueue?.job?.last_error ? (
+                  <p className="mt-3 text-sm text-amber-200">{approvalQueue.job.last_error}</p>
+                ) : null}
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_60px_rgba(2,6,23,0.32)] backdrop-blur-xl">
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                  Queue Health
+                </p>
+                <p className="mt-2 text-3xl font-black text-white">
+                  {approvalQueue?.job?.active_flag ? "Running" : "Idle"}
+                </p>
+                <p className="mt-2 text-sm text-slate-300">
+                  Target: {queueForm.targetPendingCount} pending puzzle{queueForm.targetPendingCount === 1 ? "" : "s"}.
+                </p>
+                {approvalActionMessage ? (
+                  <p className="mt-3 text-sm text-emerald-300">{approvalActionMessage}</p>
+                ) : null}
+              </div>
+              <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_60px_rgba(2,6,23,0.32)] backdrop-blur-xl">
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                  Schedule Snapshot
+                </p>
+                <p className="mt-2 text-3xl font-black text-white">{futurePuzzleCount}</p>
+                <p className="mt-2 text-sm text-slate-300">
+                  Future editable puzzle{futurePuzzleCount === 1 ? "" : "s"} queued in the published schedule.
+                </p>
+                <p className="mt-3 text-sm text-slate-400">
+                  {needsApprovalAttention
+                    ? "There is something active in the queue or review flow."
+                    : "Queue and review look calm right now."}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
             {dashboardStatsLoading ? (
               <div className="lg:col-span-2 xl:col-span-4 rounded-[24px] border border-dashed border-white/15 bg-white/5 px-5 py-12 text-sm text-slate-400">
                 Loading dashboard stats...
@@ -2496,21 +2808,22 @@ export default function DevPuzzlePage() {
                 </div>
               </>
             ) : null}
+            </div>
           </div>
-        ) : devTab === "optimizer" || devTab === "approvals" ? (
+        ) : (devTab === "create" && createView === "automation") || devTab === "review" ? (
           <div
             className={
-              devTab === "optimizer"
+              devTab === "create"
                 ? "flex flex-col gap-6"
                 : "grid gap-6 xl:grid-cols-[0.86fr_1.14fr]"
             }
           >
             <section
               className={
-                devTab === "optimizer" ? "flex flex-col gap-6" : "space-y-6"
+                devTab === "create" ? "flex flex-col gap-6" : "space-y-6"
               }
             >
-              {devTab === "optimizer" ? (
+              {devTab === "create" ? (
               <div className="order-3 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -2910,7 +3223,7 @@ export default function DevPuzzlePage() {
               </div>
               ) : null}
 
-              {devTab === "approvals" ? (
+              {devTab === "review" ? (
               <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -3211,10 +3524,10 @@ export default function DevPuzzlePage() {
 
             <section
               className={`rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl ${
-                devTab === "optimizer" ? "order-4" : ""
+                devTab === "create" ? "order-4" : ""
               }`}
             >
-              {devTab === "optimizer" ? (
+              {devTab === "create" ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -3408,7 +3721,7 @@ export default function DevPuzzlePage() {
               )}
             </section>
           </div>
-        ) : devTab === "builder" ? (
+        ) : devTab === "create" ? (
         <div className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
           <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
             <div className="grid gap-5">
@@ -3990,7 +4303,241 @@ export default function DevPuzzlePage() {
             </section>
           </div>
         </div>
-        ) : (
+        ) : devTab === "inspector" ? (
+          <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
+            <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-violet-200">
+                  Submission Inspector
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-white">Troubleshoot A Report</h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  Load a saved lineup by exact username and puzzle date, then inspect the stored scores, current derived player data, and every pair-link flag.
+                </p>
+              </div>
+
+              <div className="mt-5 space-y-4">
+                <label className="block">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Exact Username
+                  </span>
+                  <input
+                    value={inspectorUsername}
+                    onChange={(event) => setInspectorUsername(event.target.value)}
+                    placeholder="tester_username"
+                    className="mt-2 w-full rounded-[18px] border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Puzzle Date
+                  </span>
+                  <input
+                    type="date"
+                    value={inspectorDate}
+                    onChange={(event) => setInspectorDate(event.target.value)}
+                    className="mt-2 w-full rounded-[18px] border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none"
+                  />
+                </label>
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Submission Mode
+                  </p>
+                  <div className="mt-3 flex gap-2 rounded-full border border-white/10 bg-slate-950/35 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setInspectorMode("production")}
+                      className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
+                        inspectorMode === "production"
+                          ? "bg-cyan-300 text-slate-950"
+                          : "text-slate-300"
+                      }`}
+                    >
+                      Production
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInspectorMode("testing")}
+                      className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
+                        inspectorMode === "testing"
+                          ? "bg-violet-300 text-slate-950"
+                          : "text-slate-300"
+                      }`}
+                    >
+                      Testing
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleInspectSubmission()}
+                  disabled={inspectorLoading}
+                  className="rounded-full bg-violet-300 px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-60"
+                >
+                  {inspectorLoading ? "Loading..." : "Inspect Submission"}
+                </button>
+                {inspectorError ? <p className="text-sm text-rose-300">{inspectorError}</p> : null}
+              </div>
+            </section>
+
+            <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
+              {!inspectorResult ? (
+                <div className="rounded-[24px] border border-dashed border-white/15 bg-slate-950/30 px-5 py-12 text-sm text-slate-400">
+                  Load a submission to inspect the lineup, score breakdown, and all link/debug data.
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                        Loaded Submission
+                      </p>
+                      <h2 className="mt-2 text-2xl font-black text-white">
+                        {inspectorResult.lookup.username} • {formatDateLabel(inspectorResult.lookup.date)}
+                      </h2>
+                      <p className="mt-2 text-sm text-slate-300">
+                        {inspectorResult.puzzle.title} | {inspectorResult.puzzle.theme_display_name} | {inspectorResult.lookup.mode}
+                      </p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3 text-right text-xs text-slate-300">
+                      <p>Submitted {new Date(inspectorResult.submission.submitted_at).toLocaleString()}</p>
+                      <p className="mt-1">Rule: {inspectorResult.puzzle.relationship_rule.display_text}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+                        Stored Final
+                      </p>
+                      <p className="mt-1 text-lg font-black text-white">
+                        {formatNumber(inspectorResult.submission.stored_final_score)}
+                      </p>
+                    </div>
+                    <div className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+                        Recomputed Final
+                      </p>
+                      <p className="mt-1 text-lg font-black text-emerald-300">
+                        {formatNumber(inspectorResult.submission.recomputed_final_score)}
+                      </p>
+                    </div>
+                    <div className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+                        Stored Links
+                      </p>
+                      <p className="mt-1 text-lg font-black text-white">
+                        {inspectorResult.submission.stored_active_links}
+                      </p>
+                    </div>
+                    <div className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+                        Recomputed Links
+                      </p>
+                      <p className="mt-1 text-lg font-black text-emerald-300">
+                        {inspectorResult.submission.recomputed_active_links}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[22px] border border-white/10 bg-slate-950/35 p-4">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                      Lineup Debug
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      {inspectorResult.lineup.map((entry) => (
+                        <div
+                          key={`${entry.slot_number}-${entry.player.player_id}`}
+                          className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                              <p className="text-xs font-black uppercase tracking-[0.12em] text-cyan-200">
+                                Slot {entry.slot_number} | {entry.slot_rule.display_text}
+                              </p>
+                              <p className="mt-2 text-lg font-black text-white">
+                                {entry.player.player_name}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-300">
+                                {entry.player.primary_position ?? "N/A"} | Theme {entry.player.theme_start_season ?? "?"}-{entry.player.theme_end_season ?? "?"}
+                              </p>
+                            </div>
+                            <div className="text-right text-xs text-slate-300">
+                              <p>Stored points: {formatNumber(entry.submitted_fantasy_points)}</p>
+                              <p className="mt-1">Current points: {formatNumber(entry.player.fantasy_points)}</p>
+                              <p className={`mt-2 font-black ${entry.slot_match ? "text-emerald-300" : "text-rose-300"}`}>
+                                Slot rule: {entry.slot_match ? "Pass" : "Fail"}
+                              </p>
+                              <p className={`mt-1 font-black ${entry.lineup_rule_match ? "text-emerald-300" : "text-rose-300"}`}>
+                                Lineup rule: {entry.lineup_rule_match ? "Pass" : "Fail"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-3 grid gap-2 md:grid-cols-3 text-xs text-slate-300">
+                            <div>Teams: {entry.player.theme_team_abbrs.join(", ") || "N/A"}</div>
+                            <div>Colleges: {entry.player.player_colleges.join(", ") || "N/A"}</div>
+                            <div>
+                              Draft: {entry.player.undrafted_flag ? "Undrafted" : entry.player.draft_round ? `Round ${entry.player.draft_round}, ${entry.player.draft_year ?? "?"}` : "N/A"}
+                            </div>
+                            <div>SB wins: {entry.player.super_bowl_win_count ?? 0}</div>
+                            <div>Career: {entry.player.career_start_season ?? "?"}-{entry.player.career_end_season ?? "?"}</div>
+                            <div>Player ID: {entry.player.player_id}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[22px] border border-white/10 bg-slate-950/35 p-4">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                      Pair Link Debug
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      {inspectorResult.pair_debug.map((pair) => (
+                        <div
+                          key={`${pair.player_id_1}-${pair.player_id_2}`}
+                          className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                              <p className="text-sm font-black text-white">
+                                {pair.player_name_1} + {pair.player_name_2}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-400">
+                                Puzzle link: {inspectorResult.puzzle.relationship_rule.display_text}
+                              </p>
+                            </div>
+                            <p className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
+                              pair.active_for_puzzle
+                                ? "bg-emerald-300 text-slate-950"
+                                : "border border-white/10 bg-slate-950/35 text-slate-300"
+                            }`}>
+                              {pair.active_for_puzzle ? "Active Link" : "Inactive"}
+                            </p>
+                          </div>
+                          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-xs text-slate-300">
+                            <div>Teammates: {pair.flags?.were_teammates_flag ? "Yes" : "No"}</div>
+                            <div>Same franchise: {pair.flags?.same_franchise_flag ? "Yes" : "No"}</div>
+                            <div>Same college: {pair.flags?.same_college_flag ? "Yes" : "No"}</div>
+                            <div>Same draft class: {pair.flags?.same_draft_class_flag ? "Yes" : "No"}</div>
+                            <div>Same draft round: {pair.flags?.same_draft_round_flag ? "Yes" : "No"}</div>
+                            <div>Both undrafted: {pair.flags?.both_undrafted_flag ? "Yes" : "No"}</div>
+                            <div>Both non-1st: {pair.flags?.both_non_first_round_pick_flag ? "Yes" : "No"}</div>
+                            <div>Both day 3: {pair.flags?.both_day_3_pick_flag ? "Yes" : "No"}</div>
+                            <div>Both SB winners: {pair.flags?.both_super_bowl_winner_flag ? "Yes" : "No"}</div>
+                            <div>Both non-SB winners: {pair.flags?.both_non_super_bowl_winner_flag ? "Yes" : "No"}</div>
+                            <div>Both played Packers: {pair.flags?.both_played_packers_flag ? "Yes" : "No"}</div>
+                            <div>Same position: {pair.flags?.same_position_flag ? "Yes" : "No"}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+        ) : devTab === "schedule" ? (
           <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
             <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
               <div className="flex items-center justify-between gap-3">
@@ -4319,7 +4866,7 @@ export default function DevPuzzlePage() {
               )}
             </section>
           </div>
-        )}
+        ) : null}
       </div>
 
       {optimizerHowItWorksOpen && (

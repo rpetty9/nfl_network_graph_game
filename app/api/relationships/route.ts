@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { canonicalTeamAbbrSql } from "@/lib/team-abbr";
 import { requireTestingAdmin } from "@/lib/testing";
 
 export const dynamic = "force-dynamic";
@@ -203,7 +204,7 @@ export async function GET(request: NextRequest) {
             JOIN team_dim ta
               ON a.team_id = ta.team_id
             WHERE a.player_id = pb.player_id_1
-              AND ta.team_abbr = 'GB'
+              AND ${canonicalTeamAbbrSql("ta.team_abbr")} = 'GB'
           )
            AND EXISTS (
             SELECT 1
@@ -211,7 +212,7 @@ export async function GET(request: NextRequest) {
             JOIN team_dim tb
               ON b.team_id = tb.team_id
             WHERE b.player_id = pb.player_id_2
-              AND tb.team_abbr = 'GB'
+              AND ${canonicalTeamAbbrSql("tb.team_abbr")} = 'GB'
           )
           THEN true
           ELSE false

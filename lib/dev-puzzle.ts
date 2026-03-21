@@ -2,6 +2,7 @@ import type { Pool, PoolClient } from "pg";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getLinkMultiplier } from "./scoring";
+import { canonicalTeamAbbrSql, teamAbbrMatches } from "./team-abbr";
 import {
   lineupSatisfiesPuzzleRules,
   partialLineupCanStillSatisfyPuzzleRules,
@@ -843,7 +844,7 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
       );
     case "team":
       return (player.theme_team_abbrs ?? []).some(
-        (teamAbbr) => String(teamAbbr).toUpperCase() === ruleValue
+        (teamAbbr) => teamAbbrMatches(String(teamAbbr), ruleValue)
       );
     case "conference":
       return (player.theme_conferences ?? []).some(
@@ -2896,22 +2897,22 @@ async function loadPairRelationships(
         ELSE false
       END AS both_non_super_bowl_winner_flag,
       CASE
-        WHEN EXISTS (
-          SELECT 1
-          FROM player_team_history a
-          JOIN team_dim ta
-            ON a.team_id = ta.team_id
-          WHERE a.player_id = pb.player_id_1
-            AND ta.team_abbr = 'GB'
-        )
-         AND EXISTS (
-          SELECT 1
-          FROM player_team_history b
-          JOIN team_dim tb
-            ON b.team_id = tb.team_id
-          WHERE b.player_id = pb.player_id_2
-            AND tb.team_abbr = 'GB'
-        )
+          WHEN EXISTS (
+            SELECT 1
+            FROM player_team_history a
+            JOIN team_dim ta
+              ON a.team_id = ta.team_id
+            WHERE a.player_id = pb.player_id_1
+            AND ${canonicalTeamAbbrSql("ta.team_abbr")} = 'GB'
+          )
+          AND EXISTS (
+            SELECT 1
+            FROM player_team_history b
+            JOIN team_dim tb
+              ON b.team_id = tb.team_id
+            WHERE b.player_id = pb.player_id_2
+            AND ${canonicalTeamAbbrSql("tb.team_abbr")} = 'GB'
+          )
         THEN true
         ELSE false
       END AS both_played_packers_flag,
