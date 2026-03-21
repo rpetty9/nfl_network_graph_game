@@ -4170,17 +4170,14 @@ export default function HomePage() {
         key={`${slotLabel ?? "player"}-${player.player_id}`}
         className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[22px] border-[3px] bg-white/92 px-2.5 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:gap-2.5 sm:px-3 sm:py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-4 md:px-4 ${accentClasses.border}`}
       >
-        <div className="hidden sm:flex sm:w-[82px] sm:flex-col sm:items-start sm:justify-center">
+        <div className="hidden sm:flex sm:w-[62px] sm:flex-col sm:items-start sm:justify-center">
           {slotLabel ? (
             <span className={`inline-flex rounded-full border border-current/10 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${accentClasses.label}`}>
               {slotLabel}
             </span>
           ) : null}
-          <span className={`mt-2 text-[10px] font-bold uppercase tracking-[0.08em] ${accentClasses.label}`}>
-            {player.primary_position ?? "N/A"}
-          </span>
         </div>
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5 md:gap-3">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 md:gap-2.5">
           <div className="shrink-0 rounded-[16px] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eff6ff_100%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
             {renderHeadshot(player)}
           </div>
@@ -4677,7 +4674,7 @@ export default function HomePage() {
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                       Your Lineup
                     </p>
-                    <h3 className="mt-2 break-words text-[1.85rem] font-black leading-[0.9] text-slate-900 sm:text-2xl">
+                    <h3 className="mt-2 break-words text-[1rem] font-black leading-[1.02] text-slate-900 sm:text-[1.35rem]">
                       Locked Submission
                     </h3>
                   </div>
@@ -4737,7 +4734,7 @@ export default function HomePage() {
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
                       {puzzleData?.leaderboard_finalized ? "Optimal Lineup" : "Current Leader"}
                     </p>
-                    <h3 className="mt-2 break-words text-[1.65rem] font-black leading-[0.95] text-slate-900 sm:text-2xl">
+                    <h3 className="mt-2 break-words text-[0.9rem] font-black leading-[1.05] text-slate-900 sm:text-[1.2rem]">
                       {puzzleData?.leaderboard_finalized
                         ? "Best Possible Build"
                         : `Current Leader - ${currentLeaderLineup?.leader.display_name ?? "Live First Place"}`}
@@ -5122,8 +5119,7 @@ export default function HomePage() {
                         {player.player_name}
                       </p>
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-sky-700/80">
-                        {player.primary_position ?? "N/A"} â€¢{" "}
-                        {player.theme_start_season ?? player.career_start_season ?? "N/A"}â€“
+              {player.theme_start_season ?? player.career_start_season ?? "N/A"}â€“
                         {player.theme_end_season ?? player.career_end_season ?? "N/A"}
                       </p>
                     </div>
