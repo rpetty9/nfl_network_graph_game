@@ -109,6 +109,17 @@ export async function GET(request: NextRequest) {
           )
         : { rows: [] };
 
+    const leaderboardFinalizedResult = await pool.query<{ finalized: boolean }>(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM daily_leaderboard_finish
+        WHERE puzzle_id = $1
+      ) AS finalized
+      `,
+      [puzzle.puzzle_id]
+    );
+
     const statPoolResult = await pool.query(
       `
       SELECT s.stat_name, s.display_name
@@ -262,6 +273,8 @@ export async function GET(request: NextRequest) {
       slot_rules: slotRulesResult.rows,
       viewer_has_submitted:
         viewerHasSubmittedResult?.rows[0]?.has_submitted ?? false,
+      leaderboard_finalized:
+        leaderboardFinalizedResult.rows[0]?.finalized ?? false,
       available_dates: availableDatesResult.rows
         .map((row) => formatDateValue(row.puzzle_date))
         .filter((dateValue): dateValue is string => Boolean(dateValue)),

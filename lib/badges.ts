@@ -31,6 +31,7 @@ export type BadgeKey =
   | "links_100"
   | "streak_3"
   | "streak_7"
+  | "first_place_finish"
   | "top_10_finish"
   | "top_10_finish_5"
   | "ten_links_submission"
@@ -181,6 +182,14 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     tone: "rose",
     icon: "flag",
   },
+  first_place_finish: {
+    key: "first_place_finish",
+    title: "Daily Crown",
+    description: "Finished in first place on a finalized daily puzzle.",
+    unlockHint: "Claim first place on a finalized daily leaderboard.",
+    tone: "amber",
+    icon: "crown",
+  },
   top_10_finish: {
     key: "top_10_finish",
     title: "Top Ten",
@@ -238,6 +247,7 @@ export const BADGE_ORDER: BadgeKey[] = [
   "creator",
   "bestestest",
   "founder",
+  "first_place_finish",
   "beat_friend_daily_10",
   "beat_friend_daily",
   "friends_10",

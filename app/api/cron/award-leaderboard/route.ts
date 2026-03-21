@@ -150,6 +150,7 @@ async function awardPuzzle(puzzleId: number) {
   if (leaderboardResult.rows.length === 0) {
     return {
       placementsRecorded: 0,
+      firstPlaceBadgesAwarded: 0,
       topTenBadgesAwarded: 0,
       topTenFiveBadgesAwarded: 0,
       leaderboard: [],
@@ -167,6 +168,19 @@ async function awardPuzzle(puzzleId: number) {
       [puzzleId, Number(row.user_id), Number(row.placement)]
     );
   }
+
+  const firstPlaceBadgeResult = await pool.query(
+    `
+    INSERT INTO user_badge (user_id, badge_key)
+    SELECT DISTINCT user_id, 'first_place_finish'
+    FROM daily_leaderboard_finish
+    WHERE puzzle_id = $1
+      AND placement = 1
+    ON CONFLICT (user_id, badge_key)
+    DO NOTHING
+    `,
+    [puzzleId]
+  );
 
   const topTenBadgeResult = await pool.query(
     `
@@ -194,6 +208,7 @@ async function awardPuzzle(puzzleId: number) {
 
   return {
     placementsRecorded: leaderboardResult.rows.length,
+    firstPlaceBadgesAwarded: firstPlaceBadgeResult.rowCount ?? 0,
     topTenBadgesAwarded: topTenBadgeResult.rowCount ?? 0,
     topTenFiveBadgesAwarded: topTenFiveBadgeResult.rowCount ?? 0,
     leaderboard: leaderboardResult.rows,
@@ -254,6 +269,7 @@ export async function GET(request: NextRequest) {
         message: "No missing leaderboard awards found.",
         processed_dates: [],
         placements_recorded: 0,
+        first_place_badges_awarded: 0,
         top_10_badges_awarded: 0,
         top_10_x5_badges_awarded: 0,
       });
@@ -261,6 +277,7 @@ export async function GET(request: NextRequest) {
 
     const summaries = [];
     let placementsRecorded = 0;
+    let firstPlaceBadgesAwarded = 0;
     let topTenBadgesAwarded = 0;
     let topTenFiveBadgesAwarded = 0;
 
@@ -272,6 +289,7 @@ export async function GET(request: NextRequest) {
         leaderboard: summary.leaderboard,
       });
       placementsRecorded += summary.placementsRecorded;
+      firstPlaceBadgesAwarded += summary.firstPlaceBadgesAwarded;
       topTenBadgesAwarded += summary.topTenBadgesAwarded;
       topTenFiveBadgesAwarded += summary.topTenFiveBadgesAwarded;
     }
@@ -283,6 +301,7 @@ export async function GET(request: NextRequest) {
         getPreviousChicagoDateIso(),
       processed_dates: summaries.map((summary) => summary.target_date),
       placements_recorded: placementsRecorded,
+      first_place_badges_awarded: firstPlaceBadgesAwarded,
       top_10_badges_awarded: topTenBadgesAwarded,
       top_10_x5_badges_awarded: topTenFiveBadgesAwarded,
       runs: summaries,

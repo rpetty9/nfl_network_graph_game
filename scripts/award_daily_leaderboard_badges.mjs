@@ -87,6 +87,19 @@ try {
     );
   }
 
+  const firstPlaceBadgeResult = await client.query(
+    `
+    INSERT INTO user_badge (user_id, badge_key)
+    SELECT DISTINCT user_id, 'first_place_finish'
+    FROM daily_leaderboard_finish
+    WHERE puzzle_id = $1
+      AND placement = 1
+    ON CONFLICT (user_id, badge_key)
+    DO NOTHING
+    `,
+    [puzzle.puzzle_id]
+  );
+
   await client.query(
     `
     INSERT INTO user_badge (user_id, badge_key)
@@ -113,7 +126,7 @@ try {
 
   await client.query("COMMIT");
   console.log(
-    `Awarded leaderboard badges for ${requestedDate} to ${leaderboardResult.rows.length} users.`
+    `Awarded leaderboard badges for ${requestedDate} to ${leaderboardResult.rows.length} users (${firstPlaceBadgeResult.rowCount ?? 0} first-place badges).`
   );
 } catch (error) {
   await client.query("ROLLBACK").catch(() => {});

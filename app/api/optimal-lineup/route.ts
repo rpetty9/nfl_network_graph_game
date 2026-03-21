@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { getLinkMultiplier } from "@/lib/scoring";
 import { requireTestingAdmin } from "@/lib/testing";
+import { canonicalTeamAbbrSql, teamAbbrMatches } from "@/lib/team-abbr";
 import {
   lineupSatisfiesPuzzleRules,
   partialLineupCanStillSatisfyPuzzleRules,
@@ -123,7 +124,7 @@ function playerMatchesSlotRule(player: CandidatePlayer, rule: SlotRule) {
       );
     case "team":
       return (player.theme_team_abbrs ?? []).some(
-        (teamAbbr) => String(teamAbbr).toUpperCase() === ruleValue
+        (teamAbbr) => teamAbbrMatches(String(teamAbbr), ruleValue)
       );
     case "conference":
       return (player.theme_conferences ?? []).some(
@@ -223,6 +224,24 @@ export async function GET(request: NextRequest) {
 
     if (!puzzle) {
       return NextResponse.json({ error: "No puzzle found" }, { status: 404 });
+    }
+
+    const finalizedResult = await pool.query<{ finalized: boolean }>(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM daily_leaderboard_finish
+        WHERE puzzle_id = $1
+      ) AS finalized
+      `,
+      [puzzle.puzzle_id]
+    );
+
+    if (!(finalizedResult.rows[0]?.finalized ?? false)) {
+      return NextResponse.json(
+        { error: "Optimal lineup unlocks after the leaderboard is finalized." },
+        { status: 403 }
+      );
     }
 
     const [themeResult, relationshipRuleResult, slotRulesResult] = await Promise.all([
@@ -602,7 +621,7 @@ export async function GET(request: NextRequest) {
                      JOIN team_dim ta
                        ON a.team_id = ta.team_id
                      WHERE a.player_id = pb.player_id_1
-                       AND ta.team_abbr = 'GB'
+                       AND ${canonicalTeamAbbrSql("ta.team_abbr")} = 'GB'
                    )
                     AND EXISTS (
                      SELECT 1
@@ -610,7 +629,7 @@ export async function GET(request: NextRequest) {
                      JOIN team_dim tb
                        ON b.team_id = tb.team_id
                      WHERE b.player_id = pb.player_id_2
-                       AND tb.team_abbr = 'GB'
+                       AND ${canonicalTeamAbbrSql("tb.team_abbr")} = 'GB'
                    )
                    THEN true
                    ELSE false

@@ -23,6 +23,7 @@ import {
 } from "@/lib/avatar";
 import { playerAllowedByPuzzleRules } from "@/lib/puzzle-rules";
 import { getLinkBonusPct, getLinkMultiplier } from "@/lib/scoring";
+import { teamAbbrMatches } from "@/lib/team-abbr";
 
 type PuzzleResponse = {
   puzzle: {
@@ -62,6 +63,7 @@ type PuzzleResponse = {
   } | null;
   slot_rules?: SlotRule[];
   viewer_has_submitted?: boolean;
+  leaderboard_finalized?: boolean;
   available_dates?: string[];
 };
 
@@ -142,6 +144,24 @@ type OptimalLineupResponse = {
   optimal_active_links: number;
   optimal_multiplier: number;
   optimal_final_score: number;
+};
+
+type CurrentLeaderLineupResponse = {
+  puzzle_date: string;
+  leader: {
+    submission_id: number;
+    display_name: string;
+    base_score: number;
+    active_links: number;
+    multiplier: number;
+    final_score: number;
+    submitted_at: string;
+  };
+  lineup: Array<{
+    slot_number: number;
+    slot_rule: Pick<SlotRule, "slot_number" | "display_text">;
+    player: PlayerOption;
+  }>;
 };
 
 type SubmissionResponse = {
@@ -436,6 +456,12 @@ function getNextBadgeGoals(input: {
     "Every active player-to-player connection counts."
   );
   pushGoal(
+    "first_place_finish",
+    stats.leaderboard_finishes,
+    1,
+    "Finish first when the nightly leaderboard snapshot locks in."
+  );
+  pushGoal(
     "top_10_finish",
     stats.leaderboard_finishes,
     1,
@@ -511,6 +537,8 @@ function getBadgeProgressLabel(
       return `${Math.min(stats.puzzles_submitted, 50)}/50`;
     case "submissions_100":
       return `${Math.min(stats.puzzles_submitted, 100)}/100`;
+    case "first_place_finish":
+      return `${Math.min(stats.leaderboard_finishes, 1)}/1`;
     case "top_10_finish":
       return `${Math.min(stats.leaderboard_finishes, 1)}/1`;
     case "top_10_finish_5":
@@ -535,6 +563,7 @@ function getBadgeGalleryTab(badgeKey: BadgeKey): BadgeGalleryTab {
     case "beat_friend_daily":
     case "beat_friend_daily_10":
       return "social";
+    case "first_place_finish":
     case "top_10_finish":
     case "top_10_finish_5":
       return "leaderboard";
@@ -600,7 +629,9 @@ function FeaturedBadgeSlot({
   const tone = getBadgeToneClasses(badge.tone);
   const isCreatorBadge = badge.badgeKey === "creator";
   const isBestestestBadge = badge.badgeKey === "bestestest";
+  const isDailyCrownBadge = badge.badgeKey === "first_place_finish";
   const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
+  const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge;
 
   return (
     <div className="group relative">
@@ -608,16 +639,20 @@ function FeaturedBadgeSlot({
         type="button"
         onClick={onToggle}
         className={`relative flex w-full items-center gap-3 overflow-hidden rounded-[20px] border px-4 py-3.5 text-center transition hover:-translate-y-0.5 ${
-          isLegendaryManualBadge
+          isSignatureBadge
             ? isBestestestBadge
               ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.98)_0%,rgba(244,114,182,0.3)_24%,rgba(168,85,247,0.34)_46%,rgba(91,33,182,0.5)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.45),0_0_30px_rgba(168,85,247,0.34),0_20px_48px_rgba(91,33,182,0.34)]"
-              : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,252,235,0.99)_0%,rgba(253,224,71,0.42)_22%,rgba(251,191,36,0.34)_42%,rgba(249,115,22,0.28)_64%,rgba(251,146,60,0.3)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.48),0_0_28px_rgba(249,115,22,0.22),0_20px_48px_rgba(251,146,60,0.2)]"
+              : isDailyCrownBadge
+                ? "border-cyan-200 bg-[radial-gradient(circle_at_top,rgba(250,254,255,0.99)_0%,rgba(254,240,138,0.38)_18%,rgba(103,232,249,0.28)_40%,rgba(14,116,144,0.32)_64%,rgba(8,47,73,0.94)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(103,232,249,0.42),0_0_30px_rgba(34,211,238,0.24),0_20px_48px_rgba(8,145,178,0.26)]"
+                : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,252,235,0.99)_0%,rgba(253,224,71,0.42)_22%,rgba(251,191,36,0.34)_42%,rgba(249,115,22,0.28)_64%,rgba(251,146,60,0.3)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.48),0_0_28px_rgba(249,115,22,0.22),0_20px_48px_rgba(251,146,60,0.2)]"
             : tone.shell
         } ${
-          isLegendaryManualBadge
+          isSignatureBadge
             ? isBestestestBadge
               ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.5),transparent_22%),radial-gradient(circle_at_80%_18%,rgba(244,114,182,0.28),transparent_22%),repeating-linear-gradient(135deg,rgba(236,72,153,0.14)_0,rgba(236,72,153,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(236,72,153,0.24),transparent_62%)] after:blur-xl after:content-['']"
-              : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_16%,rgba(255,255,255,0.52),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(251,191,36,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(249,115,22,0.1)_0,rgba(249,115,22,0.1)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,146,60,0.22),transparent_62%)] after:blur-xl after:content-['']"
+              : isDailyCrownBadge
+                ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_16%,rgba(255,255,255,0.48),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(103,232,249,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(103,232,249,0.09)_0,rgba(103,232,249,0.09)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(34,211,238,0.2),transparent_62%)] after:blur-xl after:content-['']"
+                : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_16%,rgba(255,255,255,0.52),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(251,191,36,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(249,115,22,0.1)_0,rgba(249,115,22,0.1)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,146,60,0.22),transparent_62%)] after:blur-xl after:content-['']"
             : "shadow-[0_16px_30px_rgba(15,23,42,0.11)]"
         }`}
       >
@@ -625,10 +660,12 @@ function FeaturedBadgeSlot({
         <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.26),transparent_52%)]" />
         <div
           className={`relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-white/50 ${
-            isLegendaryManualBadge
+            isSignatureBadge
               ? isBestestestBadge
                 ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_22px_rgba(244,114,182,0.42)]"
-                : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_22px_rgba(56,189,248,0.38)]"
+                : isDailyCrownBadge
+                  ? "bg-[linear-gradient(145deg,#fefce8_0%,#fde68a_18%,#a5f3fc_48%,#06b6d4_74%,#164e63_100%)] text-cyan-950 shadow-[0_0_22px_rgba(34,211,238,0.3)]"
+                  : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_22px_rgba(56,189,248,0.38)]"
               : tone.icon
           }`}
         >
@@ -647,7 +684,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isLegendaryManualBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : "mx-auto inline-flex items-center rounded-[12px] border border-amber-200/90 bg-[linear-gradient(135deg,rgba(255,251,235,0.96)_0%,rgba(253,230,138,0.98)_22%,rgba(251,191,36,0.94)_58%,rgba(249,115,22,0.9)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.32),0_10px_24px_rgba(249,115,22,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
+          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isSignatureBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : isDailyCrownBadge ? "mx-auto inline-flex items-center rounded-[12px] border border-cyan-100/80 bg-[linear-gradient(135deg,rgba(254,252,232,0.98)_0%,rgba(253,224,71,0.9)_18%,rgba(165,243,252,0.96)_48%,rgba(34,211,238,0.88)_72%,rgba(8,47,73,0.86)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-cyan-950 shadow-[0_0_0_1px_rgba(103,232,249,0.26),0_10px_24px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.22)]" : "mx-auto inline-flex items-center rounded-[12px] border border-amber-200/90 bg-[linear-gradient(135deg,rgba(255,251,235,0.96)_0%,rgba(253,230,138,0.98)_22%,rgba(251,191,36,0.94)_58%,rgba(249,115,22,0.9)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.32),0_10px_24px_rgba(249,115,22,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
             {badge.title}
           </p>
         </div>
@@ -675,7 +712,7 @@ function FeaturedBadgeSlot({
             {badge.description}
           </p>
         ) : null}
-        <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+        <p className={`mt-2 text-center text-[10px] font-black uppercase tracking-[0.08em] ${isDailyCrownBadge ? "text-cyan-700" : "text-sky-700"}`}>
           Earned {formatBadgeAwardDate(badge.awardedAt)}
         </p>
       </div>
@@ -1332,7 +1369,9 @@ function ProfileBadgeCard({
 }) {
   const isCreatorBadge = badge.badgeKey === "creator";
   const isBestestestBadge = badge.badgeKey === "bestestest";
+  const isDailyCrownBadge = badge.badgeKey === "first_place_finish";
   const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
+  const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge;
   const isPinned = actionLabel === "Featured";
   const tone = locked
     ? {
@@ -1342,19 +1381,25 @@ function ProfileBadgeCard({
         meta: "text-slate-500",
         aura: "",
       }
-    : isLegendaryManualBadge
+    : isSignatureBadge
       ? {
           shell:
             isBestestestBadge
               ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.99)_0%,rgba(244,114,182,0.36)_20%,rgba(168,85,247,0.34)_44%,rgba(91,33,182,0.46)_68%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.42),0_0_34px_rgba(168,85,247,0.24),0_24px_52px_rgba(91,33,182,0.38),inset_0_1px_0_rgba(255,255,255,0.24)]"
-              : "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.4)_18%,rgba(125,211,252,0.32)_38%,rgba(37,99,235,0.34)_62%,rgba(8,47,73,0.9)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(125,211,252,0.42),0_0_34px_rgba(56,189,248,0.24),0_24px_52px_rgba(30,64,175,0.34),inset_0_1px_0_rgba(255,255,255,0.28)]",
+              : isDailyCrownBadge
+                ? "border-cyan-200 bg-[radial-gradient(circle_at_top,rgba(250,254,255,0.99)_0%,rgba(254,240,138,0.42)_18%,rgba(165,243,252,0.32)_40%,rgba(8,145,178,0.34)_64%,rgba(8,47,73,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(103,232,249,0.42),0_0_34px_rgba(34,211,238,0.22),0_24px_52px_rgba(8,145,178,0.32),inset_0_1px_0_rgba(255,255,255,0.28)]"
+                : "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.4)_18%,rgba(125,211,252,0.32)_38%,rgba(37,99,235,0.34)_62%,rgba(8,47,73,0.9)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(125,211,252,0.42),0_0_34px_rgba(56,189,248,0.24),0_24px_52px_rgba(30,64,175,0.34),inset_0_1px_0_rgba(255,255,255,0.28)]",
           icon: isBestestestBadge
             ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_24px_rgba(244,114,182,0.46)]"
-            : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_24px_rgba(56,189,248,0.42)]",
-          meta: isBestestestBadge ? "text-amber-100" : "text-sky-950/90",
+            : isDailyCrownBadge
+              ? "bg-[linear-gradient(145deg,#fefce8_0%,#fde68a_18%,#a5f3fc_48%,#06b6d4_74%,#164e63_100%)] text-cyan-950 shadow-[0_0_24px_rgba(34,211,238,0.34)]"
+              : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_24px_rgba(56,189,248,0.42)]",
+          meta: isBestestestBadge ? "text-amber-100" : isDailyCrownBadge ? "text-cyan-100/90" : "text-sky-950/90",
           aura: isBestestestBadge
             ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(244,114,182,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(244,114,182,0.1)_0,rgba(244,114,182,0.1)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(168,85,247,0.24),transparent_60%)] after:blur-xl after:content-['']"
-            : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(125,211,252,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(56,189,248,0.08)_0,rgba(56,189,248,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(56,189,248,0.24),transparent_60%)] after:blur-xl after:content-['']",
+            : isDailyCrownBadge
+              ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(103,232,249,0.18),transparent_22%),repeating-linear-gradient(135deg,rgba(103,232,249,0.08)_0,rgba(103,232,249,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(34,211,238,0.22),transparent_60%)] after:blur-xl after:content-['']"
+              : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(125,211,252,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(56,189,248,0.08)_0,rgba(56,189,248,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(56,189,248,0.24),transparent_60%)] after:blur-xl after:content-['']",
         }
       : {
           ...getBadgeToneClasses(badge.tone),
@@ -1431,7 +1476,7 @@ function ProfileBadgeCard({
                 ? "text-slate-600"
                 : isCreatorBadge
                   ? "text-sky-950/90"
-                  : isLegendaryManualBadge
+                  : isSignatureBadge
                     ? "text-amber-50/90"
                     : "text-slate-700"
             }`}
@@ -1470,15 +1515,19 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
         const tone = getBadgeToneClasses(badge.tone);
         const isCreatorBadge = badge.key === "creator";
         const isBestestestBadge = badge.key === "bestestest";
+        const isDailyCrownBadge = badge.key === "first_place_finish";
         const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
+        const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge;
         return (
           <span
             key={badge.key}
             className={`relative inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/75 shadow-[0_8px_16px_rgba(15,23,42,0.12)] ${
-              isLegendaryManualBadge
+              isSignatureBadge
                 ? isBestestestBadge
                   ? "bg-[radial-gradient(circle_at_30%_28%,#fff1f2_0%,#f9a8d4_16%,#f472b6_38%,#a855f7_60%,#581c87_82%,#111827_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.58),0_0_16px_rgba(168,85,247,0.52),0_12px_24px_rgba(91,33,182,0.38)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(244,114,182,0.52),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
-                  : "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#7dd3fc_42%,#2563eb_64%,#1e3a8a_84%,#082f49_100%)] text-sky-950 shadow-[0_0_0_1px_rgba(125,211,252,0.58),0_0_16px_rgba(56,189,248,0.54),0_12px_24px_rgba(30,64,175,0.34)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(56,189,248,0.54),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
+                  : isDailyCrownBadge
+                    ? "bg-[radial-gradient(circle_at_30%_28%,#fefce8_0%,#fde68a_18%,#a5f3fc_42%,#06b6d4_66%,#164e63_86%,#082f49_100%)] text-cyan-950 shadow-[0_0_0_1px_rgba(103,232,249,0.58),0_0_16px_rgba(34,211,238,0.48),0_12px_24px_rgba(8,145,178,0.32)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(34,211,238,0.48),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
+                    : "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#7dd3fc_42%,#2563eb_64%,#1e3a8a_84%,#082f49_100%)] text-sky-950 shadow-[0_0_0_1px_rgba(125,211,252,0.58),0_0_16px_rgba(56,189,248,0.54),0_12px_24px_rgba(30,64,175,0.34)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(56,189,248,0.54),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
                 : tone.icon
             }`}
             title={badge.title}
@@ -1630,6 +1679,10 @@ export default function HomePage() {
   );
   const [optimalLoading, setOptimalLoading] = useState(false);
   const [optimalError, setOptimalError] = useState<string | null>(null);
+  const [currentLeaderLineup, setCurrentLeaderLineup] =
+    useState<CurrentLeaderLineupResponse | null>(null);
+  const [currentLeaderLoading, setCurrentLeaderLoading] = useState(false);
+  const [currentLeaderError, setCurrentLeaderError] = useState<string | null>(null);
   const [submissionResult, setSubmissionResult] = useState<SubmissionResponse | null>(
     null
   );
@@ -2058,6 +2111,9 @@ export default function HomePage() {
         setOptimalLineup(null);
         setOptimalError(null);
         setOptimalLoading(false);
+        setCurrentLeaderLineup(null);
+        setCurrentLeaderError(null);
+        setCurrentLeaderLoading(false);
         setSubmissionResult(null);
         setSubmissionViewMode(null);
         setLeaderboard([]);
@@ -2381,7 +2437,7 @@ export default function HomePage() {
         );
       case "team":
         return (player.theme_team_abbrs ?? []).some(
-          (teamAbbr) => String(teamAbbr).toUpperCase() === ruleValue
+          (teamAbbr) => teamAbbrMatches(String(teamAbbr), ruleValue)
         );
       case "conference":
         return (player.theme_conferences ?? []).some(
@@ -3169,6 +3225,9 @@ export default function HomePage() {
       setOptimalLineup(null);
       setOptimalError(null);
       setOptimalLoading(false);
+      setCurrentLeaderLineup(null);
+      setCurrentLeaderError(null);
+      setCurrentLeaderLoading(false);
       setSubmissionResult(null);
       setSubmissionViewMode(null);
       setLeaderboard([]);
@@ -3179,40 +3238,81 @@ export default function HomePage() {
 
     const controller = new AbortController();
 
-    async function loadOptimalLineup() {
+    async function loadComparisonLineup() {
       try {
-        setOptimalLoading(true);
-        setOptimalError(null);
         const params = selectedDate
           ? `?date=${encodeURIComponent(selectedDate)}`
           : "";
-        const response = await fetch(withModeParam(`/api/optimal-lineup${params}`), {
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        const leaderboardFinalized = Boolean(puzzleData?.leaderboard_finalized);
+
+        if (leaderboardFinalized) {
+          setCurrentLeaderLineup(null);
+          setCurrentLeaderError(null);
+          setCurrentLeaderLoading(false);
+          setOptimalLoading(true);
+          setOptimalError(null);
+          const response = await fetch(withModeParam(`/api/optimal-lineup${params}`), {
+            cache: "no-store",
+            signal: controller.signal,
+          });
+
+          if (!response.ok) {
+            const body = await response.text();
+            throw new Error(body || "Failed to load optimal lineup");
+          }
+
+          const json: OptimalLineupResponse = await response.json();
+          setOptimalLineup(json);
+          return;
+        }
+
+        setOptimalLineup(null);
+        setOptimalError(null);
+        setOptimalLoading(false);
+        setCurrentLeaderLoading(true);
+        setCurrentLeaderError(null);
+        const response = await fetch(
+          withModeParam(`/api/current-leader-lineup${params}`),
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
 
         if (!response.ok) {
           const body = await response.text();
-          throw new Error(body || "Failed to load optimal lineup");
+          throw new Error(body || "Failed to load current leader lineup");
         }
 
-        const json: OptimalLineupResponse = await response.json();
-        setOptimalLineup(json);
+        const json: CurrentLeaderLineupResponse = await response.json();
+        setCurrentLeaderLineup(json);
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
-        setOptimalLineup(null);
-        setOptimalError((error as Error).message);
+        if (puzzleData?.leaderboard_finalized) {
+          setOptimalLineup(null);
+          setOptimalError((error as Error).message);
+        } else {
+          setCurrentLeaderLineup(null);
+          setCurrentLeaderError((error as Error).message);
+        }
       } finally {
         if (!controller.signal.aborted) {
           setOptimalLoading(false);
+          setCurrentLeaderLoading(false);
         }
       }
     }
 
-    loadOptimalLineup();
+    void loadComparisonLineup();
     return () => controller.abort();
-  }, [submitted, selectedDate, withModeParam]);
+  }, [
+    submitted,
+    selectedDate,
+    puzzleData?.leaderboard_finalized,
+    submissionResult?.submission_id,
+    withModeParam,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -3305,10 +3405,9 @@ export default function HomePage() {
   }, [profileOpen, signedInUsername]);
 
   useEffect(() => {
-    if (!submitted || !optimalLineup) return;
+    if (!submitted) return;
 
     const controller = new AbortController();
-    const optimalResult = optimalLineup;
     const submissionDate = selectedDate;
     const submissionRequestKey =
       submissionViewMode === "new"
@@ -3412,7 +3511,10 @@ export default function HomePage() {
               slot_number: node.node_id,
               player_id: Number(node.player_id),
             })),
-            optimal_final_score: Number(optimalResult.optimal_final_score),
+            optimal_final_score:
+              optimalLineup?.optimal_final_score != null
+                ? Number(optimalLineup.optimal_final_score)
+                : undefined,
           }),
           signal: controller.signal,
         });
@@ -3470,7 +3572,6 @@ export default function HomePage() {
     return () => controller.abort();
   }, [
     submitted,
-    optimalLineup,
     selectedDate,
     nodes,
     browserClientToken,
@@ -3479,6 +3580,7 @@ export default function HomePage() {
     submissionViewMode,
     session?.user?.id,
     updateSession,
+    optimalLineup?.optimal_final_score,
     withModeParam,
   ]);
 
@@ -4456,12 +4558,97 @@ export default function HomePage() {
 
               <div className="rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(129,140,248,0.1)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
-                  Optimal Lineup
+                  {puzzleData?.leaderboard_finalized ? "Optimal Lineup" : "Current Leader"}
                 </p>
-                {optimalLineup ? (
+                {puzzleData?.leaderboard_finalized ? (
+                  optimalLineup ? (
+                    <>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                        The true optimal lineup unlocks after the nightly leaderboard and badge snapshot is finalized.
+                      </p>
+                      <div className="mt-4 space-y-3">
+                        {optimalLineup.optimal_lineup.map((entry) =>
+                          renderLineupEntry(
+                            entry.player,
+                            {
+                              border: "border-indigo-100",
+                              label: "text-indigo-700/80",
+                              value: "text-indigo-700",
+                            },
+                            entry.slot_rule.display_text
+                          )
+                        )}
+                      </div>
+                      <div className="mt-5 grid grid-cols-2 gap-3">
+                        <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                            Base
+                          </p>
+                          <p className="mt-1 text-lg font-black text-slate-900">
+                            {Number(optimalLineup.optimal_base_score).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
+                            )}
+                          </p>
+                        </div>
+                        <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                            Active Links
+                          </p>
+                          <p className="mt-1 text-lg font-black text-slate-900">
+                            {optimalLineup.optimal_active_links}
+                          </p>
+                        </div>
+                        <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                            Multiplier
+                          </p>
+                          <p className="mt-1 text-lg font-black text-slate-900">
+                            {Number(optimalLineup.optimal_multiplier).toFixed(2)}x
+                          </p>
+                        </div>
+                        <div className="rounded-[18px] border-[3px] border-indigo-200 bg-indigo-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(129,140,248,0.12)]">
+                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-700">
+                            Total
+                          </p>
+                          <p className="mt-1 text-lg font-black text-indigo-900">
+                            {Number(optimalLineup.optimal_final_score).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                      {optimalLoading
+                        ? "Calculating optimal lineup..."
+                        : optimalError ??
+                          "Optimal lineup becomes available after leaderboard finalization."}
+                    </div>
+                  )
+                ) : currentLeaderLineup ? (
                   <>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                      This shows the live first-place lineup right now. The true optimal lineup stays hidden until the leaderboard is finalized.
+                    </p>
+                    <div className="mt-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/90 px-4 py-3">
+                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
+                        Leader
+                      </p>
+                      <p className="mt-1 text-lg font-black text-slate-900">
+                        {currentLeaderLineup.leader.display_name}
+                      </p>
+                    </div>
                     <div className="mt-4 space-y-3">
-                      {optimalLineup.optimal_lineup.map((entry) =>
+                      {currentLeaderLineup.lineup.map((entry) =>
                         renderLineupEntry(
                           entry.player,
                           {
@@ -4479,7 +4666,7 @@ export default function HomePage() {
                           Base
                         </p>
                         <p className="mt-1 text-lg font-black text-slate-900">
-                          {Number(optimalLineup.optimal_base_score).toLocaleString(
+                          {Number(currentLeaderLineup.leader.base_score).toLocaleString(
                             undefined,
                             {
                               minimumFractionDigits: 2,
@@ -4493,7 +4680,7 @@ export default function HomePage() {
                           Active Links
                         </p>
                         <p className="mt-1 text-lg font-black text-slate-900">
-                          {optimalLineup.optimal_active_links}
+                          {currentLeaderLineup.leader.active_links}
                         </p>
                       </div>
                       <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
@@ -4501,7 +4688,7 @@ export default function HomePage() {
                           Multiplier
                         </p>
                         <p className="mt-1 text-lg font-black text-slate-900">
-                          {Number(optimalLineup.optimal_multiplier).toFixed(2)}x
+                          {Number(currentLeaderLineup.leader.multiplier).toFixed(2)}x
                         </p>
                       </div>
                       <div className="rounded-[18px] border-[3px] border-indigo-200 bg-indigo-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(129,140,248,0.12)]">
@@ -4509,7 +4696,7 @@ export default function HomePage() {
                           Total
                         </p>
                         <p className="mt-1 text-lg font-black text-indigo-900">
-                          {Number(optimalLineup.optimal_final_score).toLocaleString(
+                          {Number(currentLeaderLineup.leader.final_score).toLocaleString(
                             undefined,
                             {
                               minimumFractionDigits: 2,
@@ -4522,9 +4709,9 @@ export default function HomePage() {
                   </>
                 ) : (
                   <div className="mt-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                    {optimalLoading
-                      ? "Calculating optimal lineup..."
-                      : "Optimal lineup unavailable"}
+                    {currentLeaderLoading
+                      ? "Loading current leader lineup..."
+                      : currentLeaderError ?? "Current leader lineup unavailable"}
                   </div>
                 )}
               </div>
@@ -6665,7 +6852,10 @@ export default function HomePage() {
                   You can only submit when all 5 slots are filled with valid, unique players. Guest browsers get one submission per date per browser. Signed-in accounts get one submission per date per account.
                 </p>
                 <p>
-                  Once a lineup is submitted, that entry is locked for leaderboard purposes. You can still inspect the puzzle, compare scores, and review the optimal lineup after submitting, but you do not get another official entry for that date.
+                  Once a lineup is submitted, that entry is locked for leaderboard purposes. You can still inspect the puzzle, compare scores, and review the live leaderboard after submitting, but you do not get another official entry for that date.
+                </p>
+                <p>
+                  The current first-place lineup can still be viewed after you submit, but the true optimal lineup stays hidden until the leaderboard and badge snapshot are finalized for that puzzle date.
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Leaderboard:</span>{" "}
@@ -6687,7 +6877,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {!submitted && !rulesOpen && (
+        {!isBoardLocked && !rulesOpen && (
           <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[90] w-[min(78vw,16rem)] -translate-x-1/2 sm:hidden">
             {mobileNavigatorOpen ? (
               <div className="pointer-events-auto flex w-full items-center gap-2 rounded-[20px] border-[2px] border-sky-200 bg-white/95 px-2 py-1.5 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
@@ -6796,7 +6986,7 @@ export default function HomePage() {
           </div>
         )}
         {isAdmin && (
-          <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-4 z-[120]">
+          <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-4 z-[120] hidden md:block">
             <div className="flex items-center gap-1 rounded-full border-[2px] border-sky-100 bg-white/95 p-1 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
               <Link
                 href="/"
