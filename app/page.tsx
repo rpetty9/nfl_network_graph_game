@@ -368,6 +368,18 @@ function formatCompactScore(value: number) {
   });
 }
 
+function formatRefreshLabel(value: string | null) {
+  if (!value) return null;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return `Updated ${date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
+
 type BadgeProgressStats = {
   puzzles_submitted: number;
   leaderboard_finishes: number;
@@ -1552,6 +1564,31 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
   );
 }
 
+function DataStateBadge({
+  finalized,
+  compact = false,
+}: {
+  finalized: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-black uppercase tracking-[0.1em] ${
+        finalized
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-amber-200 bg-amber-50 text-amber-700"
+      } ${compact ? "text-[9px]" : "text-[10px]"}`}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${
+          finalized ? "bg-emerald-500" : "bg-amber-500"
+        }`}
+      />
+      {finalized ? "Finalized" : "Live"}
+    </span>
+  );
+}
+
 function RecentSubmissionList({
   submissions,
   emptyMessage,
@@ -1689,6 +1726,7 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  const [leaderboardLastUpdatedAt, setLeaderboardLastUpdatedAt] = useState<string | null>(null);
   const [leaderboardScope, setLeaderboardScope] = useState<"all" | "friends">("all");
   const [leaderboardView, setLeaderboardView] = useState<
     "today" | "yesterday" | "all-time"
@@ -1700,6 +1738,12 @@ export default function HomePage() {
   const [allTimeLeaderboardError, setAllTimeLeaderboardError] = useState<string | null>(
     null
   );
+  const [allTimeLeaderboardLastUpdatedAt, setAllTimeLeaderboardLastUpdatedAt] =
+    useState<string | null>(null);
+  const [comparisonLastUpdatedAt, setComparisonLastUpdatedAt] = useState<string | null>(
+    null
+  );
+  const [homeRecapLastUpdatedAt, setHomeRecapLastUpdatedAt] = useState<string | null>(null);
   const [publicProfileOpen, setPublicProfileOpen] = useState(false);
   const [publicProfileLoading, setPublicProfileLoading] = useState(false);
   const [publicProfileError, setPublicProfileError] = useState<string | null>(null);
@@ -2328,6 +2372,14 @@ export default function HomePage() {
         : leaderboardView === "yesterday"
           ? "No finalized top 10 is available yet."
           : "No all-time leaderboard data yet.";
+  const leaderboardFinalized = Boolean(puzzleData?.leaderboard_finalized);
+  const comparisonRefreshLabel = formatRefreshLabel(comparisonLastUpdatedAt);
+  const leaderboardRefreshLabel =
+    leaderboardView === "all-time"
+      ? formatRefreshLabel(allTimeLeaderboardLastUpdatedAt)
+      : leaderboardView === "yesterday"
+        ? formatRefreshLabel(homeRecapLastUpdatedAt)
+        : formatRefreshLabel(leaderboardLastUpdatedAt);
   const availableDates = puzzleData?.available_dates ?? [];
   const sortedAvailableDates = [...availableDates].sort();
   const minPuzzleDate = sortedAvailableDates[0] ?? "2026-03-15";
@@ -3109,6 +3161,68 @@ export default function HomePage() {
       );
   }, [nodes, playerMap, slotRuleMap]);
   const activeSlotRule = getSlotRule(activeNodeId);
+  const currentSubmissionRank = useMemo(() => {
+    if (!submissionResult) return null;
+    const index = leaderboard.findIndex(
+      (entry) => entry.submission_id === submissionResult.submission_id
+    );
+    return index >= 0 ? index + 1 : null;
+  }, [leaderboard, submissionResult]);
+  const rankAccent: "sky" | "emerald" | "indigo" | "amber" =
+    currentSubmissionRank === 1
+      ? "emerald"
+      : currentSubmissionRank != null && currentSubmissionRank <= 10
+        ? "amber"
+        : "sky";
+  const inlineRuleHints = useMemo(() => {
+    const hints = [
+      {
+        title: "Link Rule",
+        body:
+          relationshipType === "same_franchise"
+            ? `${relationshipLabel} counts franchise history, even across relocations or different eras.`
+            : relationshipType === "same_college"
+              ? `${relationshipLabel} checks pre-NFL college history for every pair in your lineup.`
+              : relationshipType === "same_draft_class"
+                ? `${relationshipLabel} only counts players actually drafted in the same year. Undrafted players do not qualify.`
+                : relationshipType === "non_super_bowl_winner"
+                  ? `${relationshipLabel} only activates when neither player has a Super Bowl win on record.`
+                  : `${relationshipLabel} is checked across all 10 player pairings in your lineup.`,
+      },
+    ];
+
+    if (positionOverlayEnabled) {
+      hints.push({
+        title: "Lineup Constraint",
+        body: "This puzzle enforces one of each fantasy position across the full lineup, so some valid slot fits may still conflict globally.",
+      });
+    } else if (qbExclusionEnabled) {
+      hints.push({
+        title: "Lineup Constraint",
+        body: "Quarterbacks are excluded from the entire lineup for this puzzle, even if a slot rule would normally allow one.",
+      });
+    } else {
+      hints.push({
+        title: "Slot Matching",
+        body: "Each slot is checked independently, so a player must satisfy that slot’s rule and the overall lineup rules at the same time.",
+      });
+    }
+
+    hints.push({
+      title: "Leaderboard State",
+      body: leaderboardFinalized
+        ? "This puzzle date is finalized, so rankings, badges, and the optimal lineup are now locked."
+        : "This puzzle date is still live. Rankings can move, and the true optimal lineup stays hidden until finalization.",
+    });
+
+    return hints;
+  }, [
+    leaderboardFinalized,
+    positionOverlayEnabled,
+    qbExclusionEnabled,
+    relationshipLabel,
+    relationshipType,
+  ]);
 
   const totalPossibleLinks = nodePairs.length;
   const linkProgressPct = activeLinkCount / totalPossibleLinks;
@@ -3300,6 +3414,7 @@ export default function HomePage() {
         if (!controller.signal.aborted) {
           setOptimalLoading(false);
           setCurrentLeaderLoading(false);
+          setComparisonLastUpdatedAt(new Date().toISOString());
         }
       }
     }
@@ -3332,6 +3447,7 @@ export default function HomePage() {
         const json = (await response.json()) as HomeRecapResponse;
         if (!controller.signal.aborted) {
           setHomeRecap(json.recap ?? null);
+          setHomeRecapLastUpdatedAt(new Date().toISOString());
         }
       } catch (error) {
         if ((error as Error).name !== "AbortError" && !controller.signal.aborted) {
@@ -3444,6 +3560,7 @@ export default function HomePage() {
 
       if (!savedSubmission) {
         setLeaderboard(fetchedLeaderboard);
+        setLeaderboardLastUpdatedAt(new Date().toISOString());
         return;
       }
 
@@ -3477,6 +3594,7 @@ export default function HomePage() {
         .slice(0, 10);
 
       setLeaderboard(mergedLeaderboard);
+      setLeaderboardLastUpdatedAt(new Date().toISOString());
     }
 
     async function saveSubmissionAndLoadLeaderboard() {
@@ -3616,6 +3734,7 @@ export default function HomePage() {
           await leaderboardResponse.json();
         if (controller.signal.aborted) return;
         setAllTimeLeaderboard(leaderboardJson.leaderboard ?? []);
+        setAllTimeLeaderboardLastUpdatedAt(new Date().toISOString());
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
@@ -3669,6 +3788,7 @@ export default function HomePage() {
         const json: { leaderboard: LeaderboardEntry[] } = await response.json();
         if (!controller.signal.aborted) {
           setLeaderboard(json.leaderboard ?? []);
+          setLeaderboardLastUpdatedAt(new Date().toISOString());
         }
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
@@ -4026,17 +4146,29 @@ export default function HomePage() {
     return (
       <div
         key={`${slotLabel ?? "player"}-${player.player_id}`}
-        className={`flex items-center justify-between gap-2 rounded-[18px] border-[3px] bg-white/90 px-3 py-3 sm:gap-4 sm:px-4 ${accentClasses.border}`}
+        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border-[3px] bg-white/92 px-3 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-4 sm:px-4 ${accentClasses.border}`}
       >
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <div className="shrink-0">{renderHeadshot(player)}</div>
+        <div className="hidden sm:flex sm:w-[82px] sm:flex-col sm:items-start sm:justify-center">
+          {slotLabel ? (
+            <span className={`inline-flex rounded-full border border-current/10 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${accentClasses.label}`}>
+              {slotLabel}
+            </span>
+          ) : null}
+          <span className={`mt-2 text-[10px] font-bold uppercase tracking-[0.08em] ${accentClasses.label}`}>
+            {player.primary_position ?? "N/A"}
+          </span>
+        </div>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="shrink-0 rounded-[16px] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eff6ff_100%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+            {renderHeadshot(player)}
+          </div>
           <div className="min-w-0">
             {slotLabel ? (
-              <p className={`text-[10px] font-black uppercase tracking-[0.08em] ${accentClasses.label}`}>
+              <p className={`text-[10px] font-black uppercase tracking-[0.08em] sm:hidden ${accentClasses.label}`}>
                 {slotLabel}
               </p>
             ) : null}
-            <p className="mt-1 truncate text-sm font-bold text-slate-900">
+            <p className="truncate text-sm font-bold text-slate-900 sm:text-[15px]">
               {player.player_name}
             </p>
             <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] ${accentClasses.label}`}>
@@ -4044,7 +4176,7 @@ export default function HomePage() {
               {player.theme_start_season ?? player.career_start_season ?? "N/A"}–
               {player.theme_end_season ?? player.career_end_season ?? "N/A"}
             </p>
-            <div className="mt-1 sm:hidden">
+            <div className="hidden">
               <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
                 Fantasy Pts
               </p>
@@ -4057,17 +4189,41 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <div className="hidden shrink-0 text-right sm:block">
-          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+        <div className="shrink-0 text-right">
+          <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-500 sm:text-[10px]">
             Fantasy Pts
           </p>
-          <p className={`mt-1 text-lg font-black ${accentClasses.value}`}>
+          <p className={`mt-1 text-base font-black sm:text-[28px] sm:leading-none ${accentClasses.value}`}>
             {Number(player.fantasy_points).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </p>
         </div>
+      </div>
+    );
+  }
+
+  function renderSubmissionMiniStat(
+    label: string,
+    value: string,
+    accent: "sky" | "emerald" | "indigo" | "amber" = "sky"
+  ) {
+    const classes =
+      accent === "emerald"
+        ? "border-emerald-200 bg-emerald-50/90 text-emerald-900 shadow-[0_10px_20px_rgba(16,185,129,0.1)]"
+        : accent === "amber"
+          ? "border-amber-200 bg-amber-50/90 text-amber-900 shadow-[0_10px_20px_rgba(245,158,11,0.1)]"
+        : accent === "indigo"
+          ? "border-indigo-200 bg-indigo-50/90 text-indigo-900 shadow-[0_10px_20px_rgba(99,102,241,0.1)]"
+          : "border-sky-100 bg-white/90 text-slate-900 shadow-[0_10px_20px_rgba(125,211,252,0.08)]";
+
+    return (
+      <div className={`rounded-[18px] border-[3px] px-4 py-3 ${classes}`}>
+        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+          {label}
+        </p>
+        <p className="mt-1 text-lg font-black">{value}</p>
       </div>
     );
   }
@@ -4404,7 +4560,8 @@ export default function HomePage() {
         </div>
 
         {submitted ? (
-          <div className="relative mx-auto mt-8 max-w-[1080px] rounded-[34px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-10 text-center shadow-[0_10px_0_rgba(52,211,153,0.08),0_14px_34px_rgba(52,211,153,0.1)] backdrop-blur-sm">
+          <div className="relative mx-auto mt-8 max-w-[1120px] overflow-hidden rounded-[38px] border-[4px] border-emerald-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.98)_0%,rgba(240,253,250,0.98)_34%,rgba(236,253,245,0.98)_68%,rgba(219,252,231,0.96)_100%)] p-6 text-center shadow-[0_10px_0_rgba(52,211,153,0.08),0_18px_48px_rgba(16,185,129,0.12)] backdrop-blur-sm md:p-10">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.16),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(52,211,153,0.12),transparent_28%)]" />
             <button
               type="button"
               onClick={handleCloseSubmittedView}
@@ -4413,80 +4570,73 @@ export default function HomePage() {
             >
               ×
             </button>
-            <p className="text-sm font-black uppercase tracking-[0.12em] text-emerald-700">
-              Lineup Submitted
-            </p>
-            <h2 className="mt-5 text-3xl font-black text-sky-700 md:text-5xl">
+            <div className="relative mx-auto flex flex-wrap items-center justify-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/85 px-4 py-2 shadow-[0_8px_22px_rgba(16,185,129,0.1)]">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" />
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                  Lineup Submitted
+                </p>
+              </div>
+              <DataStateBadge finalized={leaderboardFinalized} />
+              {comparisonRefreshLabel ? (
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/85 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                  {comparisonRefreshLabel}
+                </span>
+              ) : null}
+            </div>
+            <h2 className="relative mt-6 text-3xl font-black text-slate-900 md:text-6xl">
               Final Score
             </h2>
-            <p className="mt-6 text-6xl font-black text-sky-700 md:text-7xl">
+            <p className="relative mt-4 bg-[linear-gradient(135deg,#2563eb_0%,#0f766e_100%)] bg-clip-text text-6xl font-black text-transparent md:text-8xl">
               {formattedFinalScore}
             </p>
+            <p className="relative mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
+              Your lineup is locked in. Compare it against the live leader now, then come back after finalization to see the true optimal build.
+            </p>
 
-            <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-3">
-              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                  Base Fantasy Points
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {displayedBaseFantasyPoints.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-
-              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                  Active Links
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {displayedActiveLinkCount}
-                </p>
-              </div>
-
-              <div className="rounded-[24px] border-[3px] border-emerald-200 bg-emerald-100/70 p-5 shadow-[0_10px_20px_rgba(52,211,153,0.12)]">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">
-                  Multiplier
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-emerald-900">
-                  {displayedMultiplier.toFixed(2)}x
-                </p>
-              </div>
-            </div>
-
-            <div className="mx-auto mt-6 grid max-w-3xl gap-4 md:grid-cols-2">
-              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                  Optimal Score
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {optimalLineup
-                    ? Number(optimalLineup.optimal_final_score).toLocaleString(
-                        undefined,
-                        {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }
-                      )
-                    : optimalLoading
-                      ? "Calculating..."
-                      : "Unavailable"}
-                </p>
-              </div>
-
-              <div className="rounded-[24px] border-[3px] border-sky-100 bg-sky-50/80 p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                  Score vs Optimal
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-slate-900">
-                  {optimalPercent != null
-                    ? `${optimalPercent.toFixed(1)}%`
-                    : optimalLoading
-                      ? "Calculating..."
-                      : "Unavailable"}
-                </p>
-              </div>
+            <div className="mx-auto mt-8 grid max-w-5xl gap-3 sm:grid-cols-2 xl:grid-cols-6">
+              {renderSubmissionMiniStat(
+                leaderboardFinalized ? "Final Rank" : "Live Rank",
+                currentSubmissionRank != null ? `#${currentSubmissionRank}` : "Pending",
+                rankAccent
+              )}
+              {renderSubmissionMiniStat(
+                "Base Fantasy Points",
+                displayedBaseFantasyPoints.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              )}
+              {renderSubmissionMiniStat(
+                "Active Links",
+                displayedActiveLinkCount.toLocaleString()
+              )}
+              {renderSubmissionMiniStat(
+                "Multiplier",
+                `${displayedMultiplier.toFixed(2)}x`,
+                "emerald"
+              )}
+              {renderSubmissionMiniStat(
+                "Optimal Score",
+                puzzleData?.leaderboard_finalized && optimalLineup
+                  ? Number(optimalLineup.optimal_final_score).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : puzzleData?.leaderboard_finalized && optimalLoading
+                    ? "Calculating..."
+                    : "Locked Until Finalized",
+                "indigo"
+              )}
+              {renderSubmissionMiniStat(
+                "Score vs Optimal",
+                optimalPercent != null
+                  ? `${optimalPercent.toFixed(1)}%`
+                  : puzzleData?.leaderboard_finalized && optimalLoading
+                    ? "Calculating..."
+                    : "Pending",
+                "indigo"
+              )}
             </div>
 
             {optimalError && (
@@ -4496,10 +4646,26 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="mx-auto mt-8 grid max-w-6xl gap-6 xl:grid-cols-2">
-              <div className="rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(125,211,252,0.1)]">
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
-                  Your Lineup
+            <div className="mx-auto mt-8 grid max-w-6xl items-stretch gap-6 xl:grid-cols-2">
+              <div className="flex h-full flex-col rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 text-left shadow-[0_12px_28px_rgba(125,211,252,0.12)] md:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
+                      Your Lineup
+                    </p>
+                    <h3 className="mt-2 text-2xl font-black text-slate-900">
+                      Locked Submission
+                    </h3>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <DataStateBadge finalized={leaderboardFinalized} compact />
+                    <div className="rounded-full border border-sky-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
+                      {selectedLineupEntriesBySlot.length} Players
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                  A cleaner snapshot of the five players you locked for this puzzle. This side reflects your saved entry exactly as scored.
                 </p>
                 <div className="mt-4 space-y-3">
                   {selectedLineupEntriesBySlot.map((entry) =>
@@ -4515,56 +4681,58 @@ export default function HomePage() {
                   )}
                 </div>
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
-                      Base
-                    </p>
-                    <p className="mt-1 text-lg font-black text-slate-900">
-                      {displayedBaseFantasyPoints.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
-                      Active Links
-                    </p>
-                    <p className="mt-1 text-lg font-black text-slate-900">
-                      {displayedActiveLinkCount}
-                    </p>
-                  </div>
-                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/85 px-4 py-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-600">
-                      Multiplier
-                    </p>
-                    <p className="mt-1 text-lg font-black text-slate-900">
-                      {displayedMultiplier.toFixed(2)}x
-                    </p>
-                  </div>
-                  <div className="rounded-[18px] border-[3px] border-sky-200 bg-sky-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(125,211,252,0.12)]">
-                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                      Total
-                    </p>
-                    <p className="mt-1 text-lg font-black text-sky-900">
-                      {displayedFinalScore.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
+                  {renderSubmissionMiniStat(
+                    "Base",
+                    displayedBaseFantasyPoints.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  )}
+                  {renderSubmissionMiniStat(
+                    "Active Links",
+                    displayedActiveLinkCount.toLocaleString()
+                  )}
+                  {renderSubmissionMiniStat(
+                    "Multiplier",
+                    `${displayedMultiplier.toFixed(2)}x`
+                  )}
+                  {renderSubmissionMiniStat(
+                    "Total",
+                    displayedFinalScore.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }),
+                    "emerald"
+                  )}
                 </div>
               </div>
 
-              <div className="rounded-[26px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(129,140,248,0.1)]">
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
-                  {puzzleData?.leaderboard_finalized ? "Optimal Lineup" : "Current Leader"}
-                </p>
+              <div className="flex h-full flex-col rounded-[30px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-5 text-left shadow-[0_12px_28px_rgba(129,140,248,0.12)] md:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
+                      {puzzleData?.leaderboard_finalized ? "Optimal Lineup" : "Current Leader"}
+                    </p>
+                    <h3 className="mt-2 text-2xl font-black text-slate-900">
+                      {puzzleData?.leaderboard_finalized
+                        ? "Best Possible Build"
+                        : `Current Leader - ${currentLeaderLineup?.leader.display_name ?? "Live First Place"}`}
+                    </h3>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <DataStateBadge finalized={leaderboardFinalized} compact />
+                    {comparisonRefreshLabel ? (
+                      <span className="inline-flex items-center rounded-full border border-indigo-100 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-indigo-500">
+                        {comparisonRefreshLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
                 {puzzleData?.leaderboard_finalized ? (
                   optimalLineup ? (
                     <>
                       <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                        The true optimal lineup unlocks after the nightly leaderboard and badge snapshot is finalized.
+                        The leaderboard is finalized, so this optimal lineup is now locked and safe to reveal.
                       </p>
                       <div className="mt-4 space-y-3">
                         {optimalLineup.optimal_lineup.map((entry) =>
@@ -4580,50 +4748,32 @@ export default function HomePage() {
                         )}
                       </div>
                       <div className="mt-5 grid grid-cols-2 gap-3">
-                        <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
-                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
-                            Base
-                          </p>
-                          <p className="mt-1 text-lg font-black text-slate-900">
-                            {Number(optimalLineup.optimal_base_score).toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }
-                            )}
-                          </p>
-                        </div>
-                        <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
-                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
-                            Active Links
-                          </p>
-                          <p className="mt-1 text-lg font-black text-slate-900">
-                            {optimalLineup.optimal_active_links}
-                          </p>
-                        </div>
-                        <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
-                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
-                            Multiplier
-                          </p>
-                          <p className="mt-1 text-lg font-black text-slate-900">
-                            {Number(optimalLineup.optimal_multiplier).toFixed(2)}x
-                          </p>
-                        </div>
-                        <div className="rounded-[18px] border-[3px] border-indigo-200 bg-indigo-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(129,140,248,0.12)]">
-                          <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-700">
-                            Total
-                          </p>
-                          <p className="mt-1 text-lg font-black text-indigo-900">
-                            {Number(optimalLineup.optimal_final_score).toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }
-                            )}
-                          </p>
-                        </div>
+                        {renderSubmissionMiniStat(
+                          "Base",
+                          Number(optimalLineup.optimal_base_score).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }),
+                          "indigo"
+                        )}
+                        {renderSubmissionMiniStat(
+                          "Active Links",
+                          optimalLineup.optimal_active_links.toLocaleString(),
+                          "indigo"
+                        )}
+                        {renderSubmissionMiniStat(
+                          "Multiplier",
+                          `${Number(optimalLineup.optimal_multiplier).toFixed(2)}x`,
+                          "indigo"
+                        )}
+                        {renderSubmissionMiniStat(
+                          "Total",
+                          Number(optimalLineup.optimal_final_score).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }),
+                          "indigo"
+                        )}
                       </div>
                     </>
                   ) : (
@@ -4637,16 +4787,8 @@ export default function HomePage() {
                 ) : currentLeaderLineup ? (
                   <>
                     <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                      This shows the live first-place lineup right now. The true optimal lineup stays hidden until the leaderboard is finalized.
+                      This shows the live first-place lineup right now. Ranks can still move, and the true optimal lineup stays hidden until finalization.
                     </p>
-                    <div className="mt-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/90 px-4 py-3">
-                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
-                        Leader
-                      </p>
-                      <p className="mt-1 text-lg font-black text-slate-900">
-                        {currentLeaderLineup.leader.display_name}
-                      </p>
-                    </div>
                     <div className="mt-4 space-y-3">
                       {currentLeaderLineup.lineup.map((entry) =>
                         renderLineupEntry(
@@ -4661,50 +4803,32 @@ export default function HomePage() {
                       )}
                     </div>
                     <div className="mt-5 grid grid-cols-2 gap-3">
-                      <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
-                          Base
-                        </p>
-                        <p className="mt-1 text-lg font-black text-slate-900">
-                          {Number(currentLeaderLineup.leader.base_score).toLocaleString(
-                            undefined,
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }
-                          )}
-                        </p>
-                      </div>
-                      <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
-                          Active Links
-                        </p>
-                        <p className="mt-1 text-lg font-black text-slate-900">
-                          {currentLeaderLineup.leader.active_links}
-                        </p>
-                      </div>
-                      <div className="rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-600">
-                          Multiplier
-                        </p>
-                        <p className="mt-1 text-lg font-black text-slate-900">
-                          {Number(currentLeaderLineup.leader.multiplier).toFixed(2)}x
-                        </p>
-                      </div>
-                      <div className="rounded-[18px] border-[3px] border-indigo-200 bg-indigo-50/80 px-4 py-3 shadow-[0_8px_18px_rgba(129,140,248,0.12)]">
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-indigo-700">
-                          Total
-                        </p>
-                        <p className="mt-1 text-lg font-black text-indigo-900">
-                          {Number(currentLeaderLineup.leader.final_score).toLocaleString(
-                            undefined,
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }
-                          )}
-                        </p>
-                      </div>
+                      {renderSubmissionMiniStat(
+                        "Base",
+                        Number(currentLeaderLineup.leader.base_score).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }),
+                        "indigo"
+                      )}
+                      {renderSubmissionMiniStat(
+                        "Active Links",
+                        currentLeaderLineup.leader.active_links.toLocaleString(),
+                        "indigo"
+                      )}
+                      {renderSubmissionMiniStat(
+                        "Multiplier",
+                        `${Number(currentLeaderLineup.leader.multiplier).toFixed(2)}x`,
+                        "indigo"
+                      )}
+                      {renderSubmissionMiniStat(
+                        "Total",
+                        Number(currentLeaderLineup.leader.final_score).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }),
+                        "indigo"
+                      )}
                     </div>
                   </>
                 ) : (
@@ -4719,7 +4843,7 @@ export default function HomePage() {
 
             {submissionResult?.awarded_badges &&
             submissionResult.awarded_badges.length > 0 ? (
-              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-6 text-left shadow-[0_8px_22px_rgba(16,185,129,0.1)]">
+              <div className="badge-celebration-shell mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-6 text-left shadow-[0_8px_22px_rgba(16,185,129,0.1)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">
                   New Badges
                 </p>
@@ -4727,9 +4851,18 @@ export default function HomePage() {
                   You earned {submissionResult.awarded_badges.length} new badge
                   {submissionResult.awarded_badges.length === 1 ? "" : "s"}
                 </h3>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                  Badges lock when official results lock. Big finishes and milestones now show up with a little more ceremony.
+                </p>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {submissionResult.awarded_badges.map((badge) => (
-                    <ProfileBadgeCard key={badge.badgeKey} badge={badge} compact />
+                  {submissionResult.awarded_badges.map((badge, index) => (
+                    <div
+                      key={badge.badgeKey}
+                      className="badge-reveal-card"
+                      style={{ animationDelay: `${index * 120}ms` }}
+                    >
+                      <ProfileBadgeCard badge={badge} compact />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -5381,6 +5514,34 @@ export default function HomePage() {
                     {submissionError}
                   </div>
                 )}
+                <div className="mb-4 grid gap-3 md:grid-cols-3">
+                  {inlineRuleHints.map((hint) => (
+                    <div
+                      key={hint.title}
+                      className="rounded-[20px] border-[3px] border-sky-100 bg-white/90 px-4 py-3 text-left shadow-[0_10px_20px_rgba(125,211,252,0.08)]"
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                        {hint.title}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                        {hint.body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+                  <DataStateBadge finalized={leaderboardFinalized} />
+                  {leaderboardRefreshLabel ? (
+                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                      {leaderboardRefreshLabel}
+                    </span>
+                  ) : null}
+                  <span className="inline-flex items-center rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                    {leaderboardFinalized
+                      ? "Badges Locked"
+                      : "Badges Award After Finalization"}
+                  </span>
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
@@ -6557,6 +6718,19 @@ export default function HomePage() {
                     >
                       {leaderboardHeading}
                     </h2>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <DataStateBadge
+                        finalized={
+                          leaderboardView === "today" ? leaderboardFinalized : true
+                        }
+                        compact
+                      />
+                      {leaderboardRefreshLabel ? (
+                        <span className="inline-flex items-center rounded-full border border-amber-100 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          {leaderboardRefreshLabel}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
                 <button
@@ -7028,6 +7202,38 @@ export default function HomePage() {
           transform: translate(-50%, -50%);
         }
 
+        .badge-celebration-shell {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .badge-celebration-shell::before {
+          content: "";
+          position: absolute;
+          inset: -30%;
+          background: radial-gradient(circle, rgba(16, 185, 129, 0.12), transparent 55%);
+          animation: badge-shell-pulse 2.8s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .badge-reveal-card {
+          position: relative;
+          animation: badge-reveal-rise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .badge-reveal-card::after {
+          content: "";
+          position: absolute;
+          inset: -8px;
+          border-radius: 28px;
+          background: radial-gradient(circle, rgba(52, 211, 153, 0.18), transparent 62%);
+          filter: blur(16px);
+          opacity: 0;
+          animation: badge-reveal-glow 900ms ease-out both;
+          animation-delay: inherit;
+          pointer-events: none;
+        }
+
         @keyframes full-link-burst {
           0% {
             opacity: 0;
@@ -7043,6 +7249,43 @@ export default function HomePage() {
                 calc(-50% + var(--burst-y))
               )
               scale(1.15) rotate(var(--burst-rotate));
+          }
+        }
+
+        @keyframes badge-reveal-rise {
+          0% {
+            opacity: 0;
+            transform: translateY(18px) scale(0.96);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes badge-reveal-glow {
+          0% {
+            opacity: 0;
+            transform: scale(0.92);
+          }
+          35% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.08);
+          }
+        }
+
+        @keyframes badge-shell-pulse {
+          0%,
+          100% {
+            opacity: 0.65;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.04);
           }
         }
 
