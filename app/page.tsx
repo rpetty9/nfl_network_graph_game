@@ -5215,7 +5215,7 @@ export default function HomePage() {
               </div>
 
               <div className="absolute inset-x-4 top-4 z-40 hidden items-start justify-between gap-3 sm:flex">
-                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-4 py-1.5 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
+                <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-4 py-2 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
                   <select
                     value={selectedDate}
@@ -5230,7 +5230,7 @@ export default function HomePage() {
                         );
                       }
                     }}
-                    className="min-w-0 bg-transparent text-center text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 outline-none"
+                    className="min-w-0 bg-transparent pr-2 text-center text-[15px] font-black uppercase tracking-[0.06em] text-sky-700 outline-none"
                     aria-label={`Puzzle date, currently ${formattedPuzzleDate}`}
                   >
                     {renderedDateOptions.map((dateValue) => (
