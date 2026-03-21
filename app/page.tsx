@@ -173,6 +173,7 @@ type SubmissionResponse = {
   final_score: number;
   optimal_final_score?: number | null;
   percent_of_optimal: number | null;
+  placement?: number | null;
   submitted_at?: string;
   lineup?: Array<{
     slot_number: number;
@@ -191,6 +192,7 @@ type LeaderboardEntry = {
   final_score: number;
   optimal_final_score: number | null;
   percent_of_optimal: number | null;
+  placement?: number | null;
   submitted_at: string;
   featured_badges?: BadgeKey[];
 };
@@ -3163,10 +3165,16 @@ export default function HomePage() {
   const activeSlotRule = getSlotRule(activeNodeId);
   const currentSubmissionRank = useMemo(() => {
     if (!submissionResult) return null;
+    if (submissionResult.placement != null) {
+      return Number(submissionResult.placement);
+    }
     const index = leaderboard.findIndex(
       (entry) => entry.submission_id === submissionResult.submission_id
     );
-    return index >= 0 ? index + 1 : null;
+    if (index >= 0) {
+      return Number(leaderboard[index]?.placement ?? index + 1);
+    }
+    return null;
   }, [leaderboard, submissionResult]);
   const rankAccent: "sky" | "emerald" | "indigo" | "amber" =
     currentSubmissionRank === 1
@@ -3303,10 +3311,16 @@ export default function HomePage() {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+  const liveComparisonScore = currentLeaderLineup?.leader.final_score != null
+    ? Number(currentLeaderLineup.leader.final_score)
+    : null;
   const optimalPercent = submissionResult?.percent_of_optimal != null
     ? Number(submissionResult.percent_of_optimal)
     : optimalLineup?.optimal_final_score
       ? (displayedFinalScore / Number(optimalLineup.optimal_final_score)) * 100
+      : null;
+  const liveLeaderPercent = liveComparisonScore && liveComparisonScore > 0
+    ? (displayedFinalScore / liveComparisonScore) * 100
     : null;
   const isLockedForSelectedDate = isTestingMode
     ? false
@@ -3539,7 +3553,7 @@ export default function HomePage() {
     async function loadLeaderboardForSubmission(savedSubmission?: SubmissionResponse | null) {
       const leaderboardResponse = await fetch(
         withModeParam(
-          `/api/leaderboard?date=${encodeURIComponent(submissionDate)}&limit=10`
+          `/api/leaderboard?date=${encodeURIComponent(submissionDate)}&limit=25`
         ),
         {
           cache: "no-store",
@@ -3580,6 +3594,10 @@ export default function HomePage() {
           savedSubmission.percent_of_optimal != null
             ? Number(savedSubmission.percent_of_optimal)
             : null,
+        placement:
+          savedSubmission.placement != null
+            ? Number(savedSubmission.placement)
+            : null,
         submitted_at: savedSubmission.submitted_at ?? new Date().toISOString(),
         featured_badges: [],
       };
@@ -3591,7 +3609,11 @@ export default function HomePage() {
         ),
       ]
         .sort(compareLeaderboardEntries)
-        .slice(0, 10);
+        .slice(0, 25)
+        .map((entry, index) => ({
+          ...entry,
+          placement: Number(entry.placement ?? index + 1),
+        }));
 
       setLeaderboard(mergedLeaderboard);
       setLeaderboardLastUpdatedAt(new Date().toISOString());
@@ -4146,7 +4168,7 @@ export default function HomePage() {
     return (
       <div
         key={`${slotLabel ?? "player"}-${player.player_id}`}
-        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border-[3px] bg-white/92 px-3 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-4 sm:px-4 ${accentClasses.border}`}
+        className={`grid grid-cols-1 gap-3 rounded-[22px] border-[3px] bg-white/92 px-3 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:px-4 ${accentClasses.border}`}
       >
         <div className="hidden sm:flex sm:w-[82px] sm:flex-col sm:items-start sm:justify-center">
           {slotLabel ? (
@@ -4189,11 +4211,11 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <div className="shrink-0 text-right">
+        <div className="flex items-end justify-between gap-3 border-t border-slate-100 pt-2 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
           <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-500 sm:text-[10px]">
             Fantasy Pts
           </p>
-          <p className={`mt-1 text-base font-black sm:text-[28px] sm:leading-none ${accentClasses.value}`}>
+          <p className={`mt-1 text-right text-[22px] font-black leading-none sm:text-[28px] ${accentClasses.value}`}>
             {Number(player.fantasy_points).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
@@ -4617,24 +4639,37 @@ export default function HomePage() {
                 "emerald"
               )}
               {renderSubmissionMiniStat(
-                "Optimal Score",
-                puzzleData?.leaderboard_finalized && optimalLineup
+                leaderboardFinalized ? "Optimal Score" : "Leader Score",
+                leaderboardFinalized && optimalLineup
                   ? Number(optimalLineup.optimal_final_score).toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })
-                  : puzzleData?.leaderboard_finalized && optimalLoading
+                  : leaderboardFinalized && optimalLoading
                     ? "Calculating..."
-                    : "Locked Until Finalized",
+                    : liveComparisonScore != null
+                      ? liveComparisonScore.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      : currentLeaderLoading
+                        ? "Loading..."
+                        : "Waiting on Leaderboard",
                 "indigo"
               )}
               {renderSubmissionMiniStat(
-                "Score vs Optimal",
-                optimalPercent != null
-                  ? `${optimalPercent.toFixed(1)}%`
-                  : puzzleData?.leaderboard_finalized && optimalLoading
-                    ? "Calculating..."
-                    : "Pending",
+                leaderboardFinalized ? "Score vs Optimal" : "Score vs Leader",
+                leaderboardFinalized
+                  ? optimalPercent != null
+                    ? `${optimalPercent.toFixed(1)}%`
+                    : optimalLoading
+                      ? "Calculating..."
+                      : "Pending"
+                  : liveLeaderPercent != null
+                    ? `${liveLeaderPercent.toFixed(1)}%`
+                    : currentLeaderLoading
+                      ? "Loading..."
+                      : "Waiting on Leaderboard",
                 "indigo"
               )}
             </div>
@@ -4970,7 +5005,7 @@ export default function HomePage() {
                     >
                       <div className="min-w-0 w-full sm:w-auto">
                         <p className="text-[9px] font-black uppercase tracking-[0.08em] text-amber-700">
-                          #{index + 1}
+                          #{entry.placement ?? index + 1}
                         </p>
                         <p className="mt-0.5 truncate text-[13px] font-bold text-slate-900 sm:text-sm">
                           {entry.display_name}
@@ -5514,40 +5549,12 @@ export default function HomePage() {
                     {submissionError}
                   </div>
                 )}
-                <div className="mb-4 grid gap-3 md:grid-cols-3">
-                  {inlineRuleHints.map((hint) => (
-                    <div
-                      key={hint.title}
-                      className="rounded-[20px] border-[3px] border-sky-100 bg-white/90 px-4 py-3 text-left shadow-[0_10px_20px_rgba(125,211,252,0.08)]"
-                    >
-                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                        {hint.title}
-                      </p>
-                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                        {hint.body}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-                  <DataStateBadge finalized={leaderboardFinalized} />
-                  {leaderboardRefreshLabel ? (
-                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
-                      {leaderboardRefreshLabel}
-                    </span>
-                  ) : null}
-                  <span className="inline-flex items-center rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
-                    {leaderboardFinalized
-                      ? "Badges Locked"
-                      : "Badges Award After Finalization"}
-                  </span>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
                   <button
                     type="button"
                     onClick={isLockedForSelectedDate ? () => void handleShowSubmission() : handleSubmit}
                     disabled={isLockedForSelectedDate ? savedSubmissionLoading : !canSubmit}
-                    className={`sm:order-2 rounded-2xl px-6 py-4 text-sm font-bold transition ${
+                    className={`rounded-2xl px-6 py-4 text-sm font-bold transition ${
                       isLockedForSelectedDate || canSubmit
                         ? "border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] hover:-translate-y-0.5 hover:brightness-105"
                         : "cursor-not-allowed border border-white/10 bg-white/10 text-slate-400 shadow-none"
@@ -5562,7 +5569,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setRulesOpen(true)}
-                    className="sm:order-1 rounded-2xl border-[3px] border-sky-200 bg-white/90 px-6 py-4 text-sm font-bold text-sky-700 shadow-[0_8px_18px_rgba(125,211,252,0.14)] transition hover:-translate-y-0.5 hover:bg-sky-50"
+                    className="rounded-2xl border-[3px] border-sky-200 bg-white/90 px-6 py-4 text-sm font-bold text-sky-700 shadow-[0_8px_18px_rgba(125,211,252,0.14)] transition hover:-translate-y-0.5 hover:bg-sky-50"
                   >
                     Rules &amp; Info
                   </button>
@@ -5574,6 +5581,34 @@ export default function HomePage() {
                       : `Locked lineup loaded for ${formatPuzzleDateLabel(selectedDate)} on this browser. You can still review that saved entry, but each guest only gets one official score per day.`}
                   </p>
                 )}
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                  <DataStateBadge finalized={leaderboardFinalized} />
+                  {leaderboardRefreshLabel ? (
+                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+                      {leaderboardRefreshLabel}
+                    </span>
+                  ) : null}
+                  <span className="inline-flex items-center rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                    {leaderboardFinalized
+                      ? "Badges Locked"
+                      : "Badges Award After Finalization"}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {inlineRuleHints.map((hint) => (
+                    <div
+                      key={hint.title}
+                      className="rounded-[20px] border-[3px] border-sky-100 bg-white/90 px-4 py-3 text-left shadow-[0_10px_20px_rgba(125,211,252,0.08)]"
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
+                        {hint.title}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                        {hint.body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
           </>
         )}
@@ -6826,7 +6861,7 @@ export default function HomePage() {
                         >
                           <div className="min-w-0 w-full sm:w-auto">
                             <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-700">
-                              #{index + 1}
+                              #{entry.placement ?? index + 1}
                             </p>
                             <p className="mt-1 truncate text-sm font-bold text-slate-900">
                               {entry.display_name}

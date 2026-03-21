@@ -70,6 +70,34 @@ type ExistingSubmissionRow = {
   percent_of_optimal: string | null;
 };
 
+async function loadSubmissionPlacement(input: {
+  puzzleId: number | string;
+  submissionId: number;
+  testingMode?: boolean;
+}) {
+  const tableName = input.testingMode ? "testing_submission" : "puzzle_submission";
+  const idColumn = input.testingMode ? "testing_submission_id" : "submission_id";
+  const placementResult = await pool.query<{ placement: number }>(
+    `
+    SELECT placement
+    FROM (
+      SELECT
+        ${idColumn} AS submission_id,
+        ROW_NUMBER() OVER (
+          ORDER BY final_score DESC, submitted_at ASC
+        )::int AS placement
+      FROM ${tableName}
+      WHERE puzzle_id = $1
+    ) ranked
+    WHERE submission_id = $2
+    LIMIT 1
+    `,
+    [Number(input.puzzleId), Number(input.submissionId)]
+  );
+
+  return placementResult.rows[0]?.placement ?? null;
+}
+
 type ExistingSubmissionPlayerRow = {
   slot_number: number;
   player_id: string;
@@ -246,6 +274,12 @@ async function loadExistingSubmission(input: {
     [Number(submission.submission_id)]
   );
 
+  const placement = await loadSubmissionPlacement({
+    puzzleId: puzzle.puzzle_id,
+    submissionId: Number(submission.submission_id),
+    testingMode: input.testingMode,
+  });
+
   return {
     submission_id: Number(submission.submission_id),
     display_name: submission.display_name,
@@ -263,6 +297,7 @@ async function loadExistingSubmission(input: {
       slot_number: Number(row.slot_number),
       player_id: row.player_id,
     })),
+    placement,
     awarded_badges: [],
   };
 }
@@ -822,6 +857,12 @@ export async function POST(request: NextRequest) {
           })
         : [];
 
+    const placement = await loadSubmissionPlacement({
+      puzzleId: puzzle.puzzle_id,
+      submissionId: Number(submission.submission_id),
+      testingMode,
+    });
+
     return NextResponse.json({
       submission_id: submission.submission_id,
       display_name: submission.display_name,
@@ -831,6 +872,7 @@ export async function POST(request: NextRequest) {
       final_score: finalScore,
       optimal_final_score: optimalFinalScore,
       percent_of_optimal: percentOfOptimal,
+      placement,
       submitted_at: submission.submitted_at,
       awarded_badges: awardedBadges,
     });

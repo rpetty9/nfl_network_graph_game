@@ -138,48 +138,60 @@ export async function GET(request: NextRequest) {
       scope === "friends"
         ? await pool.query(
             `
-            SELECT
-              ps.user_id::text AS user_id,
-              ${testingMode ? "ps.testing_submission_id" : "ps.submission_id"} AS submission_id,
-              ps.display_name,
-              ps.base_score,
-              ps.active_links,
-              ps.multiplier,
-              ps.final_score,
-              ps.optimal_final_score,
-              ps.percent_of_optimal,
-              ps.submitted_at,
-              COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
-            FROM ${testingMode ? "testing_submission" : "puzzle_submission"} ps
-            JOIN app_user au
-              ON ps.user_id = au.user_id
-            WHERE ps.puzzle_id = $1
-              AND ps.user_id IS NOT NULL
-              AND ps.user_id = ANY($2::bigint[])
-            ORDER BY ps.final_score DESC, ps.submitted_at ASC
+            SELECT *
+            FROM (
+              SELECT
+                ps.user_id::text AS user_id,
+                ${testingMode ? "ps.testing_submission_id" : "ps.submission_id"} AS submission_id,
+                ps.display_name,
+                ps.base_score,
+                ps.active_links,
+                ps.multiplier,
+                ps.final_score,
+                ps.optimal_final_score,
+                ps.percent_of_optimal,
+                ps.submitted_at,
+                COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges,
+                ROW_NUMBER() OVER (
+                  ORDER BY ps.final_score DESC, ps.submitted_at ASC
+                )::int AS placement
+              FROM ${testingMode ? "testing_submission" : "puzzle_submission"} ps
+              JOIN app_user au
+                ON ps.user_id = au.user_id
+              WHERE ps.puzzle_id = $1
+                AND ps.user_id IS NOT NULL
+                AND ps.user_id = ANY($2::bigint[])
+            ) ranked
+            ORDER BY placement ASC
             LIMIT $3
             `,
             [puzzle.puzzle_id, friendUserIds.map(Number), limit]
           )
         : await pool.query(
             `
-            SELECT
-              ps.user_id::text AS user_id,
-              ${testingMode ? "ps.testing_submission_id" : "ps.submission_id"} AS submission_id,
-              COALESCE(au.username, ps.display_name) AS display_name,
-              ps.base_score,
-              ps.active_links,
-              ps.multiplier,
-              ps.final_score,
-              ps.optimal_final_score,
-              ps.percent_of_optimal,
-              ps.submitted_at,
-              COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges
-            FROM ${testingMode ? "testing_submission" : "puzzle_submission"} ps
-            LEFT JOIN app_user au
-              ON ps.user_id = au.user_id
-            WHERE ps.puzzle_id = $1
-            ORDER BY ps.final_score DESC, ps.submitted_at ASC
+            SELECT *
+            FROM (
+              SELECT
+                ps.user_id::text AS user_id,
+                ${testingMode ? "ps.testing_submission_id" : "ps.submission_id"} AS submission_id,
+                COALESCE(au.username, ps.display_name) AS display_name,
+                ps.base_score,
+                ps.active_links,
+                ps.multiplier,
+                ps.final_score,
+                ps.optimal_final_score,
+                ps.percent_of_optimal,
+                ps.submitted_at,
+                COALESCE(au.featured_badges, ARRAY[]::text[]) AS featured_badges,
+                ROW_NUMBER() OVER (
+                  ORDER BY ps.final_score DESC, ps.submitted_at ASC
+                )::int AS placement
+              FROM ${testingMode ? "testing_submission" : "puzzle_submission"} ps
+              LEFT JOIN app_user au
+                ON ps.user_id = au.user_id
+              WHERE ps.puzzle_id = $1
+            ) ranked
+            ORDER BY placement ASC
             LIMIT $2
             `,
             [puzzle.puzzle_id, limit]
