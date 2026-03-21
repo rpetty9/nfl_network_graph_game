@@ -5156,7 +5156,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-          <div className="relative mt-4 mx-auto h-[500px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] px-1.5 pb-1 pt-3 shadow-[0_10px_0_rgba(125,211,252,0.08),0_16px_38px_rgba(125,211,252,0.12)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:px-2 md:pb-2 md:pt-4">
+          <div className="relative mt-4 mx-auto h-[435px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] px-1.5 pb-1 pt-3 shadow-[0_10px_0_rgba(125,211,252,0.08),0_16px_38px_rgba(125,211,252,0.12)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:px-2 md:pb-2 md:pt-4">
               <div className="absolute left-3 top-3 z-40 sm:hidden">
                 <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
