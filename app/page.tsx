@@ -4168,7 +4168,7 @@ export default function HomePage() {
     return (
       <div
         key={`${slotLabel ?? "player"}-${player.player_id}`}
-        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[22px] border-[3px] bg-white/92 px-3 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-4 sm:px-4 ${accentClasses.border}`}
+        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-[22px] border-[3px] bg-white/92 px-2.5 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:gap-2.5 sm:px-3 sm:py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-4 md:px-4 ${accentClasses.border}`}
       >
         <div className="hidden sm:flex sm:w-[82px] sm:flex-col sm:items-start sm:justify-center">
           {slotLabel ? (
@@ -4180,17 +4180,17 @@ export default function HomePage() {
             {player.primary_position ?? "N/A"}
           </span>
         </div>
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5 md:gap-3">
           <div className="shrink-0 rounded-[16px] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eff6ff_100%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
             {renderHeadshot(player)}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 pr-1">
             {slotLabel ? (
               <p className={`text-[10px] font-black uppercase tracking-[0.08em] sm:hidden ${accentClasses.label}`}>
                 {slotLabel}
               </p>
             ) : null}
-            <p className="truncate text-sm font-bold text-slate-900 sm:text-[15px]">
+            <p className="truncate text-[13px] font-bold text-slate-900 sm:text-[15px]">
               {player.player_name}
             </p>
             <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] ${accentClasses.label}`}>
@@ -4200,11 +4200,11 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-        <div className="w-[92px] shrink-0 text-right sm:w-auto">
+        <div className="w-[76px] shrink-0 text-right sm:w-[92px] md:w-auto">
           <p className="hidden text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 sm:block">
             Fantasy Pts
           </p>
-          <p className={`text-[20px] font-black leading-none sm:mt-1 sm:text-[28px] ${accentClasses.value}`}>
+          <p className={`text-[17px] font-black leading-none sm:mt-1 sm:text-[22px] md:text-[28px] ${accentClasses.value}`}>
             {Number(player.fantasy_points).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
@@ -4571,7 +4571,7 @@ export default function HomePage() {
         </div>
 
         {submitted ? (
-          <div className="relative mx-auto mt-8 max-w-[1120px] overflow-hidden rounded-[38px] border-[4px] border-emerald-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.98)_0%,rgba(240,253,250,0.98)_34%,rgba(236,253,245,0.98)_68%,rgba(219,252,231,0.96)_100%)] p-6 text-center shadow-[0_10px_0_rgba(52,211,153,0.08),0_18px_48px_rgba(16,185,129,0.12)] backdrop-blur-sm md:p-10">
+          <div className="relative mx-auto mt-8 max-w-[1120px] overflow-hidden rounded-[38px] border-[4px] border-emerald-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.98)_0%,rgba(240,253,250,0.98)_34%,rgba(236,253,245,0.98)_68%,rgba(219,252,231,0.96)_100%)] p-4 text-center shadow-[0_10px_0_rgba(52,211,153,0.08),0_18px_48px_rgba(16,185,129,0.12)] backdrop-blur-sm md:p-10">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.16),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(52,211,153,0.12),transparent_28%)]" />
             <button
               type="button"
@@ -4670,25 +4670,25 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="mx-auto mt-8 grid max-w-6xl items-stretch gap-6 xl:grid-cols-2">
-              <div className="flex h-full flex-col rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 text-left shadow-[0_12px_28px_rgba(125,211,252,0.12)] md:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+            <div className="mx-auto mt-8 grid max-w-6xl items-stretch gap-4 xl:grid-cols-2">
+              <div className="min-w-0 flex h-full flex-col rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-4 text-left shadow-[0_12px_28px_rgba(125,211,252,0.12)] md:p-6">
+                <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                       Your Lineup
                     </p>
-                    <h3 className="mt-2 text-2xl font-black text-slate-900">
+                    <h3 className="mt-2 break-words text-[1.85rem] font-black leading-[0.9] text-slate-900 sm:text-2xl">
                       Locked Submission
                     </h3>
                   </div>
-                  <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className="flex max-w-full flex-wrap items-center gap-2 self-start sm:justify-end">
                     <DataStateBadge finalized={leaderboardFinalized} compact />
                     <div className="rounded-full border border-sky-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                       {selectedLineupEntriesBySlot.length} Players
                     </div>
                   </div>
                 </div>
-                <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                <p className="mt-3 max-w-full break-words text-sm font-semibold leading-6 text-slate-600">
                   A cleaner snapshot of the five players you locked for this puzzle. This side reflects your saved entry exactly as scored.
                 </p>
                 <div className="mt-4 space-y-3">
@@ -4731,19 +4731,19 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="flex h-full flex-col rounded-[30px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-5 text-left shadow-[0_12px_28px_rgba(129,140,248,0.12)] md:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+              <div className="min-w-0 flex h-full flex-col rounded-[30px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-4 text-left shadow-[0_12px_28px_rgba(129,140,248,0.12)] md:p-6">
+                <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
                       {puzzleData?.leaderboard_finalized ? "Optimal Lineup" : "Current Leader"}
                     </p>
-                    <h3 className="mt-2 text-2xl font-black text-slate-900">
+                    <h3 className="mt-2 break-words text-[1.65rem] font-black leading-[0.95] text-slate-900 sm:text-2xl">
                       {puzzleData?.leaderboard_finalized
                         ? "Best Possible Build"
                         : `Current Leader - ${currentLeaderLineup?.leader.display_name ?? "Live First Place"}`}
                     </h3>
                   </div>
-                  <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className="flex max-w-full flex-wrap items-center gap-2 self-start sm:justify-end">
                     <DataStateBadge finalized={leaderboardFinalized} compact />
                     {comparisonRefreshLabel ? (
                       <span className="inline-flex items-center rounded-full border border-indigo-100 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-indigo-500">
@@ -4755,7 +4755,7 @@ export default function HomePage() {
                 {puzzleData?.leaderboard_finalized ? (
                   optimalLineup ? (
                     <>
-                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                      <p className="mt-2 max-w-full break-words text-sm font-semibold leading-6 text-slate-600">
                         The leaderboard is finalized, so this optimal lineup is now locked and safe to reveal.
                       </p>
                       <div className="mt-4 space-y-3">
@@ -4810,7 +4810,7 @@ export default function HomePage() {
                   )
                 ) : currentLeaderLineup ? (
                   <>
-                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                    <p className="mt-2 max-w-full break-words text-sm font-semibold leading-6 text-slate-600">
                       This shows the live first-place lineup right now. Ranks can still move, and the true optimal lineup stays hidden until finalization.
                     </p>
                     <div className="mt-4 space-y-3">
