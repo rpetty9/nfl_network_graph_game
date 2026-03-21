@@ -4168,7 +4168,7 @@ export default function HomePage() {
     return (
       <div
         key={`${slotLabel ?? "player"}-${player.player_id}`}
-        className={`grid grid-cols-1 gap-3 rounded-[22px] border-[3px] bg-white/92 px-3 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:px-4 ${accentClasses.border}`}
+        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[22px] border-[3px] bg-white/92 px-3 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-4 sm:px-4 ${accentClasses.border}`}
       >
         <div className="hidden sm:flex sm:w-[82px] sm:flex-col sm:items-start sm:justify-center">
           {slotLabel ? (
@@ -4180,7 +4180,7 @@ export default function HomePage() {
             {player.primary_position ?? "N/A"}
           </span>
         </div>
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="shrink-0 rounded-[16px] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eff6ff_100%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
             {renderHeadshot(player)}
           </div>
@@ -4198,24 +4198,13 @@ export default function HomePage() {
               {player.theme_start_season ?? player.career_start_season ?? "N/A"}–
               {player.theme_end_season ?? player.career_end_season ?? "N/A"}
             </p>
-            <div className="hidden">
-              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
-                Fantasy Pts
-              </p>
-              <p className={`text-sm font-black ${accentClasses.value}`}>
-                {Number(player.fantasy_points).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-            </div>
           </div>
         </div>
-        <div className="flex items-end justify-between gap-3 border-t border-slate-100 pt-2 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
-          <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-500 sm:text-[10px]">
+        <div className="w-[92px] shrink-0 text-right sm:w-auto">
+          <p className="hidden text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 sm:block">
             Fantasy Pts
           </p>
-          <p className={`mt-1 text-right text-[22px] font-black leading-none sm:text-[28px] ${accentClasses.value}`}>
+          <p className={`text-[20px] font-black leading-none sm:mt-1 sm:text-[28px] ${accentClasses.value}`}>
             {Number(player.fantasy_points).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
