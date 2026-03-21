@@ -108,10 +108,11 @@ export async function GET(request: NextRequest) {
         LEFT JOIN app_user au
           ON ps.user_id = au.user_id
         WHERE ps.puzzle_id = $1
+          ${testingMode ? "" : "AND (ps.submitted_at AT TIME ZONE 'America/Chicago')::date = $2::date"}
         ORDER BY ps.final_score DESC, ps.submitted_at ASC
         LIMIT 1
         `,
-        [puzzle.puzzle_id]
+        testingMode ? [puzzle.puzzle_id] : [puzzle.puzzle_id, puzzle.puzzle_date]
       ),
     ]);
 

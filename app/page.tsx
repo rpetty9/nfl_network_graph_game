@@ -1586,7 +1586,7 @@ function DataStateBadge({
           finalized ? "bg-emerald-500" : "bg-amber-500"
         }`}
       />
-      {finalized ? "Finalized" : "Live"}
+      {finalized ? "Finalized" : "Awaiting Finalization"}
     </span>
   );
 }
@@ -3220,7 +3220,7 @@ export default function HomePage() {
       title: "Leaderboard State",
       body: leaderboardFinalized
         ? "This puzzle date is finalized, so rankings, badges, and the optimal lineup are now locked."
-        : "This puzzle date is still live. Rankings can move, and the true optimal lineup stays hidden until finalization.",
+        : "This puzzle date is awaiting finalization. Rankings can still move, and the true optimal lineup stays hidden until the final snapshot is recorded.",
     });
 
     return hints;
@@ -3322,17 +3322,20 @@ export default function HomePage() {
   const liveLeaderPercent = liveComparisonScore && liveComparisonScore > 0
     ? (displayedFinalScore / liveComparisonScore) * 100
     : null;
-  const isLockedForSelectedDate = isTestingMode
+  const hasSavedSubmissionForSelectedDate = isTestingMode
     ? false
     : isTrackedAccountUser
       ? accountHasSubmittedForSelectedDate
       : hasSubmittedForSelectedDate;
-  const isBoardLocked = submitted || isLockedForSelectedDate;
+  const isPastPuzzleDate = !isTestingMode && selectedDate < todayIso;
+  const isLockedForSelectedDate = hasSavedSubmissionForSelectedDate;
+  const canShowSavedSubmission = hasSavedSubmissionForSelectedDate;
   const canSubmit =
     allFilled &&
     !duplicatePlayersExist &&
     !submitted &&
-    !isLockedForSelectedDate;
+    !hasSavedSubmissionForSelectedDate;
+  const isBoardLocked = submitted || isLockedForSelectedDate;
 
   useEffect(() => {
     if (!isFullyConnected) {
@@ -3409,6 +3412,17 @@ export default function HomePage() {
 
         if (!response.ok) {
           const body = await response.text();
+          const normalizedBody = body.toLowerCase();
+          if (
+            response.status === 404 &&
+            (normalizedBody.includes("no leaderboard entries yet") ||
+              normalizedBody.includes("\"error\":\"no leaderboard entries yet.\"") ||
+              normalizedBody.includes("leader lineup unavailable"))
+          ) {
+            setCurrentLeaderLineup(null);
+            setCurrentLeaderError(null);
+            return;
+          }
           throw new Error(body || "Failed to load current leader lineup");
         }
 
@@ -4227,11 +4241,11 @@ export default function HomePage() {
           : "border-sky-100 bg-white/90 text-slate-900 shadow-[0_10px_20px_rgba(125,211,252,0.08)]";
 
     return (
-      <div className={`rounded-[18px] border-[3px] px-4 py-3 ${classes}`}>
-        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
+      <div className={`rounded-[16px] border-[3px] px-3.5 py-3 sm:px-4 ${classes}`}>
+        <p className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-500 sm:text-[10px]">
           {label}
         </p>
-        <p className="mt-1 text-lg font-black">{value}</p>
+        <p className="mt-1 text-[1.05rem] font-black leading-tight sm:text-lg">{value}</p>
       </div>
     );
   }
@@ -4568,7 +4582,7 @@ export default function HomePage() {
         </div>
 
         {submitted ? (
-          <div className="relative mx-auto mt-8 max-w-[1120px] overflow-hidden rounded-[38px] border-[4px] border-emerald-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.98)_0%,rgba(240,253,250,0.98)_34%,rgba(236,253,245,0.98)_68%,rgba(219,252,231,0.96)_100%)] p-4 text-center shadow-[0_10px_0_rgba(52,211,153,0.08),0_18px_48px_rgba(16,185,129,0.12)] backdrop-blur-sm md:p-10">
+          <div className="relative mx-auto mt-8 max-w-[1120px] overflow-hidden rounded-[32px] border-[4px] border-emerald-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.98)_0%,rgba(240,253,250,0.98)_34%,rgba(236,253,245,0.98)_68%,rgba(219,252,231,0.96)_100%)] p-4 text-center shadow-[0_10px_0_rgba(52,211,153,0.08),0_18px_48px_rgba(16,185,129,0.12)] backdrop-blur-sm md:p-8">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.16),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(52,211,153,0.12),transparent_28%)]" />
             <button
               type="button"
@@ -4592,10 +4606,10 @@ export default function HomePage() {
                 </span>
               ) : null}
             </div>
-            <h2 className="relative mt-6 text-3xl font-black text-slate-900 md:text-6xl">
+            <h2 className="relative mt-5 text-[2rem] font-black leading-none text-slate-900 md:text-[3.5rem]">
               Final Score
             </h2>
-            <p className="relative mt-4 bg-[linear-gradient(135deg,#2563eb_0%,#0f766e_100%)] bg-clip-text text-6xl font-black text-transparent md:text-8xl">
+            <p className="relative mt-3 bg-[linear-gradient(135deg,#2563eb_0%,#0f766e_100%)] bg-clip-text text-[3.2rem] font-black leading-none text-transparent md:text-[5.5rem]">
               {formattedFinalScore}
             </p>
             <p className="relative mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
@@ -4604,7 +4618,7 @@ export default function HomePage() {
 
             <div className="mx-auto mt-8 grid max-w-5xl gap-3 sm:grid-cols-2 xl:grid-cols-6">
               {renderSubmissionMiniStat(
-                leaderboardFinalized ? "Final Rank" : "Live Rank",
+                leaderboardFinalized ? "Final Rank" : "Current Rank",
                 currentSubmissionRank != null ? `#${currentSubmissionRank}` : "Pending",
                 rankAccent
               )}
@@ -4640,7 +4654,7 @@ export default function HomePage() {
                         })
                       : currentLeaderLoading
                         ? "Loading..."
-                        : "Waiting on Leaderboard",
+                        : "Awaiting Leaderboard",
                 "indigo"
               )}
               {renderSubmissionMiniStat(
@@ -4655,7 +4669,7 @@ export default function HomePage() {
                     ? `${liveLeaderPercent.toFixed(1)}%`
                     : currentLeaderLoading
                       ? "Loading..."
-                      : "Waiting on Leaderboard",
+                      : "Awaiting Leaderboard",
                 "indigo"
               )}
             </div>
@@ -4668,13 +4682,13 @@ export default function HomePage() {
             )}
 
             <div className="mx-auto mt-8 grid max-w-6xl items-stretch gap-4 xl:grid-cols-2">
-              <div className="min-w-0 flex h-full flex-col rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-4 text-left shadow-[0_12px_28px_rgba(125,211,252,0.12)] md:p-6">
+              <div className="min-w-0 flex h-full flex-col rounded-[24px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-4 text-left shadow-[0_12px_28px_rgba(125,211,252,0.12)] md:p-5">
                 <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                       Your Lineup
                     </p>
-                    <h3 className="mt-2 break-words text-[1rem] font-black leading-[1.02] text-slate-900 sm:text-[1.35rem]">
+                    <h3 className="mt-2 break-words text-[0.95rem] font-black leading-[1.04] text-slate-900 sm:text-[1.2rem]">
                       Locked Submission
                     </h3>
                   </div>
@@ -4728,13 +4742,13 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="min-w-0 flex h-full flex-col rounded-[30px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-4 text-left shadow-[0_12px_28px_rgba(129,140,248,0.12)] md:p-6">
+              <div className="min-w-0 flex h-full flex-col rounded-[24px] border-[4px] border-indigo-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef2ff_100%)] p-4 text-left shadow-[0_12px_28px_rgba(129,140,248,0.12)] md:p-5">
                 <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
                       {puzzleData?.leaderboard_finalized ? "Optimal Lineup" : "Current Leader"}
                     </p>
-                    <h3 className="mt-2 break-words text-[0.9rem] font-black leading-[1.05] text-slate-900 sm:text-[1.2rem]">
+                    <h3 className="mt-2 break-words text-[0.88rem] font-black leading-[1.08] text-slate-900 sm:text-[1.1rem]">
                       {puzzleData?.leaderboard_finalized
                         ? "Best Possible Build"
                         : `Current Leader - ${currentLeaderLineup?.leader.display_name ?? "Live First Place"}`}
@@ -4808,7 +4822,7 @@ export default function HomePage() {
                 ) : currentLeaderLineup ? (
                   <>
                     <p className="mt-2 max-w-full break-words text-sm font-semibold leading-6 text-slate-600">
-                      This shows the live first-place lineup right now. Ranks can still move, and the true optimal lineup stays hidden until finalization.
+                      This shows the current first-place lineup before finalization. Ranks can still move, and the true optimal lineup stays hidden until the final snapshot is recorded.
                     </p>
                     <div className="mt-4 space-y-3">
                       {currentLeaderLineup.lineup.map((entry) =>
@@ -4864,11 +4878,11 @@ export default function HomePage() {
 
             {submissionResult?.awarded_badges &&
             submissionResult.awarded_badges.length > 0 ? (
-              <div className="badge-celebration-shell mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-6 text-left shadow-[0_8px_22px_rgba(16,185,129,0.1)]">
+              <div className="badge-celebration-shell mx-auto mt-8 max-w-4xl rounded-[24px] border-[4px] border-emerald-200 bg-[linear-gradient(180deg,#ffffff_0%,#ecfdf5_100%)] p-5 text-left shadow-[0_8px_22px_rgba(16,185,129,0.1)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">
                   New Badges
                 </p>
-                <h3 className="mt-2 text-2xl font-black text-emerald-900">
+                <h3 className="mt-2 text-[1.35rem] font-black leading-tight text-emerald-900 sm:text-[1.55rem]">
                   You earned {submissionResult.awarded_badges.length} new badge
                   {submissionResult.awarded_badges.length === 1 ? "" : "s"}
                 </h3>
@@ -4890,20 +4904,20 @@ export default function HomePage() {
             ) : null}
 
             {isTrackedAccountUser ? (
-              <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-6 text-left shadow-[0_8px_22px_rgba(56,189,248,0.1)]">
+              <div className="mx-auto mt-8 max-w-4xl rounded-[24px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-5 text-left shadow-[0_8px_22px_rgba(56,189,248,0.1)]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">
                       Next Goals
                     </p>
-                    <h3 className="mt-2 text-2xl font-black text-sky-900">
+                    <h3 className="mt-2 text-[1.35rem] font-black leading-tight text-sky-900 sm:text-[1.55rem]">
                       Keep the streak going
                     </h3>
                     <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
                       Account stats are tracked across days, and daily leaderboard badges lock from the nightly finalized snapshot.
                     </p>
                   </div>
-                  <div className="rounded-[18px] border-[3px] border-sky-100 bg-white/90 px-4 py-3 text-center">
+                  <div className="rounded-[16px] border-[3px] border-sky-100 bg-white/90 px-4 py-3 text-center">
                     <p className="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
                       Projected Totals
                     </p>
@@ -4917,7 +4931,7 @@ export default function HomePage() {
                   {nextBadgeGoals.map((goal) => (
                     <div
                       key={`goal-${goal.badge.key}`}
-                      className="rounded-[20px] border-[3px] border-sky-100 bg-white/90 p-4 shadow-[0_10px_24px_rgba(56,189,248,0.08)]"
+                      className="rounded-[18px] border-[3px] border-sky-100 bg-white/90 p-4 shadow-[0_10px_24px_rgba(56,189,248,0.08)]"
                     >
                       <div className="flex items-center gap-3">
                         <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-white/60 bg-[linear-gradient(145deg,#e0f2fe,#7dd3fc)] text-sky-900 shadow-[0_10px_18px_rgba(56,189,248,0.18)]">
@@ -4964,7 +4978,7 @@ export default function HomePage() {
               </div>
             ) : null}
 
-            <div className="mx-auto mt-8 max-w-4xl rounded-[26px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-6 text-left shadow-[0_8px_22px_rgba(251,191,36,0.1)]">
+              <div className="mx-auto mt-8 max-w-4xl rounded-[24px] border-[4px] border-amber-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5 text-left shadow-[0_8px_22px_rgba(251,191,36,0.1)]">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
                 {formatPuzzleDateLabel(activePuzzleDate)} Leaderboard
               </p>
@@ -5527,7 +5541,7 @@ export default function HomePage() {
             </div>
 
               <div className="mx-auto mt-6 max-w-[1080px] rounded-[30px] border-[4px] border-sky-200 bg-[linear-gradient(180deg,#f0f9ff_0%,#eff6ff_100%)] p-6 shadow-[0_8px_0_rgba(125,211,252,0.07),0_12px_28px_rgba(125,211,252,0.1)] backdrop-blur-sm">
-                {submissionError && !isLockedForSelectedDate && (
+                {submissionError && (!isLockedForSelectedDate || canShowSavedSubmission) && (
                   <div
                     className="mb-4 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900"
                   >
@@ -5537,15 +5551,19 @@ export default function HomePage() {
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
                   <button
                     type="button"
-                    onClick={isLockedForSelectedDate ? () => void handleShowSubmission() : handleSubmit}
-                    disabled={isLockedForSelectedDate ? savedSubmissionLoading : !canSubmit}
+                    onClick={canShowSavedSubmission ? () => void handleShowSubmission() : handleSubmit}
+                    disabled={
+                      canShowSavedSubmission
+                        ? savedSubmissionLoading
+                        : !canSubmit
+                    }
                     className={`rounded-2xl px-6 py-4 text-sm font-bold transition ${
-                      isLockedForSelectedDate || canSubmit
+                      canShowSavedSubmission || canSubmit
                         ? "border-[3px] border-sky-300 bg-[linear-gradient(180deg,#7dd3fc_0%,#38bdf8_52%,#0ea5e9_100%)] text-white shadow-[0_10px_0_rgba(56,189,248,0.18),0_14px_28px_rgba(56,189,248,0.24)] hover:-translate-y-0.5 hover:brightness-105"
                         : "cursor-not-allowed border border-white/10 bg-white/10 text-slate-400 shadow-none"
                     }`}
                   >
-                    {isLockedForSelectedDate
+                    {canShowSavedSubmission
                       ? savedSubmissionLoading
                         ? "Loading Submission..."
                         : "Show Submission"
@@ -5559,11 +5577,16 @@ export default function HomePage() {
                     Rules &amp; Info
                   </button>
                 </div>
-                {isLockedForSelectedDate && (
+                {canShowSavedSubmission && (
                   <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-sky-800/80 sm:text-sm">
                     {isTrackedAccountUser
                       ? `Locked lineup loaded for ${formatPuzzleDateLabel(selectedDate)}. You can still review that saved entry, but each user only gets one official score per day.`
                       : `Locked lineup loaded for ${formatPuzzleDateLabel(selectedDate)} on this browser. You can still review that saved entry, but each guest only gets one official score per day.`}
+                  </p>
+                )}
+                {isPastPuzzleDate && (
+                  <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-sky-800/80 sm:text-sm">
+                    {`Archive puzzle mode: you can still submit for ${formatPuzzleDateLabel(selectedDate)}, but only entries submitted on the original puzzle date count for leaderboard placement and badges.`}
                   </p>
                 )}
                 <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
@@ -5576,7 +5599,7 @@ export default function HomePage() {
                   <span className="inline-flex items-center rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-sky-700">
                     {leaderboardFinalized
                       ? "Badges Locked"
-                      : "Badges Award After Finalization"}
+                      : "Badges Award At Finalization"}
                   </span>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">

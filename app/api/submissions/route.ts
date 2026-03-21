@@ -690,6 +690,7 @@ export async function POST(request: NextRequest) {
       qbExclusionEnabled,
     } =
       await loadPuzzleContext(requestedDate, testingMode);
+
     const players = await loadPlayersForTheme(themeRule);
     const playerMap = new Map(players.map((player) => [String(player.player_id), player]));
     const slotRuleMap = new Map(slotRules.map((rule) => [Number(rule.slot_number), rule]));

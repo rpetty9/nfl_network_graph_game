@@ -161,11 +161,14 @@ export async function GET(request: NextRequest) {
               WHERE ps.puzzle_id = $1
                 AND ps.user_id IS NOT NULL
                 AND ps.user_id = ANY($2::bigint[])
+                ${testingMode ? "" : "AND (ps.submitted_at AT TIME ZONE 'America/Chicago')::date = $4::date"}
             ) ranked
             ORDER BY placement ASC
             LIMIT $3
             `,
-            [puzzle.puzzle_id, friendUserIds.map(Number), limit]
+            testingMode
+              ? [puzzle.puzzle_id, friendUserIds.map(Number), limit]
+              : [puzzle.puzzle_id, friendUserIds.map(Number), limit, puzzle.puzzle_date]
           )
         : await pool.query(
             `
@@ -190,11 +193,14 @@ export async function GET(request: NextRequest) {
               LEFT JOIN app_user au
                 ON ps.user_id = au.user_id
               WHERE ps.puzzle_id = $1
+                ${testingMode ? "" : "AND (ps.submitted_at AT TIME ZONE 'America/Chicago')::date = $3::date"}
             ) ranked
             ORDER BY placement ASC
             LIMIT $2
             `,
-            [puzzle.puzzle_id, limit]
+            testingMode
+              ? [puzzle.puzzle_id, limit]
+              : [puzzle.puzzle_id, limit, puzzle.puzzle_date]
           );
 
     return NextResponse.json({
