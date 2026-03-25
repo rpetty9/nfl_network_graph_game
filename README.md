@@ -1,6 +1,6 @@
-# Option Routes
+# Five Wide
 
-Option Routes is a daily NFL puzzle game built with Next.js, React, TypeScript, and Postgres.
+Five Wide is a daily NFL puzzle game built with Next.js, React, TypeScript, and Postgres.
 
 Players build a 5-player lineup around:
 
