@@ -1,5 +1,7 @@
 # Five Wide
 
+Check out the live demo here: https://nfl-network-graph-game-glgq.vercel.app/
+
 Five Wide is a daily NFL puzzle game built with Next.js, React, TypeScript, and Postgres.
 
 Players build a 5-player lineup around:
