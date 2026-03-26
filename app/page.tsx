@@ -751,6 +751,7 @@ type SearchablePlayerSelectProps = {
   onActivate?: () => void;
   registerFocus?: ((focusFn: (() => void) | null) => void) | null;
   onPlayerSelected?: () => void;
+  onOpenChange?: ((open: boolean) => void) | null;
 };
 
 function SearchablePlayerSelect({
@@ -763,6 +764,7 @@ function SearchablePlayerSelect({
   onActivate,
   registerFocus,
   onPlayerSelected,
+  onOpenChange,
 }: SearchablePlayerSelectProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -786,6 +788,10 @@ function SearchablePlayerSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [onOpenChange, open]);
 
   useEffect(() => {
     if (!registerFocus) return;
@@ -852,7 +858,7 @@ function SearchablePlayerSelect({
       </div>
 
       {open && !disabled && (
-        <div className="absolute z-40 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border-[3px] border-sky-300 bg-white shadow-[0_18px_50px_rgba(56,189,248,0.14)]">
+        <div className="absolute z-[120] mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border-[3px] border-sky-300 bg-white shadow-[0_18px_50px_rgba(56,189,248,0.14)]">
           {filteredPlayers.length === 0 ? (
             <div className="px-4 py-3 text-[11px] text-slate-500">
               {query.trim() ? "No players found." : "Start typing a player name."}
@@ -862,9 +868,8 @@ function SearchablePlayerSelect({
               <button
                 key={player.player_id}
                 type="button"
-                onPointerDown={(event) => {
+                onMouseDown={(event) => {
                   event.preventDefault();
-                  inputRef.current?.blur();
                 }}
                 onClick={() => {
                   onChange(String(player.player_id));
@@ -1669,6 +1674,7 @@ export default function HomePage() {
   const [nodes, setNodes] = useState<NodeState[]>([]);
   const [activeNodeId, setActiveNodeId] = useState(1);
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(true);
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [browserClientToken, setBrowserClientToken] = useState("");
   const [hasSubmittedForSelectedDate, setHasSubmittedForSelectedDate] =
@@ -4308,6 +4314,11 @@ export default function HomePage() {
               onActivate={() => setActiveNodeId(nodeId)}
               registerFocus={(focusFn) => registerNodeFocus(nodeId, focusFn)}
               onPlayerSelected={() => handleMobileNodeAdvance(nodeId)}
+              onOpenChange={(nextOpen) => {
+                if (isMobileBoard) {
+                  setMobileDropdownOpen(nextOpen);
+                }
+              }}
             />
 
             <div className="mt-3 rounded-[18px] border-[3px] border-sky-100 bg-[linear-gradient(180deg,#ffffff_0%,#f0f9ff_100%)] p-2.5 sm:p-3">
@@ -5155,7 +5166,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-          <div className="relative mt-4 mx-auto h-[435px] max-w-[1080px] overflow-hidden rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] px-1.5 pb-1 pt-3 shadow-[0_10px_0_rgba(125,211,252,0.08),0_16px_38px_rgba(125,211,252,0.12)] backdrop-blur-sm sm:h-[700px] md:h-[760px] md:max-w-[1080px] md:px-2 md:pb-2 md:pt-4">
+          <div className="relative mt-4 mx-auto h-[435px] max-w-[1080px] overflow-visible rounded-[36px] border-[4px] border-sky-200 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f0f9ff_46%,#f8f4ea_100%)] px-1.5 pb-1 pt-3 shadow-[0_10px_0_rgba(125,211,252,0.08),0_16px_38px_rgba(125,211,252,0.12)] backdrop-blur-sm sm:h-[700px] sm:overflow-hidden md:h-[760px] md:max-w-[1080px] md:px-2 md:pb-2 md:pt-4">
               <div className="absolute left-3 top-3 z-40 sm:hidden">
                 <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full border-[2px] border-sky-200 bg-white/90 px-2 py-1 shadow-[0_6px_16px_rgba(125,211,252,0.14)]">
                   <span className="h-3 w-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
@@ -7094,7 +7105,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {!isBoardLocked && !rulesOpen && (
+        {!isBoardLocked && !rulesOpen && !mobileDropdownOpen && (
           <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[90] w-[min(78vw,16rem)] -translate-x-1/2 sm:hidden">
             {mobileNavigatorOpen ? (
               <div className="pointer-events-auto flex w-full items-center gap-2 rounded-[20px] border-[2px] border-sky-200 bg-white/95 px-2 py-1.5 shadow-[0_16px_36px_rgba(125,211,252,0.22)] backdrop-blur-md">
