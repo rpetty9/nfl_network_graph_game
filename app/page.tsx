@@ -775,7 +775,7 @@ function SearchablePlayerSelect({
     () => players.find((p) => String(p.player_id) === String(value)) ?? null,
     [players, value]
   );
-  const selectedPlayerLabel = selectedPlayer ? getPlayerLabel(selectedPlayer) : "";
+  const selectedPlayerName = selectedPlayer?.player_name ?? "";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -798,13 +798,13 @@ function SearchablePlayerSelect({
 
     registerFocus(() => {
       if (disabled) return;
-      setQuery(selectedPlayerLabel);
+      setQuery(selectedPlayerName);
       inputRef.current?.focus();
       setOpen(true);
     });
 
     return () => registerFocus(null);
-  }, [disabled, registerFocus, selectedPlayerLabel]);
+  }, [disabled, registerFocus, selectedPlayerName]);
 
   const filteredPlayers = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -821,7 +821,7 @@ function SearchablePlayerSelect({
       .slice(0, 50);
   }, [players, query]);
 
-  const inputValue = open ? query : selectedPlayerLabel || query;
+  const inputValue = open ? query : selectedPlayerName || query;
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -834,7 +834,7 @@ function SearchablePlayerSelect({
           placeholder={placeholder}
           onFocus={() => {
             if (!disabled) {
-              setQuery(selectedPlayerLabel || query);
+              setQuery(selectedPlayerName || query);
               onActivate?.();
               setOpen(true);
             }
@@ -845,8 +845,23 @@ function SearchablePlayerSelect({
             onActivate?.();
             if (value) onChange("");
           }}
-          className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-12 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+          className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-20 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
         />
+        {(value || query) && !disabled ? (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setOpen(true);
+              if (value) onChange("");
+              inputRef.current?.focus();
+            }}
+            className="absolute right-11 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-black text-sky-700 transition hover:bg-sky-200"
+            aria-label="Clear selected player"
+          >
+            ×
+          </button>
+        ) : null}
         <button
           type="button"
           disabled={disabled}
@@ -868,12 +883,14 @@ function SearchablePlayerSelect({
               <button
                 key={player.player_id}
                 type="button"
+                title={getPlayerLabel(player)}
+                aria-label={getPlayerLabel(player)}
                 onMouseDown={(event) => {
                   event.preventDefault();
                 }}
                 onClick={() => {
                   onChange(String(player.player_id));
-                  setQuery(getPlayerLabel(player));
+                  setQuery(player.player_name);
                   setOpen(false);
                   onPlayerSelected?.();
                 }}
@@ -4599,7 +4616,7 @@ export default function HomePage() {
               type="button"
               onClick={handleCloseSubmittedView}
               aria-label="Close submitted lineup view"
-              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-emerald-200 bg-white/90 text-xl font-black text-emerald-700 shadow-[0_8px_18px_rgba(16,185,129,0.12)] transition hover:-translate-y-0.5 hover:bg-emerald-50"
+              className="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-emerald-200 bg-white/95 text-xl font-black text-emerald-700 shadow-[0_8px_18px_rgba(16,185,129,0.12)] transition hover:-translate-y-0.5 hover:bg-emerald-50"
             >
               ×
             </button>
