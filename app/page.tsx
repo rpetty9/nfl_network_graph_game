@@ -1441,7 +1441,7 @@ function ProfileBadgeCard({
             : isDailyCrownBadge
               ? "bg-[linear-gradient(145deg,#fefce8_0%,#fde68a_18%,#a5f3fc_48%,#06b6d4_74%,#164e63_100%)] text-cyan-950 shadow-[0_0_24px_rgba(34,211,238,0.34)]"
               : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_24px_rgba(56,189,248,0.42)]",
-          meta: isBestestestBadge ? "text-amber-100" : isDailyCrownBadge ? "text-cyan-100/90" : "text-sky-950/90",
+          meta: isBestestestBadge ? "text-amber-100" : isDailyCrownBadge ? "text-cyan-950/90" : "text-sky-950/90",
           aura: isBestestestBadge
             ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(244,114,182,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(244,114,182,0.1)_0,rgba(244,114,182,0.1)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(168,85,247,0.24),transparent_60%)] after:blur-xl after:content-['']"
             : isDailyCrownBadge
@@ -1468,10 +1468,10 @@ function ProfileBadgeCard({
           onClick={onAction}
           disabled={actionDisabled}
           aria-label={isPinned ? `Unfeature ${badge.title}` : `Feature ${badge.title}`}
-          className={`absolute bottom-3 right-3 z-10 inline-flex h-6 w-6 items-center justify-center text-slate-950 transition ${
+          className={`absolute bottom-3 right-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)] transition ${
             isPinned
-              ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
-              : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 hover:-translate-y-0.5"
+              ? "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+              : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 hover:-translate-y-0.5"
           } disabled:cursor-not-allowed disabled:opacity-30`}
         >
           <svg
@@ -1512,6 +1512,8 @@ function ProfileBadgeCard({
             className={`text-xs font-black uppercase tracking-[0.13em] ${
               isCreatorBadge
                 ? "text-sky-950 drop-shadow-[0_1px_0_rgba(255,248,220,0.55)]"
+                : isDailyCrownBadge
+                  ? "text-cyan-950"
                 : "drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"
             }`}
           >
