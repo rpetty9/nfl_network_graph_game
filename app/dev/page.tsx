@@ -4080,121 +4080,6 @@ export default function DevPuzzlePage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3">
-                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
-                    Auto Usage Threshold
-                  </span>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={autoBuildUsageThreshold}
-                      onChange={(event) =>
-                        setAutoBuildUsageThreshold(
-                          Math.max(0, Number(event.target.value) || 0)
-                        )
-                      }
-                      className="w-24 rounded-[14px] border border-white/10 bg-slate-900 px-3 py-2 text-sm font-black text-white outline-none"
-                    />
-                    <p className="text-xs text-slate-300">
-                      Auto-build keeps puzzles where total `Used X` is below this.
-                    </p>
-                  </div>
-                </label>
-                <label className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3">
-                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
-                    Min Active Links
-                  </span>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={0}
-                      max={10}
-                      step={1}
-                      value={autoBuildMinActiveLinks}
-                      onChange={(event) =>
-                        setAutoBuildMinActiveLinks(
-                          Math.max(0, Math.min(10, Number(event.target.value) || 0))
-                        )
-                      }
-                      className="w-24 rounded-[14px] border border-white/10 bg-slate-900 px-3 py-2 text-sm font-black text-white outline-none"
-                    />
-                    <p className="text-xs text-slate-300">
-                      Require at least this many active links in the optimal lineup.
-                    </p>
-                  </div>
-                </label>
-                <label className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3">
-                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
-                    Max QBs In Lineup
-                  </span>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={0}
-                      max={5}
-                      step={1}
-                      value={autoBuildMaxQbs}
-                      onChange={(event) =>
-                        setAutoBuildMaxQbs(
-                          Math.max(0, Math.min(5, Number(event.target.value) || 0))
-                        )
-                      }
-                      className="w-24 rounded-[14px] border border-white/10 bg-slate-900 px-3 py-2 text-sm font-black text-white outline-none"
-                    />
-                    <p className="text-xs text-slate-300">
-                      Reject any viable puzzle with more quarterbacks than this.
-                    </p>
-                  </div>
-                </label>
-                <label className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3">
-                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
-                    Min Fantasy Points Per Season
-                  </span>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={0}
-                      step={5}
-                      value={autoBuildMinFantasyPointsPerSeason}
-                      onChange={(event) =>
-                        setAutoBuildMinFantasyPointsPerSeason(
-                          Math.max(0, Number(event.target.value) || 0)
-                        )
-                      }
-                      className="w-24 rounded-[14px] border border-white/10 bg-slate-900 px-3 py-2 text-sm font-black text-white outline-none"
-                    />
-                    <p className="text-xs text-slate-300">
-                      Each optimal player must clear this per-season points floor.
-                    </p>
-                  </div>
-                </label>
-                <label className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3">
-                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
-                    Max Attempts
-                  </span>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={autoBuildMaxAttempts}
-                      onChange={(event) =>
-                        setAutoBuildMaxAttempts(
-                          Math.max(1, Number(event.target.value) || 1)
-                        )
-                      }
-                      className="w-24 rounded-[14px] border border-white/10 bg-slate-900 px-3 py-2 text-sm font-black text-white outline-none"
-                    />
-                    <p className="text-xs text-slate-300">
-                      Limit how many auto-build tries run before giving up.
-                    </p>
-                  </div>
-                </label>
-              </div>
-
               <div className="mt-3 grid gap-2">
                 {metaError ? <p className="text-sm text-rose-300">{metaError}</p> : null}
                 {previewError ? <p className="text-sm text-rose-300">{previewError}</p> : null}
@@ -4300,6 +4185,135 @@ export default function DevPuzzlePage() {
                 each answer has already been used.
               </div>
             )}
+            </section>
+
+            <section className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4 shadow-[0_18px_48px_rgba(2,6,23,0.28)] backdrop-blur-xl">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Auto-Build Filters
+                  </p>
+                  <p className="mt-2 text-sm text-slate-300">
+                    Tune the viability thresholds the search uses while it looks for a
+                    puzzle worth keeping.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="rounded-[18px] border border-white/10 bg-slate-900/65 px-4 py-3">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Auto Usage Threshold
+                  </span>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={autoBuildUsageThreshold}
+                      onChange={(event) =>
+                        setAutoBuildUsageThreshold(
+                          Math.max(0, Number(event.target.value) || 0)
+                        )
+                      }
+                      className="w-24 rounded-[14px] border border-white/10 bg-slate-950 px-3 py-2 text-sm font-black text-white outline-none"
+                    />
+                    <p className="text-xs text-slate-300">
+                      Auto-build keeps puzzles where total `Used X` is below this.
+                    </p>
+                  </div>
+                </label>
+                <label className="rounded-[18px] border border-white/10 bg-slate-900/65 px-4 py-3">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Min Active Links
+                  </span>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={autoBuildMinActiveLinks}
+                      onChange={(event) =>
+                        setAutoBuildMinActiveLinks(
+                          Math.max(0, Math.min(10, Number(event.target.value) || 0))
+                        )
+                      }
+                      className="w-24 rounded-[14px] border border-white/10 bg-slate-950 px-3 py-2 text-sm font-black text-white outline-none"
+                    />
+                    <p className="text-xs text-slate-300">
+                      Require at least this many active links in the optimal lineup.
+                    </p>
+                  </div>
+                </label>
+                <label className="rounded-[18px] border border-white/10 bg-slate-900/65 px-4 py-3">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Max QBs In Lineup
+                  </span>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={0}
+                      max={5}
+                      step={1}
+                      value={autoBuildMaxQbs}
+                      onChange={(event) =>
+                        setAutoBuildMaxQbs(
+                          Math.max(0, Math.min(5, Number(event.target.value) || 0))
+                        )
+                      }
+                      className="w-24 rounded-[14px] border border-white/10 bg-slate-950 px-3 py-2 text-sm font-black text-white outline-none"
+                    />
+                    <p className="text-xs text-slate-300">
+                      Reject any viable puzzle with more quarterbacks than this.
+                    </p>
+                  </div>
+                </label>
+                <label className="rounded-[18px] border border-white/10 bg-slate-900/65 px-4 py-3">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Min Fantasy Points Per Season
+                  </span>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={0}
+                      step={5}
+                      value={autoBuildMinFantasyPointsPerSeason}
+                      onChange={(event) =>
+                        setAutoBuildMinFantasyPointsPerSeason(
+                          Math.max(0, Number(event.target.value) || 0)
+                        )
+                      }
+                      className="w-24 rounded-[14px] border border-white/10 bg-slate-950 px-3 py-2 text-sm font-black text-white outline-none"
+                    />
+                    <p className="text-xs text-slate-300">
+                      Each optimal player must clear this per-season points floor.
+                    </p>
+                  </div>
+                </label>
+                <label className="rounded-[18px] border border-white/10 bg-slate-900/65 px-4 py-3 sm:col-span-2">
+                  <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    Max Attempts
+                  </span>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={autoBuildMaxAttempts}
+                      onChange={(event) =>
+                        setAutoBuildMaxAttempts(
+                          Math.max(1, Number(event.target.value) || 1)
+                        )
+                      }
+                      className="w-24 rounded-[14px] border border-white/10 bg-slate-950 px-3 py-2 text-sm font-black text-white outline-none"
+                    />
+                    <p className="text-xs text-slate-300">
+                      Limit how many auto-build tries run before giving up.
+                    </p>
+                  </div>
+                </label>
+              </div>
             </section>
           </div>
         </div>
