@@ -845,9 +845,9 @@ function SearchablePlayerSelect({
             onActivate?.();
             if (value) onChange("");
           }}
-          className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-20 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+          className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-12 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
         />
-        {(value || query) && !disabled ? (
+        {false && (value || query) && !disabled ? (
           <button
             type="button"
             onClick={() => {
@@ -2893,6 +2893,10 @@ export default function HomePage() {
     );
   }
 
+  function clearNode(nodeId: number) {
+    updateNode(nodeId, "");
+  }
+
   function registerNodeFocus(nodeId: number, focusFn: (() => void) | null) {
     if (focusFn) {
       nodeFocusMapRef.current.set(nodeId, focusFn);
@@ -3186,6 +3190,8 @@ export default function HomePage() {
       );
   }, [nodes, playerMap, slotRuleMap]);
   const activeSlotRule = getSlotRule(activeNodeId);
+  const activeNode = getNodeById(activeNodeId);
+  const activeNodeHasPlayer = Boolean(activeNode?.player_id);
   const currentSubmissionRank = useMemo(() => {
     if (!submissionResult) return null;
     if (submissionResult.placement != null) {
@@ -7158,6 +7164,15 @@ export default function HomePage() {
                   <p className="mt-0.5 truncate font-[family-name:var(--font-display)] text-[12px] text-sky-900">
                     {activeSlotRule.display_text}
                   </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => clearNode(activeNodeId)}
+                  disabled={submitted || !activeNodeHasPlayer}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[2px] border-sky-200 bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] text-sky-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Clear active slot"
+                >
+                  ×
                 </button>
                 <button
                   type="button"
