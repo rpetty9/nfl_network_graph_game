@@ -1523,6 +1523,8 @@ function ProfileBadgeCard({
                 ? "text-slate-600"
                 : isCreatorBadge
                   ? "text-sky-950/90"
+                  : isDailyCrownBadge
+                    ? "text-cyan-950"
                   : isSignatureBadge
                     ? "text-amber-50/90"
                     : "text-slate-700"
@@ -1537,7 +1539,7 @@ function ProfileBadgeCard({
           </p>
           {onAction ? (
             <p className="mt-3 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
-              {isPinned ? "Pinned to profile" : "Tap pin to feature"}
+              {isPinned ? "Pinned to profile" : "Tap to feature"}
             </p>
           ) : null}
         </div>
