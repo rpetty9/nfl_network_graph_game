@@ -822,6 +822,7 @@ function SearchablePlayerSelect({
   }, [players, query]);
 
   const inputValue = open ? query : selectedPlayerName || query;
+  const shouldSelectFullName = Boolean(selectedPlayerName) && !query;
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -837,6 +838,16 @@ function SearchablePlayerSelect({
               setQuery(selectedPlayerName || query);
               onActivate?.();
               setOpen(true);
+              if (selectedPlayerName) {
+                window.setTimeout(() => {
+                  inputRef.current?.select();
+                }, 0);
+              }
+            }
+          }}
+          onClick={() => {
+            if (shouldSelectFullName) {
+              inputRef.current?.select();
             }
           }}
           onChange={(e) => {
@@ -844,9 +855,6 @@ function SearchablePlayerSelect({
             setOpen(true);
             onActivate?.();
             if (value) onChange("");
-          }}
-          onDoubleClick={(event) => {
-            event.currentTarget.select();
           }}
           className="w-full rounded-2xl border-[3px] border-sky-300 bg-white px-4 py-3 pr-12 text-base font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
         />
