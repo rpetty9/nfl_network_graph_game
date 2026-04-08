@@ -2173,9 +2173,6 @@ export default function HomePage() {
         setOptimalLineup(null);
         setOptimalError(null);
         setOptimalLoading(false);
-        setCurrentLeaderLineup(null);
-        setCurrentLeaderError(null);
-        setCurrentLeaderLoading(false);
         setSubmissionResult(null);
         setSubmissionViewMode(null);
         setLeaderboard([]);
