@@ -104,6 +104,17 @@ type PuzzleDetailResponse = {
     parameter_value: string | null;
     rule_name: string;
   }>;
+  submissions: {
+    submission_count: number;
+    entries: Array<{
+      submission_id: string;
+      user_id: string | null;
+      username: string | null;
+      display_name: string;
+      submitted_at: string;
+      final_score: number;
+    }>;
+  };
   cached_optimal: null | {
     computed_at: string;
     optimal_active_links: number | null;
@@ -1456,6 +1467,25 @@ export default function DevPuzzlePage() {
     return json as PreviewResponse;
   }
 
+  function buildCurrentGeneratorSettings(): GeneratorSettings {
+    return {
+      targetPendingCount: 1,
+      minActiveLinks: autoBuildMinActiveLinks,
+      usageThresholdTotal: autoBuildUsageThreshold,
+      maxQbs: autoBuildMaxQbs,
+      minFantasyPointsPerSeason: autoBuildMinFantasyPointsPerSeason,
+      maxAttemptsPerPuzzle: autoBuildMaxAttempts,
+      forcePositionLock: positionOverlayEnabled,
+      forceNoQbs: qbExclusionEnabled,
+      useAnchorSearch: true,
+      useSkeletonScoring: true,
+      useThresholdMemory: true,
+      anchorCount: 3,
+      stageWidth: 6,
+      beamWidth: 3,
+    };
+  }
+
   async function requestSavePending(config: BuilderConfig) {
     const pendingPositionOverlayEnabled =
       config.positionOverlayEnabled ?? false;
@@ -1964,8 +1994,16 @@ export default function DevPuzzlePage() {
     }
   }
 
-  async function runPuzzleAction(action: "swap" | "earlier" | "later") {
+  async function runPuzzleAction(action: "swap" | "earlier" | "later" | "delete") {
     if (!selectedPuzzleId) return;
+    if (
+      action === "delete" &&
+      !window.confirm(
+        "Delete this future puzzle and shift every later puzzle up one day to fill the gap?"
+      )
+    ) {
+      return;
+    }
     setPuzzleActionLoading(true);
     setPuzzleActionError(null);
     setPuzzleActionMessage(null);
@@ -1973,7 +2011,9 @@ export default function DevPuzzlePage() {
       const response = await fetch(
         action === "swap"
           ? `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(selectedPuzzleId)}/swap-slots`
-          : `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(selectedPuzzleId)}/move-date`,
+          : action === "delete"
+            ? `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(selectedPuzzleId)}/delete`
+            : `/api/admin/dev-puzzle/puzzles/${encodeURIComponent(selectedPuzzleId)}/move-date`,
         {
           method: "POST",
           headers: {
@@ -1982,7 +2022,9 @@ export default function DevPuzzlePage() {
           body:
             action === "swap"
               ? JSON.stringify({ slotA: swapSlotA, slotB: swapSlotB })
-              : JSON.stringify({ direction: action }),
+              : action === "delete"
+                ? undefined
+                : JSON.stringify({ direction: action }),
         }
       );
       const json = await response.json();
@@ -1990,11 +2032,17 @@ export default function DevPuzzlePage() {
         throw new Error(json?.error ?? "Puzzle update failed.");
       }
       await refreshPuzzleList();
-      await refreshPuzzleDetail(selectedPuzzleId);
+      if (action === "delete") {
+        setPuzzleDetail(null);
+      } else {
+        await refreshPuzzleDetail(selectedPuzzleId);
+      }
       await refreshMetaNextOpenDay();
       setPuzzleActionMessage(
         action === "swap"
           ? "Node positions swapped."
+          : action === "delete"
+            ? `Deleted ${json?.removedDate ?? "the puzzle date"} and shifted ${json?.shiftedCount ?? 0} later puzzle(s) forward.`
           : action === "earlier"
             ? "Puzzle moved earlier in the future schedule."
             : "Puzzle moved later in the future schedule."
@@ -2110,22 +2158,10 @@ export default function DevPuzzlePage() {
 
         let candidatePreview: PreviewResponse;
         try {
-          candidatePreview = await requestPreview(candidateConfig, {
-            targetPendingCount: 1,
-            minActiveLinks: autoBuildMinActiveLinks,
-            usageThresholdTotal: autoBuildUsageThreshold,
-            maxQbs: autoBuildMaxQbs,
-            minFantasyPointsPerSeason: autoBuildMinFantasyPointsPerSeason,
-            maxAttemptsPerPuzzle: autoBuildMaxAttempts,
-            forcePositionLock: positionOverlayEnabled,
-            forceNoQbs: qbExclusionEnabled,
-            useAnchorSearch: true,
-            useSkeletonScoring: true,
-            useThresholdMemory: true,
-            anchorCount: 3,
-            stageWidth: 6,
-            beamWidth: 3,
-          });
+          candidatePreview = await requestPreview(
+            candidateConfig,
+            buildCurrentGeneratorSettings()
+          );
         } catch (error) {
           const message = error instanceof Error ? error.message : "Preview failed.";
           if (
@@ -2203,7 +2239,7 @@ export default function DevPuzzlePage() {
       setSaveMessage(null);
       setSaveError(null);
       setSaveConfirmOpen(false);
-      setPreview(await requestPreview());
+      setPreview(await requestPreview(undefined, buildCurrentGeneratorSettings()));
     } catch (error) {
       setPreview(null);
       setPreviewError((error as Error).message);
@@ -2247,7 +2283,7 @@ export default function DevPuzzlePage() {
 
       setSaveMessage(`Saved to ${json.puzzle_date}.`);
       await refreshMetaNextOpenDay();
-      setPreview(await requestPreview());
+      setPreview(await requestPreview(undefined, buildCurrentGeneratorSettings()));
     } catch (error) {
       setSaveError((error as Error).message);
     } finally {
@@ -4758,6 +4794,23 @@ export default function DevPuzzlePage() {
                           </button>
                         </div>
                       </div>
+
+                      <div className="rounded-[22px] border border-rose-300/20 bg-rose-300/10 p-4 lg:col-span-2">
+                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-rose-200">
+                          Delete Puzzle
+                        </p>
+                        <p className="mt-2 text-sm text-rose-100/80">
+                          Remove this future puzzle and shift every later scheduled puzzle up one day so the calendar gap is filled automatically.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void runPuzzleAction("delete")}
+                          disabled={puzzleActionLoading}
+                          className="mt-4 rounded-full bg-rose-300 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-slate-950 disabled:opacity-60"
+                        >
+                          Delete And Close Gap
+                        </button>
+                      </div>
                     </div>
                   ) : null}
 
@@ -4785,6 +4838,14 @@ export default function DevPuzzlePage() {
                         {new Date(puzzleDetail.puzzle.created_at).toLocaleString()}
                       </p>
                     </div>
+                    <div className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+                        Submission Count
+                      </p>
+                      <p className="mt-1 text-sm font-black text-white">
+                        {puzzleDetail.submissions.submission_count}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="rounded-[22px] border border-white/10 bg-slate-950/35 p-4">
@@ -4809,6 +4870,45 @@ export default function DevPuzzlePage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="rounded-[22px] border border-white/10 bg-slate-950/35 p-4">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                      Submitters
+                    </p>
+                    {puzzleDetail.submissions.entries.length > 0 ? (
+                      <div className="mt-3 space-y-3">
+                        {puzzleDetail.submissions.entries.map((entry) => (
+                          <div
+                            key={entry.submission_id}
+                            className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-3"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-black text-white">
+                                  {entry.display_name}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-300">
+                                  {entry.username
+                                    ? `@${entry.username}`
+                                    : "Guest / browser submission"}
+                                </p>
+                              </div>
+                              <div className="text-right text-xs text-slate-300">
+                                <p>{new Date(entry.submitted_at).toLocaleString()}</p>
+                                <p className="mt-1 font-black text-emerald-300">
+                                  {formatNumber(entry.final_score)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-slate-400">
+                        No submissions have been recorded for this puzzle date.
+                      </p>
+                    )}
                   </div>
 
                   <div className="rounded-[22px] border border-white/10 bg-slate-950/35 p-4">

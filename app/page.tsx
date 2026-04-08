@@ -146,24 +146,6 @@ type OptimalLineupResponse = {
   optimal_final_score: number;
 };
 
-type CurrentLeaderLineupResponse = {
-  puzzle_date: string;
-  leader: {
-    submission_id: number;
-    display_name: string;
-    base_score: number;
-    active_links: number;
-    multiplier: number;
-    final_score: number;
-    submitted_at: string;
-  };
-  lineup: Array<{
-    slot_number: number;
-    slot_rule: Pick<SlotRule, "slot_number" | "display_text">;
-    player: PlayerOption;
-  }>;
-};
-
 type SubmissionResponse = {
   submission_id: number;
   display_name: string;
@@ -1756,10 +1738,6 @@ export default function HomePage() {
   );
   const [optimalLoading, setOptimalLoading] = useState(false);
   const [optimalError, setOptimalError] = useState<string | null>(null);
-  const [currentLeaderLineup, setCurrentLeaderLineup] =
-    useState<CurrentLeaderLineupResponse | null>(null);
-  const [currentLeaderLoading, setCurrentLeaderLoading] = useState(false);
-  const [currentLeaderError, setCurrentLeaderError] = useState<string | null>(null);
   const [submissionResult, setSubmissionResult] = useState<SubmissionResponse | null>(
     null
   );
@@ -3258,7 +3236,7 @@ export default function HomePage() {
       title: "Leaderboard State",
       body: leaderboardFinalized
         ? "This puzzle date is finalized, so rankings, badges, and the optimal lineup are now locked."
-        : "This puzzle date is awaiting finalization. Rankings can still move, and the true optimal lineup stays hidden until the final snapshot is recorded.",
+        : "This puzzle date is still live, so rankings can move until the final snapshot is recorded. Your submitted lineup can still be compared against the computed optimal build right away.",
     });
 
     return hints;
@@ -3349,17 +3327,14 @@ export default function HomePage() {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  const liveComparisonScore = currentLeaderLineup?.leader.final_score != null
-    ? Number(currentLeaderLineup.leader.final_score)
+  const comparisonScore = optimalLineup?.optimal_final_score != null
+    ? Number(optimalLineup.optimal_final_score)
     : null;
   const optimalPercent = submissionResult?.percent_of_optimal != null
     ? Number(submissionResult.percent_of_optimal)
     : optimalLineup?.optimal_final_score
       ? (displayedFinalScore / Number(optimalLineup.optimal_final_score)) * 100
       : null;
-  const liveLeaderPercent = liveComparisonScore && liveComparisonScore > 0
-    ? (displayedFinalScore / liveComparisonScore) * 100
-    : null;
   const hasSavedSubmissionForSelectedDate = isTestingMode
     ? false
     : isTrackedAccountUser
@@ -3394,9 +3369,6 @@ export default function HomePage() {
       setOptimalLineup(null);
       setOptimalError(null);
       setOptimalLoading(false);
-      setCurrentLeaderLineup(null);
-      setCurrentLeaderError(null);
-      setCurrentLeaderLoading(false);
       setSubmissionResult(null);
       setSubmissionViewMode(null);
       setLeaderboard([]);
@@ -3412,74 +3384,28 @@ export default function HomePage() {
         const params = selectedDate
           ? `?date=${encodeURIComponent(selectedDate)}`
           : "";
-        const leaderboardFinalized = Boolean(puzzleData?.leaderboard_finalized);
-
-        if (leaderboardFinalized) {
-          setCurrentLeaderLineup(null);
-          setCurrentLeaderError(null);
-          setCurrentLeaderLoading(false);
-          setOptimalLoading(true);
-          setOptimalError(null);
-          const response = await fetch(withModeParam(`/api/optimal-lineup${params}`), {
-            cache: "no-store",
-            signal: controller.signal,
-          });
-
-          if (!response.ok) {
-            const body = await response.text();
-            throw new Error(body || "Failed to load optimal lineup");
-          }
-
-          const json: OptimalLineupResponse = await response.json();
-          setOptimalLineup(json);
-          return;
-        }
-
-        setOptimalLineup(null);
+        setOptimalLoading(true);
         setOptimalError(null);
-        setOptimalLoading(false);
-        setCurrentLeaderLoading(true);
-        setCurrentLeaderError(null);
-        const response = await fetch(
-          withModeParam(`/api/current-leader-lineup${params}`),
-          {
-            cache: "no-store",
-            signal: controller.signal,
-          }
-        );
+        const response = await fetch(withModeParam(`/api/optimal-lineup${params}`), {
+          cache: "no-store",
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           const body = await response.text();
-          const normalizedBody = body.toLowerCase();
-          if (
-            response.status === 404 &&
-            (normalizedBody.includes("no leaderboard entries yet") ||
-              normalizedBody.includes("\"error\":\"no leaderboard entries yet.\"") ||
-              normalizedBody.includes("leader lineup unavailable"))
-          ) {
-            setCurrentLeaderLineup(null);
-            setCurrentLeaderError(null);
-            return;
-          }
-          throw new Error(body || "Failed to load current leader lineup");
+          throw new Error(body || "Failed to load optimal lineup");
         }
 
-        const json: CurrentLeaderLineupResponse = await response.json();
-        setCurrentLeaderLineup(json);
+        const json: OptimalLineupResponse = await response.json();
+        setOptimalLineup(json);
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error(error);
-        if (puzzleData?.leaderboard_finalized) {
-          setOptimalLineup(null);
-          setOptimalError((error as Error).message);
-        } else {
-          setCurrentLeaderLineup(null);
-          setCurrentLeaderError((error as Error).message);
-        }
+        setOptimalLineup(null);
+        setOptimalError((error as Error).message);
       } finally {
         if (!controller.signal.aborted) {
           setOptimalLoading(false);
-          setCurrentLeaderLoading(false);
           setComparisonLastUpdatedAt(new Date().toISOString());
         }
       }
@@ -3490,7 +3416,6 @@ export default function HomePage() {
   }, [
     submitted,
     selectedDate,
-    puzzleData?.leaderboard_finalized,
     submissionResult?.submission_id,
     withModeParam,
   ]);
@@ -4656,7 +4581,7 @@ export default function HomePage() {
               {formattedFinalScore}
             </p>
             <p className="relative mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
-              Your lineup is locked in. Compare it against the live leader now, then come back after finalization to see the true optimal build.
+              Your lineup is locked in. You can now compare it directly against the optimal build for this puzzle date.
             </p>
 
             <div className="mx-auto mt-8 grid max-w-5xl gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -4682,37 +4607,24 @@ export default function HomePage() {
                 "emerald"
               )}
               {renderSubmissionMiniStat(
-                leaderboardFinalized ? "Optimal Score" : "Leader Score",
-                leaderboardFinalized && optimalLineup
-                  ? Number(optimalLineup.optimal_final_score).toLocaleString(undefined, {
+                "Optimal Score",
+                comparisonScore != null
+                  ? comparisonScore.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })
-                  : leaderboardFinalized && optimalLoading
+                  : optimalLoading
                     ? "Calculating..."
-                    : liveComparisonScore != null
-                      ? liveComparisonScore.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })
-                      : currentLeaderLoading
-                        ? "Loading..."
-                        : "Awaiting Leaderboard",
+                    : "Unavailable",
                 "indigo"
               )}
               {renderSubmissionMiniStat(
-                leaderboardFinalized ? "Score vs Optimal" : "Score vs Leader",
-                leaderboardFinalized
-                  ? optimalPercent != null
-                    ? `${optimalPercent.toFixed(1)}%`
-                    : optimalLoading
-                      ? "Calculating..."
-                      : "Pending"
-                  : liveLeaderPercent != null
-                    ? `${liveLeaderPercent.toFixed(1)}%`
-                    : currentLeaderLoading
-                      ? "Loading..."
-                      : "Awaiting Leaderboard",
+                "Score vs Optimal",
+                optimalPercent != null
+                  ? `${optimalPercent.toFixed(1)}%`
+                  : optimalLoading
+                    ? "Calculating..."
+                    : "Pending",
                 "indigo"
               )}
             </div>
@@ -4789,12 +4701,10 @@ export default function HomePage() {
                 <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
-                      {puzzleData?.leaderboard_finalized ? "Optimal Lineup" : "Current Leader"}
+                      Optimal Lineup
                     </p>
                     <h3 className="mt-2 break-words text-[0.88rem] font-black leading-[1.08] text-slate-900 sm:text-[1.1rem]">
-                      {puzzleData?.leaderboard_finalized
-                        ? "Best Possible Build"
-                        : `Current Leader - ${currentLeaderLineup?.leader.display_name ?? "Live First Place"}`}
+                      Best Possible Build
                     </h3>
                   </div>
                   <div className="flex max-w-full flex-wrap items-center gap-2 self-start sm:justify-end">
@@ -4806,20 +4716,19 @@ export default function HomePage() {
                     ) : null}
                   </div>
                 </div>
-                {puzzleData?.leaderboard_finalized ? (
-                  optimalLineup ? (
-                    <>
-                      <p className="mt-2 max-w-full break-words text-sm font-semibold leading-6 text-slate-600">
-                        The leaderboard is finalized, so this optimal lineup is now locked and safe to reveal.
-                      </p>
-                      <div className="mt-4 space-y-3">
-                        {optimalLineup.optimal_lineup.map((entry) =>
-                          renderLineupEntry(
-                            entry.player,
-                            {
-                              border: "border-indigo-100",
-                              label: "text-indigo-700/80",
-                              value: "text-indigo-700",
+                {optimalLineup ? (
+                  <>
+                    <p className="mt-2 max-w-full break-words text-sm font-semibold leading-6 text-slate-600">
+                      This is the best possible lineup we computed for this puzzle date, so you can compare your locked entry against the ceiling immediately after submitting.
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      {optimalLineup.optimal_lineup.map((entry) =>
+                        renderLineupEntry(
+                          entry.player,
+                          {
+                            border: "border-indigo-100",
+                            label: "text-indigo-700/80",
+                            value: "text-indigo-700",
                             },
                             entry.slot_rule.display_text
                           )
@@ -4853,67 +4762,12 @@ export default function HomePage() {
                           "indigo"
                         )}
                       </div>
-                    </>
-                  ) : (
-                    <div className="mt-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                      {optimalLoading
-                        ? "Calculating optimal lineup..."
-                        : optimalError ??
-                          "Optimal lineup becomes available after leaderboard finalization."}
-                    </div>
-                  )
-                ) : currentLeaderLineup ? (
-                  <>
-                    <p className="mt-2 max-w-full break-words text-sm font-semibold leading-6 text-slate-600">
-                      This shows the current first-place lineup before finalization. Ranks can still move, and the true optimal lineup stays hidden until the final snapshot is recorded.
-                    </p>
-                    <div className="mt-4 space-y-3">
-                      {currentLeaderLineup.lineup.map((entry) =>
-                        renderLineupEntry(
-                          entry.player,
-                          {
-                            border: "border-indigo-100",
-                            label: "text-indigo-700/80",
-                            value: "text-indigo-700",
-                          },
-                          entry.slot_rule.display_text
-                        )
-                      )}
-                    </div>
-                    <div className="mt-5 grid grid-cols-2 gap-3">
-                      {renderSubmissionMiniStat(
-                        "Base",
-                        Number(currentLeaderLineup.leader.base_score).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }),
-                        "indigo"
-                      )}
-                      {renderSubmissionMiniStat(
-                        "Active Links",
-                        currentLeaderLineup.leader.active_links.toLocaleString(),
-                        "indigo"
-                      )}
-                      {renderSubmissionMiniStat(
-                        "Multiplier",
-                        `${Number(currentLeaderLineup.leader.multiplier).toFixed(2)}x`,
-                        "indigo"
-                      )}
-                      {renderSubmissionMiniStat(
-                        "Total",
-                        Number(currentLeaderLineup.leader.final_score).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }),
-                        "indigo"
-                      )}
-                    </div>
                   </>
                 ) : (
                   <div className="mt-4 rounded-[18px] border-[3px] border-indigo-100 bg-white/85 px-4 py-6 text-center text-sm font-semibold text-slate-600">
-                    {currentLeaderLoading
-                      ? "Loading current leader lineup..."
-                      : currentLeaderError ?? "Current leader lineup unavailable"}
+                    {optimalLoading
+                      ? "Calculating optimal lineup..."
+                      : optimalError ?? "Optimal lineup unavailable"}
                   </div>
                 )}
               </div>
@@ -7115,7 +6969,7 @@ export default function HomePage() {
                   Once a lineup is submitted, that entry is locked for leaderboard purposes. You can still inspect the puzzle, compare scores, and review the live leaderboard after submitting, but you do not get another official entry for that date.
                 </p>
                 <p>
-                  The current first-place lineup can still be viewed after you submit, but the true optimal lineup stays hidden until the leaderboard and badge snapshot are finalized for that puzzle date.
+                  After you submit, the results screen shows the computed optimal lineup for that puzzle date so you can compare your entry right away.
                 </p>
                 <p>
                   <span className="font-bold text-sky-900">Leaderboard:</span>{" "}

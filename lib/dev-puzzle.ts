@@ -133,6 +133,17 @@ export type DevPuzzleDetail = {
     parameter_value: string | null;
     rule_name: string;
   }>;
+  submissions: {
+    submission_count: number;
+    entries: Array<{
+      submission_id: string;
+      user_id: string | null;
+      username: string | null;
+      display_name: string;
+      submitted_at: string;
+      final_score: number;
+    }>;
+  };
   cached_optimal: null | {
     computed_at: string;
     optimal_active_links: number | null;
@@ -1589,7 +1600,7 @@ export async function getDevPuzzleDetail(
     return null;
   }
 
-  const [slotsResult, cacheResult] = await Promise.all([
+  const [slotsResult, submissionsResult, cacheResult] = await Promise.all([
     db.query(
       `
       SELECT
@@ -1603,6 +1614,23 @@ export async function getDevPuzzleDetail(
         ON srd.slot_rule_id = dpsr.slot_rule_id
       WHERE dpsr.puzzle_id = $1::bigint
       ORDER BY dpsr.slot_number ASC
+      `,
+      [Number(puzzleId)]
+    ),
+    db.query(
+      `
+      SELECT
+        ps.submission_id::text AS submission_id,
+        ps.user_id::text AS user_id,
+        au.username,
+        COALESCE(au.username, ps.display_name) AS display_name,
+        ps.submitted_at::text AS submitted_at,
+        ps.final_score::float8 AS final_score
+      FROM puzzle_submission ps
+      LEFT JOIN app_user au
+        ON au.user_id = ps.user_id
+      WHERE ps.puzzle_id = $1::bigint
+      ORDER BY ps.submitted_at ASC, ps.submission_id ASC
       `,
       [Number(puzzleId)]
     ),
@@ -1624,6 +1652,17 @@ export async function getDevPuzzleDetail(
   return {
     puzzle,
     slots: slotsResult.rows,
+    submissions: {
+      submission_count: submissionsResult.rows.length,
+      entries: submissionsResult.rows.map((row) => ({
+        submission_id: String(row.submission_id),
+        user_id: row.user_id ? String(row.user_id) : null,
+        username: row.username ? String(row.username) : null,
+        display_name: String(row.display_name),
+        submitted_at: String(row.submitted_at),
+        final_score: Number(row.final_score ?? 0),
+      })),
+    },
     cached_optimal: payload
       ? {
           computed_at: cacheRow.computed_at,
@@ -2541,6 +2580,72 @@ export async function moveFuturePuzzleByDate(
   await updateCachedPuzzleDate(db, Number(puzzleId), String(adjacent.puzzle_date));
   await updateCachedPuzzleDate(db, Number(adjacent.puzzle_id), String(puzzle.puzzle_date));
   await rebuildOptimalUsageTrackerDoc(db);
+}
+
+export async function deleteFuturePuzzleAndShift(
+  db: DbClient,
+  puzzleId: string | number
+) {
+  const puzzle = await assertFutureEditablePuzzle(db, puzzleId);
+
+  const futureSubmissionResult = await db.query(
+    `
+    SELECT COUNT(*)::int AS submission_count
+    FROM puzzle_submission ps
+    JOIN daily_puzzle dp
+      ON dp.puzzle_id = ps.puzzle_id
+    WHERE dp.sport = 'nfl'
+      AND dp.puzzle_date > $1::date
+    `,
+    [puzzle.puzzle_date]
+  );
+  if (Number(futureSubmissionResult.rows[0]?.submission_count ?? 0) > 0) {
+    throw new Error(
+      "Cannot shift future puzzles because one or more later dates already have submissions."
+    );
+  }
+
+  await db.query(`DELETE FROM daily_puzzle WHERE puzzle_id = $1::bigint`, [Number(puzzleId)]);
+
+  const laterPuzzlesResult = await db.query(
+    `
+    SELECT puzzle_id::text, puzzle_date::text
+    FROM daily_puzzle
+    WHERE sport = 'nfl'
+      AND puzzle_date > $1::date
+    ORDER BY puzzle_date ASC, puzzle_id ASC
+    `,
+    [puzzle.puzzle_date]
+  );
+
+  for (const row of laterPuzzlesResult.rows) {
+    const shiftedDateResult = await db.query<{ shifted_date: string }>(
+      `SELECT ($1::date - INTERVAL '1 day')::date::text AS shifted_date`,
+      [row.puzzle_date]
+    );
+    const shiftedDate = shiftedDateResult.rows[0]?.shifted_date;
+    if (!shiftedDate) {
+      continue;
+    }
+
+    await db.query(
+      `
+      UPDATE daily_puzzle
+      SET puzzle_date = $1::date
+      WHERE puzzle_id = $2::bigint
+      `,
+      [shiftedDate, Number(row.puzzle_id)]
+    );
+    await updateCachedPuzzleDate(db, Number(row.puzzle_id), shiftedDate);
+  }
+
+  await rebuildOptimalUsageTrackerDoc(db);
+
+  return {
+    deletedPuzzleId: String(puzzleId),
+    removedDate: String(puzzle.puzzle_date),
+    shiftedCount: laterPuzzlesResult.rows.length,
+  };
 }
 
 async function loadConfigDefinition(db: DbClient, config: DevPuzzleConfig) {
