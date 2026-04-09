@@ -600,6 +600,55 @@ async function ensureDevAutomationTables(db: DbClient) {
   `);
 
   await db.query(`
+    ALTER TABLE dev_invalid_slot_candidate_cache
+      DROP CONSTRAINT IF EXISTS dev_invalid_slot_candidate_cache_pkey
+  `);
+  await db.query(`
+    ALTER TABLE dev_invalid_slot_candidate_cache
+      ADD PRIMARY KEY (
+        theme_rule_logic_key,
+        slot_rule_id,
+        position_overlay_enabled,
+        qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled
+      )
+  `);
+
+  await db.query(`
+    ALTER TABLE dev_invalid_config_cache
+      DROP CONSTRAINT IF EXISTS dev_invalid_config_cache_pkey
+  `);
+  await db.query(`
+    ALTER TABLE dev_invalid_config_cache
+      ADD PRIMARY KEY (
+        theme_rule_logic_key,
+        slot_signature,
+        position_overlay_enabled,
+        qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled,
+        failure_reason
+      )
+  `);
+
+  await db.query(`
+    ALTER TABLE dev_slot_candidate_metric_cache
+      DROP CONSTRAINT IF EXISTS dev_slot_candidate_metric_cache_pkey
+  `);
+  await db.query(`
+    ALTER TABLE dev_slot_candidate_metric_cache
+      ADD PRIMARY KEY (
+        theme_rule_logic_key,
+        slot_rule_id,
+        position_overlay_enabled,
+        qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled
+      )
+  `);
+
+  await db.query(`
     CREATE TABLE IF NOT EXISTS dev_threshold_failure_cache (
       config_signature TEXT NOT NULL,
       min_active_links INTEGER NOT NULL,
