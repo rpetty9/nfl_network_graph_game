@@ -35,6 +35,7 @@ export type BadgeKey =
   | "top_10_finish"
   | "top_10_finish_5"
   | "ten_links_submission"
+  | "optimal_lineup_submission"
   | "creator"
   | "founder"
   | "bestestest";
@@ -214,6 +215,14 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     tone: "emerald",
     icon: "link",
   },
+  optimal_lineup_submission: {
+    key: "optimal_lineup_submission",
+    title: "Perfect Solve",
+    description: "Submitted the exact optimal lineup for a puzzle.",
+    unlockHint: "Submit a lineup that matches the puzzle's optimal build.",
+    tone: "amber",
+    icon: "crown",
+  },
   creator: {
     key: "creator",
     title: "Creator",
@@ -246,6 +255,7 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
 export const BADGE_ORDER: BadgeKey[] = [
   "creator",
   "bestestest",
+  "optimal_lineup_submission",
   "founder",
   "first_place_finish",
   "beat_friend_daily_10",

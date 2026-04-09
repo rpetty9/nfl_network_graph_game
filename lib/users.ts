@@ -1287,12 +1287,22 @@ export async function grantBadgesToUser(input: {
 export async function awardBadgesForSubmission(input: {
   userId: string;
   activeLinks: number;
+  finalScore?: number | null;
+  optimalFinalScore?: number | null;
 }) {
   const stats = await loadStatsForUser(input.userId);
   const badgeKeys = new Set<BadgeKey>(collectStatBasedBadgeKeys(stats));
 
   if (input.activeLinks >= 10) {
     badgeKeys.add("ten_links_submission");
+  }
+
+  if (
+    input.finalScore != null &&
+    input.optimalFinalScore != null &&
+    Math.abs(Number(input.finalScore) - Number(input.optimalFinalScore)) < 0.005
+  ) {
+    badgeKeys.add("optimal_lineup_submission");
   }
 
   return grantBadgesToUser({

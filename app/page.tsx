@@ -569,6 +569,7 @@ function getBadgeGalleryTab(badgeKey: BadgeKey): BadgeGalleryTab {
       return "links";
     case "account_created":
     case "avatar_customized":
+    case "optimal_lineup_submission":
     case "creator":
     case "founder":
     case "bestestest":
@@ -625,9 +626,10 @@ function FeaturedBadgeSlot({
   const tone = getBadgeToneClasses(badge.tone);
   const isCreatorBadge = badge.badgeKey === "creator";
   const isBestestestBadge = badge.badgeKey === "bestestest";
+  const isPerfectSolveBadge = badge.badgeKey === "optimal_lineup_submission";
   const isDailyCrownBadge = badge.badgeKey === "first_place_finish";
   const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
-  const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge;
+  const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge || isPerfectSolveBadge;
 
   return (
     <div className="group relative">
@@ -638,6 +640,8 @@ function FeaturedBadgeSlot({
           isSignatureBadge
             ? isBestestestBadge
               ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.98)_0%,rgba(244,114,182,0.3)_24%,rgba(168,85,247,0.34)_46%,rgba(91,33,182,0.5)_68%,rgba(17,24,39,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.45),0_0_30px_rgba(168,85,247,0.34),0_20px_48px_rgba(91,33,182,0.34)]"
+              : isPerfectSolveBadge
+                ? "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.4)_18%,rgba(125,211,252,0.32)_38%,rgba(37,99,235,0.34)_62%,rgba(8,47,73,0.9)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(125,211,252,0.42),0_0_30px_rgba(56,189,248,0.24),0_20px_48px_rgba(30,64,175,0.34)]"
               : isDailyCrownBadge
                 ? "border-cyan-200 bg-[radial-gradient(circle_at_top,rgba(250,254,255,0.99)_0%,rgba(254,240,138,0.38)_18%,rgba(103,232,249,0.28)_40%,rgba(14,116,144,0.32)_64%,rgba(8,47,73,0.94)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(103,232,249,0.42),0_0_30px_rgba(34,211,238,0.24),0_20px_48px_rgba(8,145,178,0.26)]"
                 : "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(255,252,235,0.99)_0%,rgba(253,224,71,0.42)_22%,rgba(251,191,36,0.34)_42%,rgba(249,115,22,0.28)_64%,rgba(251,146,60,0.3)_100%)] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.48),0_0_28px_rgba(249,115,22,0.22),0_20px_48px_rgba(251,146,60,0.2)]"
@@ -646,6 +650,8 @@ function FeaturedBadgeSlot({
           isSignatureBadge
             ? isBestestestBadge
               ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.5),transparent_22%),radial-gradient(circle_at_80%_18%,rgba(244,114,182,0.28),transparent_22%),repeating-linear-gradient(135deg,rgba(236,72,153,0.14)_0,rgba(236,72,153,0.14)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(236,72,153,0.24),transparent_62%)] after:blur-xl after:content-['']"
+              : isPerfectSolveBadge
+                ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_16%,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(125,211,252,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(56,189,248,0.08)_0,rgba(56,189,248,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(56,189,248,0.24),transparent_62%)] after:blur-xl after:content-['']"
               : isDailyCrownBadge
                 ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_16%,rgba(255,255,255,0.48),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(103,232,249,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(103,232,249,0.09)_0,rgba(103,232,249,0.09)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(34,211,238,0.2),transparent_62%)] after:blur-xl after:content-['']"
                 : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_16%,rgba(255,255,255,0.52),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(251,191,36,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(249,115,22,0.1)_0,rgba(249,115,22,0.1)_7px,transparent_7px,transparent_15px)] before:content-[''] after:absolute after:-inset-6 after:-z-10 after:rounded-[28px] after:bg-[radial-gradient(circle,rgba(251,146,60,0.22),transparent_62%)] after:blur-xl after:content-['']"
@@ -659,6 +665,8 @@ function FeaturedBadgeSlot({
             isSignatureBadge
               ? isBestestestBadge
                 ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_22px_rgba(244,114,182,0.42)]"
+                : isPerfectSolveBadge
+                  ? "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_22px_rgba(56,189,248,0.38)]"
                 : isDailyCrownBadge
                   ? "bg-[linear-gradient(145deg,#fefce8_0%,#fde68a_18%,#a5f3fc_48%,#06b6d4_74%,#164e63_100%)] text-cyan-950 shadow-[0_0_22px_rgba(34,211,238,0.3)]"
                   : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_22px_rgba(56,189,248,0.38)]"
@@ -680,7 +688,7 @@ function FeaturedBadgeSlot({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isSignatureBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : isDailyCrownBadge ? "mx-auto inline-flex items-center rounded-[12px] border border-cyan-100/80 bg-[linear-gradient(135deg,rgba(254,252,232,0.98)_0%,rgba(253,224,71,0.9)_18%,rgba(165,243,252,0.96)_48%,rgba(34,211,238,0.88)_72%,rgba(8,47,73,0.86)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-cyan-950 shadow-[0_0_0_1px_rgba(103,232,249,0.26),0_10px_24px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.22)]" : "mx-auto inline-flex items-center rounded-[12px] border border-amber-200/90 bg-[linear-gradient(135deg,rgba(255,251,235,0.96)_0%,rgba(253,230,138,0.98)_22%,rgba(251,191,36,0.94)_58%,rgba(249,115,22,0.9)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.32),0_10px_24px_rgba(249,115,22,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
+          <p className={`text-center text-sm font-black uppercase tracking-[0.1em] ${isSignatureBadge ? isBestestestBadge ? "text-pink-50 drop-shadow-[0_1px_0_rgba(91,33,182,0.65)]" : isDailyCrownBadge ? "mx-auto inline-flex items-center rounded-[12px] border border-cyan-100/80 bg-[linear-gradient(135deg,rgba(254,252,232,0.98)_0%,rgba(253,224,71,0.9)_18%,rgba(165,243,252,0.96)_48%,rgba(34,211,238,0.88)_72%,rgba(8,47,73,0.86)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-cyan-950 shadow-[0_0_0_1px_rgba(103,232,249,0.26),0_10px_24px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.22)]" : isPerfectSolveBadge ? "mx-auto inline-flex items-center rounded-[12px] border border-sky-100/80 bg-[linear-gradient(135deg,rgba(255,248,220,0.98)_0%,rgba(253,230,138,0.94)_18%,rgba(125,211,252,0.95)_48%,rgba(59,130,246,0.9)_72%,rgba(30,64,175,0.86)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-sky-950 shadow-[0_0_0_1px_rgba(125,211,252,0.3),0_10px_24px_rgba(56,189,248,0.18),inset_0_1px_0_rgba(255,255,255,0.22)]" : "mx-auto inline-flex items-center rounded-[12px] border border-amber-200/90 bg-[linear-gradient(135deg,rgba(255,251,235,0.96)_0%,rgba(253,230,138,0.98)_22%,rgba(251,191,36,0.94)_58%,rgba(249,115,22,0.9)_100%)] px-3.5 py-1.5 text-[13px] tracking-[0.14em] text-amber-950 shadow-[0_0_0_1px_rgba(251,191,36,0.32),0_10px_24px_rgba(249,115,22,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]" : "text-slate-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]"}`}>
             {badge.title}
           </p>
         </div>
@@ -1398,9 +1406,10 @@ function ProfileBadgeCard({
 }) {
   const isCreatorBadge = badge.badgeKey === "creator";
   const isBestestestBadge = badge.badgeKey === "bestestest";
+  const isPerfectSolveBadge = badge.badgeKey === "optimal_lineup_submission";
   const isDailyCrownBadge = badge.badgeKey === "first_place_finish";
   const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
-  const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge;
+  const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge || isPerfectSolveBadge;
   const isPinned = actionLabel === "Featured";
   const tone = locked
     ? {
@@ -1415,17 +1424,23 @@ function ProfileBadgeCard({
           shell:
             isBestestestBadge
               ? "border-pink-300 bg-[radial-gradient(circle_at_top,rgba(255,244,250,0.99)_0%,rgba(244,114,182,0.36)_20%,rgba(168,85,247,0.34)_44%,rgba(91,33,182,0.46)_68%,rgba(17,24,39,0.96)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.42),0_0_34px_rgba(168,85,247,0.24),0_24px_52px_rgba(91,33,182,0.38),inset_0_1px_0_rgba(255,255,255,0.24)]"
+              : isPerfectSolveBadge
+                ? "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.4)_18%,rgba(125,211,252,0.32)_38%,rgba(37,99,235,0.34)_62%,rgba(8,47,73,0.9)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(125,211,252,0.42),0_0_34px_rgba(56,189,248,0.24),0_24px_52px_rgba(30,64,175,0.34),inset_0_1px_0_rgba(255,255,255,0.28)]"
               : isDailyCrownBadge
                 ? "border-cyan-200 bg-[radial-gradient(circle_at_top,rgba(250,254,255,0.99)_0%,rgba(254,240,138,0.42)_18%,rgba(165,243,252,0.32)_40%,rgba(8,145,178,0.34)_64%,rgba(8,47,73,0.92)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(103,232,249,0.42),0_0_34px_rgba(34,211,238,0.22),0_24px_52px_rgba(8,145,178,0.32),inset_0_1px_0_rgba(255,255,255,0.28)]"
                 : "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(255,248,220,0.99)_0%,rgba(250,204,21,0.4)_18%,rgba(125,211,252,0.32)_38%,rgba(37,99,235,0.34)_62%,rgba(8,47,73,0.9)_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(125,211,252,0.42),0_0_34px_rgba(56,189,248,0.24),0_24px_52px_rgba(30,64,175,0.34),inset_0_1px_0_rgba(255,255,255,0.28)]",
           icon: isBestestestBadge
             ? "bg-[linear-gradient(145deg,#fff1f2_0%,#f9a8d4_18%,#f472b6_42%,#a855f7_72%,#581c87_100%)] text-amber-50 shadow-[0_0_24px_rgba(244,114,182,0.46)]"
+            : isPerfectSolveBadge
+              ? "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_24px_rgba(56,189,248,0.42)]"
             : isDailyCrownBadge
               ? "bg-[linear-gradient(145deg,#fefce8_0%,#fde68a_18%,#a5f3fc_48%,#06b6d4_74%,#164e63_100%)] text-cyan-950 shadow-[0_0_24px_rgba(34,211,238,0.34)]"
               : "bg-[linear-gradient(145deg,#fff7cc_0%,#fde68a_18%,#7dd3fc_48%,#2563eb_74%,#1e3a8a_100%)] text-sky-950 shadow-[0_0_24px_rgba(56,189,248,0.42)]",
           meta: isBestestestBadge ? "text-amber-100" : isDailyCrownBadge ? "text-cyan-950/90" : "text-sky-950/90",
           aura: isBestestestBadge
             ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(244,114,182,0.2),transparent_22%),repeating-linear-gradient(135deg,rgba(244,114,182,0.1)_0,rgba(244,114,182,0.1)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(168,85,247,0.24),transparent_60%)] after:blur-xl after:content-['']"
+            : isPerfectSolveBadge
+              ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(125,211,252,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(56,189,248,0.08)_0,rgba(56,189,248,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(56,189,248,0.24),transparent_60%)] after:blur-xl after:content-['']"
             : isDailyCrownBadge
               ? "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(103,232,249,0.18),transparent_22%),repeating-linear-gradient(135deg,rgba(103,232,249,0.08)_0,rgba(103,232,249,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(34,211,238,0.22),transparent_60%)] after:blur-xl after:content-['']"
               : "before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.32),transparent_48%),radial-gradient(circle_at_78%_18%,rgba(125,211,252,0.22),transparent_22%),repeating-linear-gradient(135deg,rgba(56,189,248,0.08)_0,rgba(56,189,248,0.08)_8px,transparent_8px,transparent_16px)] before:content-[''] after:absolute after:-inset-8 after:-z-10 after:rounded-[30px] after:bg-[radial-gradient(circle,rgba(56,189,248,0.24),transparent_60%)] after:blur-xl after:content-['']",
@@ -1548,9 +1563,10 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
         const tone = getBadgeToneClasses(badge.tone);
         const isCreatorBadge = badge.key === "creator";
         const isBestestestBadge = badge.key === "bestestest";
+        const isPerfectSolveBadge = badge.key === "optimal_lineup_submission";
         const isDailyCrownBadge = badge.key === "first_place_finish";
         const isLegendaryManualBadge = isCreatorBadge || isBestestestBadge;
-        const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge;
+        const isSignatureBadge = isLegendaryManualBadge || isDailyCrownBadge || isPerfectSolveBadge;
         return (
           <span
             key={badge.key}
@@ -1558,6 +1574,8 @@ function LeaderboardBadgeIcons({ badgeKeys }: { badgeKeys?: BadgeKey[] }) {
               isSignatureBadge
                 ? isBestestestBadge
                   ? "bg-[radial-gradient(circle_at_30%_28%,#fff1f2_0%,#f9a8d4_16%,#f472b6_38%,#a855f7_60%,#581c87_82%,#111827_100%)] text-amber-50 shadow-[0_0_0_1px_rgba(244,114,182,0.58),0_0_16px_rgba(168,85,247,0.52),0_12px_24px_rgba(91,33,182,0.38)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(244,114,182,0.52),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
+                  : isPerfectSolveBadge
+                    ? "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#7dd3fc_42%,#2563eb_64%,#1e3a8a_84%,#082f49_100%)] text-sky-950 shadow-[0_0_0_1px_rgba(125,211,252,0.58),0_0_16px_rgba(56,189,248,0.54),0_12px_24px_rgba(30,64,175,0.34)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(56,189,248,0.54),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
                   : isDailyCrownBadge
                     ? "bg-[radial-gradient(circle_at_30%_28%,#fefce8_0%,#fde68a_18%,#a5f3fc_42%,#06b6d4_66%,#164e63_86%,#082f49_100%)] text-cyan-950 shadow-[0_0_0_1px_rgba(103,232,249,0.58),0_0_16px_rgba(34,211,238,0.48),0_12px_24px_rgba(8,145,178,0.32)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(34,211,238,0.48),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
                     : "bg-[radial-gradient(circle_at_30%_28%,#fff8cc_0%,#fde68a_18%,#7dd3fc_42%,#2563eb_64%,#1e3a8a_84%,#082f49_100%)] text-sky-950 shadow-[0_0_0_1px_rgba(125,211,252,0.58),0_0_16px_rgba(56,189,248,0.54),0_12px_24px_rgba(30,64,175,0.34)] before:absolute before:-inset-1.5 before:-z-10 before:rounded-full before:bg-[radial-gradient(circle,rgba(56,189,248,0.54),transparent_66%)] before:blur-[7px] before:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-[conic-gradient(from_180deg_at_50%_50%,rgba(255,255,255,0.18),transparent_20%,rgba(255,255,255,0.08)_36%,transparent_56%,rgba(255,255,255,0.18))] after:content-['']"
@@ -4903,8 +4921,10 @@ export default function HomePage() {
                         </p>
                         <LeaderboardBadgeIcons badgeKeys={entry.featured_badges} />
                         <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] text-amber-700/80">
-                          {Number(entry.percent_of_optimal ?? 0).toFixed(1)}% of optimal •{" "}
-                          {entry.active_links} links
+                          {entry.percent_of_optimal != null
+                            ? `${Number(entry.percent_of_optimal).toFixed(1)}% of optimal`
+                            : "Optimal pending"}{" "}
+                          • {entry.active_links} links
                         </p>
                       </div>
                       <div className="w-full shrink-0 text-left sm:w-auto sm:text-right">

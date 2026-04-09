@@ -134,6 +134,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No puzzle found" }, { status: 404 });
     }
 
+    const optimalCacheResult = await pool.query<{ optimal_final_score: number | null }>(
+      `
+      SELECT
+        CASE
+          WHEN payload->>'optimal_final_score' IS NOT NULL
+            THEN (payload->>'optimal_final_score')::float8
+          ELSE NULL
+        END AS optimal_final_score
+      FROM optimal_lineup_cache
+      WHERE puzzle_id = $1::bigint
+      ORDER BY computed_at DESC
+      LIMIT 1
+      `,
+      [Number(puzzle.puzzle_id)]
+    );
+    const cachedOptimalFinalScore = optimalCacheResult.rows[0]?.optimal_final_score ?? null;
+
     const submissionsResult =
       scope === "friends"
         ? await pool.query(
@@ -203,9 +220,28 @@ export async function GET(request: NextRequest) {
               : [puzzle.puzzle_id, limit, puzzle.puzzle_date]
           );
 
+    const leaderboard = submissionsResult.rows.map((row) => {
+      const optimalFinalScore =
+        row.optimal_final_score != null
+          ? Number(row.optimal_final_score)
+          : cachedOptimalFinalScore;
+      const percentOfOptimal =
+        row.percent_of_optimal != null
+          ? Number(row.percent_of_optimal)
+          : optimalFinalScore != null && optimalFinalScore > 0
+            ? (Number(row.final_score) / optimalFinalScore) * 100
+            : null;
+
+      return {
+        ...row,
+        optimal_final_score: optimalFinalScore,
+        percent_of_optimal: percentOfOptimal,
+      };
+    });
+
     return NextResponse.json({
       puzzle_date: String(puzzle.puzzle_date).slice(0, 10),
-      leaderboard: submissionsResult.rows,
+      leaderboard,
       scope: scope === "friends" ? "friends" : "daily",
     });
   } catch (error) {

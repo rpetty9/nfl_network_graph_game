@@ -103,6 +103,26 @@ type ExistingSubmissionPlayerRow = {
   player_id: string;
 };
 
+async function loadCachedOptimalFinalScore(puzzleId: string | number) {
+  const result = await pool.query<{ optimal_final_score: number | null }>(
+    `
+    SELECT
+      CASE
+        WHEN payload->>'optimal_final_score' IS NOT NULL
+          THEN (payload->>'optimal_final_score')::float8
+        ELSE NULL
+      END AS optimal_final_score
+    FROM optimal_lineup_cache
+    WHERE puzzle_id = $1::bigint
+    ORDER BY computed_at DESC
+    LIMIT 1
+    `,
+    [Number(puzzleId)]
+  );
+
+  return result.rows[0]?.optimal_final_score ?? null;
+}
+
 const ADJECTIVES = [
   "Blitz",
   "Clutch",
@@ -654,7 +674,7 @@ export async function POST(request: NextRequest) {
     const requestedDate = typeof body?.date === "string" ? body.date : null;
     const clientToken = normalizeClientToken(body?.client_token);
     const lineup = Array.isArray(body?.lineup) ? body.lineup : [];
-    const optimalFinalScore =
+    const requestedOptimalFinalScore =
       typeof body?.optimal_final_score === "number"
         ? body.optimal_final_score
         : null;
@@ -785,6 +805,8 @@ export async function POST(request: NextRequest) {
       Number(relationshipRule.bonus_pct ?? 10)
     );
     const finalScore = baseScore * multiplier;
+    const optimalFinalScore =
+      requestedOptimalFinalScore ?? (await loadCachedOptimalFinalScore(puzzle.puzzle_id));
     const percentOfOptimal =
       optimalFinalScore && optimalFinalScore > 0
         ? (finalScore / optimalFinalScore) * 100
@@ -855,6 +877,8 @@ export async function POST(request: NextRequest) {
         ? await awardBadgesForSubmission({
             userId: registeredUserId,
             activeLinks,
+            finalScore,
+            optimalFinalScore,
           })
         : [];
 
