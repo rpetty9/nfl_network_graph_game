@@ -207,6 +207,10 @@ export type DevGeneratorSettings = {
   anchorCount: number;
   stageWidth: number;
   beamWidth: number;
+  lockedStartSeason: number | null;
+  lockedEndSeason: number | null;
+  lockedRelationshipRuleId: string | null;
+  lockedSlotRuleIds: string[];
 };
 
 export type DevGeneratorJobStatus = {
@@ -340,6 +344,10 @@ const DEFAULT_GENERATOR_SETTINGS: DevGeneratorSettings = {
   anchorCount: 3,
   stageWidth: 6,
   beamWidth: 3,
+  lockedStartSeason: null,
+  lockedEndSeason: null,
+  lockedRelationshipRuleId: null,
+  lockedSlotRuleIds: ["", "", "", "", ""],
 };
 
 const SEEDED_OPTIMIZER_MILESTONES = [
@@ -409,6 +417,32 @@ function getPairKey(playerId1: string, playerId2: string) {
 export function sanitizeGeneratorSettings(
   value: Partial<DevGeneratorSettings> | null | undefined
 ): DevGeneratorSettings {
+  const lockedStartSeason =
+    typeof value?.lockedStartSeason === "number" && Number.isFinite(value.lockedStartSeason)
+      ? Math.min(Math.max(Math.trunc(value.lockedStartSeason), 2000), 2025)
+      : null;
+  const lockedEndSeason =
+    typeof value?.lockedEndSeason === "number" && Number.isFinite(value.lockedEndSeason)
+      ? Math.min(Math.max(Math.trunc(value.lockedEndSeason), 2000), 2025)
+      : null;
+  const normalizedLockedStartSeason =
+    lockedStartSeason != null && lockedEndSeason != null
+      ? Math.min(lockedStartSeason, lockedEndSeason)
+      : null;
+  const normalizedLockedEndSeason =
+    lockedStartSeason != null && lockedEndSeason != null
+      ? Math.max(lockedStartSeason, lockedEndSeason)
+      : null;
+  const lockedRelationshipRuleId =
+    typeof value?.lockedRelationshipRuleId === "string" &&
+    value.lockedRelationshipRuleId.trim().length > 0
+      ? value.lockedRelationshipRuleId.trim()
+      : null;
+  const lockedSlotRuleIds = Array.from({ length: 5 }, (_, index) => {
+    const slotRuleId = value?.lockedSlotRuleIds?.[index];
+    return typeof slotRuleId === "string" ? slotRuleId.trim() : "";
+  });
+
   return {
     targetPendingCount: Math.min(
       Math.max(Math.trunc(Number(value?.targetPendingCount ?? DEFAULT_GENERATOR_SETTINGS.targetPendingCount)) || DEFAULT_GENERATOR_SETTINGS.targetPendingCount, 1),
@@ -445,7 +479,7 @@ export function sanitizeGeneratorSettings(
         ) || DEFAULT_GENERATOR_SETTINGS.maxAttemptsPerPuzzle,
         1
       ),
-      1000
+      10000
     ),
     forcePositionLock:
       Boolean(value?.forcePositionLock) &&
@@ -491,6 +525,10 @@ export function sanitizeGeneratorSettings(
       ),
       10
     ),
+    lockedStartSeason: normalizedLockedStartSeason,
+    lockedEndSeason: normalizedLockedEndSeason,
+    lockedRelationshipRuleId,
+    lockedSlotRuleIds,
   };
 }
 
@@ -600,52 +638,146 @@ async function ensureDevAutomationTables(db: DbClient) {
   `);
 
   await db.query(`
-    ALTER TABLE dev_invalid_slot_candidate_cache
-      DROP CONSTRAINT IF EXISTS dev_invalid_slot_candidate_cache_pkey
-  `);
-  await db.query(`
-    ALTER TABLE dev_invalid_slot_candidate_cache
-      ADD PRIMARY KEY (
-        theme_rule_logic_key,
-        slot_rule_id,
-        position_overlay_enabled,
-        qb_exclusion_enabled,
-        rb_exclusion_enabled,
-        wr_exclusion_enabled
-      )
+    DO $$
+    DECLARE
+      current_cols TEXT[];
+      current_constraint TEXT;
+    BEGIN
+      SELECT
+        ARRAY_AGG(a.attname ORDER BY key_cols.ordinality),
+        MAX(c.conname)
+      INTO current_cols, current_constraint
+      FROM pg_constraint c
+      JOIN unnest(c.conkey) WITH ORDINALITY AS key_cols(attnum, ordinality)
+        ON TRUE
+      JOIN pg_attribute a
+        ON a.attrelid = c.conrelid
+       AND a.attnum = key_cols.attnum
+      WHERE c.conrelid = 'dev_invalid_slot_candidate_cache'::regclass
+        AND c.contype = 'p';
+
+      IF current_cols IS DISTINCT FROM ARRAY[
+        'theme_rule_logic_key',
+        'slot_rule_id',
+        'position_overlay_enabled',
+        'qb_exclusion_enabled',
+        'rb_exclusion_enabled',
+        'wr_exclusion_enabled'
+      ] THEN
+        IF current_constraint IS NOT NULL THEN
+          EXECUTE format(
+            'ALTER TABLE dev_invalid_slot_candidate_cache DROP CONSTRAINT %I',
+            current_constraint
+          );
+        END IF;
+
+        ALTER TABLE dev_invalid_slot_candidate_cache
+          ADD PRIMARY KEY (
+            theme_rule_logic_key,
+            slot_rule_id,
+            position_overlay_enabled,
+            qb_exclusion_enabled,
+            rb_exclusion_enabled,
+            wr_exclusion_enabled
+          );
+      END IF;
+    END $$;
   `);
 
   await db.query(`
-    ALTER TABLE dev_invalid_config_cache
-      DROP CONSTRAINT IF EXISTS dev_invalid_config_cache_pkey
-  `);
-  await db.query(`
-    ALTER TABLE dev_invalid_config_cache
-      ADD PRIMARY KEY (
-        theme_rule_logic_key,
-        slot_signature,
-        position_overlay_enabled,
-        qb_exclusion_enabled,
-        rb_exclusion_enabled,
-        wr_exclusion_enabled,
-        failure_reason
-      )
+    DO $$
+    DECLARE
+      current_cols TEXT[];
+      current_constraint TEXT;
+    BEGIN
+      SELECT
+        ARRAY_AGG(a.attname ORDER BY key_cols.ordinality),
+        MAX(c.conname)
+      INTO current_cols, current_constraint
+      FROM pg_constraint c
+      JOIN unnest(c.conkey) WITH ORDINALITY AS key_cols(attnum, ordinality)
+        ON TRUE
+      JOIN pg_attribute a
+        ON a.attrelid = c.conrelid
+       AND a.attnum = key_cols.attnum
+      WHERE c.conrelid = 'dev_invalid_config_cache'::regclass
+        AND c.contype = 'p';
+
+      IF current_cols IS DISTINCT FROM ARRAY[
+        'theme_rule_logic_key',
+        'slot_signature',
+        'position_overlay_enabled',
+        'qb_exclusion_enabled',
+        'rb_exclusion_enabled',
+        'wr_exclusion_enabled',
+        'failure_reason'
+      ] THEN
+        IF current_constraint IS NOT NULL THEN
+          EXECUTE format(
+            'ALTER TABLE dev_invalid_config_cache DROP CONSTRAINT %I',
+            current_constraint
+          );
+        END IF;
+
+        ALTER TABLE dev_invalid_config_cache
+          ADD PRIMARY KEY (
+            theme_rule_logic_key,
+            slot_signature,
+            position_overlay_enabled,
+            qb_exclusion_enabled,
+            rb_exclusion_enabled,
+            wr_exclusion_enabled,
+            failure_reason
+          );
+      END IF;
+    END $$;
   `);
 
   await db.query(`
-    ALTER TABLE dev_slot_candidate_metric_cache
-      DROP CONSTRAINT IF EXISTS dev_slot_candidate_metric_cache_pkey
-  `);
-  await db.query(`
-    ALTER TABLE dev_slot_candidate_metric_cache
-      ADD PRIMARY KEY (
-        theme_rule_logic_key,
-        slot_rule_id,
-        position_overlay_enabled,
-        qb_exclusion_enabled,
-        rb_exclusion_enabled,
-        wr_exclusion_enabled
-      )
+    DO $$
+    DECLARE
+      current_cols TEXT[];
+      current_constraint TEXT;
+    BEGIN
+      SELECT
+        ARRAY_AGG(a.attname ORDER BY key_cols.ordinality),
+        MAX(c.conname)
+      INTO current_cols, current_constraint
+      FROM pg_constraint c
+      JOIN unnest(c.conkey) WITH ORDINALITY AS key_cols(attnum, ordinality)
+        ON TRUE
+      JOIN pg_attribute a
+        ON a.attrelid = c.conrelid
+       AND a.attnum = key_cols.attnum
+      WHERE c.conrelid = 'dev_slot_candidate_metric_cache'::regclass
+        AND c.contype = 'p';
+
+      IF current_cols IS DISTINCT FROM ARRAY[
+        'theme_rule_logic_key',
+        'slot_rule_id',
+        'position_overlay_enabled',
+        'qb_exclusion_enabled',
+        'rb_exclusion_enabled',
+        'wr_exclusion_enabled'
+      ] THEN
+        IF current_constraint IS NOT NULL THEN
+          EXECUTE format(
+            'ALTER TABLE dev_slot_candidate_metric_cache DROP CONSTRAINT %I',
+            current_constraint
+          );
+        END IF;
+
+        ALTER TABLE dev_slot_candidate_metric_cache
+          ADD PRIMARY KEY (
+            theme_rule_logic_key,
+            slot_rule_id,
+            position_overlay_enabled,
+            qb_exclusion_enabled,
+            rb_exclusion_enabled,
+            wr_exclusion_enabled
+          );
+      END IF;
+    END $$;
   `);
 
   await db.query(`
@@ -2084,16 +2216,24 @@ export async function upsertDevGeneratorJob(
   };
 }
 
-function buildRandomSlotRuleIds(
+function buildRandomSlotRuleIdsWithLocks(
   slotRules: Array<{
     slot_rule_id: string;
     parameter_type: string;
     random_weight?: number | null;
-  }>
+  }>,
+  currentSlotRuleIds: string[],
+  currentSlotLocks: boolean[]
 ) {
   const rulesByType = new Map<string, typeof slotRules>();
+  const lockedRuleIds = new Set(
+    currentSlotRuleIds.filter((slotRuleId, index) => currentSlotLocks[index] && slotRuleId)
+  );
   for (const rule of slotRules) {
     if (rule.parameter_type === "college" && Number(rule.random_weight ?? 0) <= 0) {
+      continue;
+    }
+    if (lockedRuleIds.has(rule.slot_rule_id)) {
       continue;
     }
     const items = rulesByType.get(rule.parameter_type) ?? [];
@@ -2101,12 +2241,27 @@ function buildRandomSlotRuleIds(
     rulesByType.set(rule.parameter_type, items);
   }
 
-  const nextSlotRuleIds: string[] = [];
+  const totalAvailableRules = Array.from(rulesByType.values()).reduce(
+    (sum, items) => sum + items.length,
+    0
+  );
+  const lockedRuleCount = currentSlotLocks.filter(Boolean).length;
+  if (totalAvailableRules + lockedRuleCount < 5) {
+    return null;
+  }
+
+  const nextSlotRuleIds = currentSlotRuleIds.map((slotRuleId, index) =>
+    currentSlotLocks[index] ? slotRuleId : ""
+  );
 
   for (let slotIndex = 0; slotIndex < 5; slotIndex += 1) {
+    if (currentSlotLocks[slotIndex]) {
+      continue;
+    }
+
     const typeEntries = Array.from(rulesByType.entries()).filter(([, items]) => items.length > 0);
     if (typeEntries.length === 0) {
-      return null;
+      break;
     }
     const collegeEntry = typeEntries.find(([type]) => type === "college") ?? null;
     const nonCollegeEntries = typeEntries.filter(([type]) => type !== "college");
@@ -2117,7 +2272,7 @@ function buildRandomSlotRuleIds(
       ? "college"
       : pickRandomItem(nonCollegeEntries)?.[0] ?? collegeEntry?.[0] ?? null;
     if (!selectedType) {
-      return null;
+      break;
     }
     const availableRules = rulesByType.get(selectedType) ?? [];
     const selectedRule =
@@ -2125,9 +2280,10 @@ function buildRandomSlotRuleIds(
         ? pickWeightedRule(availableRules)
         : pickRandomItem(availableRules);
     if (!selectedRule) {
-      return null;
+      break;
     }
-    nextSlotRuleIds.push(selectedRule.slot_rule_id);
+
+    nextSlotRuleIds[slotIndex] = selectedRule.slot_rule_id;
     const selectedIndex = availableRules.findIndex(
       (item) => item.slot_rule_id === selectedRule.slot_rule_id
     );
@@ -2141,7 +2297,85 @@ function buildRandomSlotRuleIds(
     }
   }
 
-  return nextSlotRuleIds.length === 5 ? nextSlotRuleIds : null;
+  return nextSlotRuleIds.every(Boolean) ? nextSlotRuleIds : null;
+}
+
+function pickRandomDistinctIndices(count: number, pickCount: number) {
+  const pool = Array.from({ length: count }, (_, index) => index);
+  const picks: number[] = [];
+  const safePickCount = Math.max(0, Math.min(count, pickCount));
+
+  for (let step = 0; step < safePickCount; step += 1) {
+    const chosenPoolIndex = Math.floor(Math.random() * pool.length);
+    const [picked] = pool.splice(chosenPoolIndex, 1);
+    if (picked == null) {
+      break;
+    }
+    picks.push(picked);
+  }
+
+  return picks.sort((a, b) => a - b);
+}
+
+function scoreSlotRuleSkeleton(
+  slotRuleIdsToScore: string[],
+  slotRules: Array<{
+    slot_rule_id: string;
+    parameter_type: string;
+    random_weight?: number | null;
+  }>
+) {
+  const ruleMap = new Map(slotRules.map((rule) => [rule.slot_rule_id, rule]));
+  const typeCounts = new Map<string, number>();
+  let score = 0;
+  let collegeCount = 0;
+
+  for (const slotRuleId of slotRuleIdsToScore) {
+    const rule = ruleMap.get(slotRuleId);
+    if (!rule) {
+      continue;
+    }
+
+    typeCounts.set(rule.parameter_type, (typeCounts.get(rule.parameter_type) ?? 0) + 1);
+
+    switch (rule.parameter_type) {
+      case "any":
+        score += 8;
+        break;
+      case "conference":
+        score += 6;
+        break;
+      case "division":
+        score += 5;
+        break;
+      case "team":
+        score += 4;
+        break;
+      case "position":
+        score += 3;
+        break;
+      case "college":
+        collegeCount += 1;
+        score += Math.min(8, Math.log2(Number(rule.random_weight ?? 1) + 1));
+        break;
+      default:
+        score += 1;
+    }
+  }
+
+  score += typeCounts.size * 4;
+
+  for (const count of typeCounts.values()) {
+    if (count > 2) {
+      score -= (count - 2) * 3;
+    }
+  }
+
+  if (collegeCount > 2) {
+    score -= (collegeCount - 2) * 8;
+  }
+
+  return score;
 }
 
 function previewMeetsGeneratorThresholds(
@@ -2230,60 +2464,170 @@ function evaluatePreviewAgainstGeneratorThresholds(
 
 async function tryGenerateCandidatePuzzle(
   db: DbClient,
-  settings: DevGeneratorSettings
+  settings: DevGeneratorSettings,
+  options?: {
+    searchPass?: number;
+    onProgress?: (progress: { attempts: number; searchPass: number }) => void;
+    shouldStop?: () => boolean;
+  }
 ): Promise<{ config: DevPuzzleConfig; preview: PreviewPayload; attempts: number } | null> {
   const meta = await getDevPuzzleMeta(db);
-  for (let attempt = 0; attempt < settings.maxAttemptsPerPuzzle; attempt += 1) {
-    const themeRange = pickRandomItem([...AUTO_THEME_RANGES]);
-    const relationship = pickRandomItem(meta.relationships);
-    const slotRuleIds = buildRandomSlotRuleIds(meta.slotRules);
-    if (!themeRange || !relationship || !slotRuleIds) {
+  const maxAttempts = Math.max(1, settings.maxAttemptsPerPuzzle);
+  const useAnchorSearch = settings.useAnchorSearch;
+  const anchorCount = useAnchorSearch
+    ? Math.max(1, Math.min(4, settings.anchorCount))
+    : 0;
+  const stageWidth = useAnchorSearch
+    ? Math.max(1, Math.min(20, settings.stageWidth))
+    : 1;
+  const beamWidth = settings.useSkeletonScoring
+    ? Math.max(1, Math.min(stageWidth, settings.beamWidth))
+    : stageWidth;
+  let attempt = 0;
+
+  while (attempt < maxAttempts) {
+    if (options?.shouldStop?.()) {
+      return null;
+    }
+    const themeRange =
+      settings.lockedStartSeason != null && settings.lockedEndSeason != null
+        ? {
+            startSeason: settings.lockedStartSeason,
+            endSeason: settings.lockedEndSeason,
+          }
+        : pickRandomItem([...AUTO_THEME_RANGES]);
+    const relationship =
+      settings.lockedRelationshipRuleId != null
+        ? meta.relationships.find(
+            (item) => item.relationship_rule_id === settings.lockedRelationshipRuleId
+          ) ?? null
+        : pickRandomItem(meta.relationships);
+    const lockedSlotRuleIds = settings.lockedSlotRuleIds ?? ["", "", "", "", ""];
+    const slotLocks = lockedSlotRuleIds.map((slotRuleId) => slotRuleId.length > 0);
+    const anchorSeedSlotRuleIds = buildRandomSlotRuleIdsWithLocks(
+      meta.slotRules,
+      lockedSlotRuleIds,
+      slotLocks
+    );
+    if (!themeRange || !relationship || !anchorSeedSlotRuleIds) {
       continue;
     }
-    const config: DevPuzzleConfig = {
-      title: buildSuggestedTitle(
-        buildThemeLabel(themeRange.startSeason, themeRange.endSeason),
-        relationship.display_text
-      ),
-      startSeason: themeRange.startSeason,
-      endSeason: themeRange.endSeason,
-      relationshipRuleId: relationship.relationship_rule_id,
-      slotRuleIds,
-      positionOverlayEnabled: settings.forcePositionLock,
-      qbExclusionEnabled: settings.forceNoQbs,
-      rbExclusionEnabled: settings.forceNoRbs,
-      wrExclusionEnabled: settings.forceNoWrs,
-    };
-    try {
-      const preview = await computePreviewPayload(db, config, {
-        generatorSettings: settings,
-      });
-      if (!previewMeetsGeneratorThresholds(preview, settings)) {
+
+    const randomAnchorIndices = pickRandomDistinctIndices(5, anchorCount);
+    const anchorIndices = Array.from(
+      new Set([
+        ...slotLocks
+          .map((locked, index) => (locked ? index : -1))
+          .filter((index) => index >= 0),
+        ...randomAnchorIndices,
+      ])
+    );
+    const anchorLocks = Array.from({ length: 5 }, (_, index) =>
+      anchorIndices.includes(index)
+    );
+
+    const stagedCandidates: string[][] = [];
+    for (
+      let stageAttempt = 0;
+      stageAttempt < stageWidth && attempt + stagedCandidates.length < maxAttempts;
+      stageAttempt += 1
+    ) {
+      const stagedSlotRuleIds = buildRandomSlotRuleIdsWithLocks(
+        meta.slotRules,
+        anchorSeedSlotRuleIds,
+        anchorLocks
+      );
+      if (!stagedSlotRuleIds) {
         continue;
       }
-      return { config, preview, attempts: attempt + 1 };
-    } catch (error) {
-      if (
-        (error as Error).message === "No valid candidate pool for one or more slots." ||
-        (error as Error).message === "Configuration cannot meet current generator thresholds."
-      ) {
-        continue;
+
+      stagedCandidates.push(stagedSlotRuleIds);
+    }
+
+    const rankedStageCandidates = settings.useSkeletonScoring
+      ? stagedCandidates
+          .map((slotRuleIds) => ({
+            slotRuleIds,
+            score: scoreSlotRuleSkeleton(slotRuleIds, meta.slotRules),
+          }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, beamWidth)
+      : stagedCandidates.map((slotRuleIds) => ({
+          slotRuleIds,
+          score: 0,
+        }));
+
+    for (const rankedCandidate of rankedStageCandidates) {
+      if (options?.shouldStop?.()) {
+        return null;
+      }
+      attempt += 1;
+      options?.onProgress?.({
+        attempts: attempt,
+        searchPass: Math.max(1, options?.searchPass ?? 1),
+      });
+
+      const config: DevPuzzleConfig = {
+        title: buildSuggestedTitle(
+          buildThemeLabel(themeRange.startSeason, themeRange.endSeason),
+          relationship.display_text
+        ),
+        startSeason: themeRange.startSeason,
+        endSeason: themeRange.endSeason,
+        relationshipRuleId: relationship.relationship_rule_id,
+        slotRuleIds: rankedCandidate.slotRuleIds,
+        positionOverlayEnabled: settings.forcePositionLock,
+        qbExclusionEnabled: settings.forceNoQbs,
+        rbExclusionEnabled: settings.forceNoRbs,
+        wrExclusionEnabled: settings.forceNoWrs,
+      };
+      try {
+        const preview = await computePreviewPayload(db, config, {
+          generatorSettings: settings,
+        });
+        if (!previewMeetsGeneratorThresholds(preview, settings)) {
+          continue;
+        }
+        return { config, preview, attempts: attempt };
+      } catch (error) {
+        if (
+          (error as Error).message === "No valid candidate pool for one or more slots." ||
+          (error as Error).message === "Configuration cannot meet current generator thresholds."
+        ) {
+          continue;
+        }
       }
     }
   }
+
   return null;
 }
 
 async function findViablePuzzleCandidate(
   db: DbClient,
   settings: DevGeneratorSettings,
-  options?: { maxSearchPasses?: number }
+  options?: {
+    maxSearchPasses?: number;
+    onProgress?: (progress: { attempts: number; searchPass: number }) => void;
+    shouldStop?: () => boolean;
+  }
 ) {
   const maxSearchPasses = Math.max(1, Math.trunc(options?.maxSearchPasses ?? 1) || 1);
   let totalAttempts = 0;
 
   for (let pass = 1; pass <= maxSearchPasses; pass += 1) {
-    const candidate = await tryGenerateCandidatePuzzle(db, settings);
+    if (options?.shouldStop?.()) {
+      return null;
+    }
+    const candidate = await tryGenerateCandidatePuzzle(db, settings, {
+      searchPass: pass,
+      onProgress: (progress) =>
+        options?.onProgress?.({
+          attempts: totalAttempts + progress.attempts,
+          searchPass: progress.searchPass,
+        }),
+      shouldStop: options?.shouldStop,
+    });
     if (candidate) {
       return {
         ...candidate,
@@ -2299,7 +2643,17 @@ async function findViablePuzzleCandidate(
 
 export async function processDevGeneratorJobs(
   db: DbClient,
-  options?: { force?: boolean; maxGenerate?: number }
+  options?: {
+    force?: boolean;
+    maxGenerate?: number;
+    onProgress?: (progress: {
+      attempts: number;
+      searchPass: number;
+      generated: number;
+      targetThisRun: number;
+    }) => void;
+    shouldStop?: () => boolean;
+  }
 ) {
   await ensureDevAutomationTables(db);
   const job = await getLatestDevGeneratorJob(db);
@@ -2307,6 +2661,8 @@ export async function processDevGeneratorJobs(
     return {
       ran: false,
       generated: 0,
+      attempts: 0,
+      searchPasses: 0,
       reason: "No active generator job.",
     };
   }
@@ -2325,6 +2681,8 @@ export async function processDevGeneratorJobs(
     return {
       ran: true,
       generated: 0,
+      attempts: 0,
+      searchPasses: 0,
       reason: "Queue already full.",
     };
   }
@@ -2336,13 +2694,29 @@ export async function processDevGeneratorJobs(
   let generated = 0;
   let totalAttempts = 0;
   let totalSearchPasses = 0;
-  const searchPassesPerPuzzle = Math.max(3, Math.min(12, Math.ceil(600 / job.settings.maxAttemptsPerPuzzle)));
+  const searchPassesPerPuzzle = 1;
 
   for (let index = 0; index < maxGeneratedThisRun; index += 1) {
+    if (options?.shouldStop?.()) {
+      break;
+    }
     const candidate = await findViablePuzzleCandidate(db, job.settings, {
       maxSearchPasses: searchPassesPerPuzzle,
+      onProgress: (progress) =>
+        options?.onProgress?.({
+          attempts: totalAttempts + progress.attempts,
+          searchPass: totalSearchPasses + progress.searchPass,
+          generated,
+          targetThisRun: maxGeneratedThisRun,
+        }),
+      shouldStop: options?.shouldStop,
     });
     if (!candidate) {
+      if (options?.shouldStop?.()) {
+        break;
+      }
+      totalAttempts += searchPassesPerPuzzle * job.settings.maxAttemptsPerPuzzle;
+      totalSearchPasses += searchPassesPerPuzzle;
       await db.query(
         `
         UPDATE dev_puzzle_generation_job
