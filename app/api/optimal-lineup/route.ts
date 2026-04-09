@@ -226,24 +226,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No puzzle found" }, { status: 404 });
     }
 
-    const finalizedResult = await pool.query<{ finalized: boolean }>(
-      `
-      SELECT EXISTS (
-        SELECT 1
-        FROM daily_leaderboard_finish
-        WHERE puzzle_id = $1
-      ) AS finalized
-      `,
-      [puzzle.puzzle_id]
-    );
-
-    if (!(finalizedResult.rows[0]?.finalized ?? false)) {
-      return NextResponse.json(
-        { error: "Optimal lineup unlocks after the leaderboard is finalized." },
-        { status: 403 }
-      );
-    }
-
     const [themeResult, relationshipRuleResult, slotRulesResult] = await Promise.all([
       pool.query(
         `

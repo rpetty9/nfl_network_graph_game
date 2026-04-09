@@ -4564,7 +4564,6 @@ export default function HomePage() {
                   Lineup Submitted
                 </p>
               </div>
-              <DataStateBadge finalized={leaderboardFinalized} />
               {comparisonRefreshLabel ? (
                 <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/85 px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">
                   {comparisonRefreshLabel}
@@ -4645,7 +4644,6 @@ export default function HomePage() {
                     </h3>
                   </div>
                   <div className="flex max-w-full flex-wrap items-center gap-2 self-start sm:justify-end">
-                    <DataStateBadge finalized={leaderboardFinalized} compact />
                     <div className="rounded-full border border-sky-200 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-sky-700">
                       {selectedLineupEntriesBySlot.length} Players
                     </div>
@@ -4705,7 +4703,6 @@ export default function HomePage() {
                     </h3>
                   </div>
                   <div className="flex max-w-full flex-wrap items-center gap-2 self-start sm:justify-end">
-                    <DataStateBadge finalized={leaderboardFinalized} compact />
                     {comparisonRefreshLabel ? (
                       <span className="inline-flex items-center rounded-full border border-indigo-100 bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-indigo-500">
                         {comparisonRefreshLabel}
