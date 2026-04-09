@@ -959,6 +959,27 @@ function getCurrentChicagoDateIso() {
   }).format(new Date());
 }
 
+function getCurrentChicagoClockParts() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+
+  const readPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return {
+    dateIso: `${readPart("year")}-${readPart("month")}-${readPart("day")}`,
+    hour: readPart("hour"),
+    minute: readPart("minute"),
+  };
+}
+
 function buildNavigationUrl(
   dateValue: string,
   todayIso: string,
@@ -1687,11 +1708,13 @@ function RecentSubmissionList({
 export default function HomePage() {
   const pathname = usePathname();
   const isTestingMode = pathname === "/testing";
-  const todayIso = getCurrentChicagoDateIso();
+  const [todayIso, setTodayIso] = useState(() => getCurrentChicagoDateIso());
+  const [dailyRefreshTick, setDailyRefreshTick] = useState(0);
   const loadRequestRef = useRef(0);
   const relationshipRequestRef = useRef(0);
   const submissionRequestKeyRef = useRef<string | null>(null);
   const nodeFocusMapRef = useRef(new Map<number, () => void>());
+  const lastMidnightRefreshDateRef = useRef<string | null>(null);
   const [isMobileBoard, setIsMobileBoard] = useState(false);
   const [puzzleData, setPuzzleData] = useState<PuzzleResponse | null>(null);
   const [playersData, setPlayersData] = useState<PlayersResponse | null>(null);
@@ -3385,6 +3408,37 @@ export default function HomePage() {
   const isBoardLocked = submitted || isLockedForSelectedDate;
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncChicagoDayState = () => {
+      const { dateIso, hour, minute } = getCurrentChicagoClockParts();
+
+      setTodayIso((current) => {
+        if (current !== dateIso) {
+          setSelectedDate((selected) => (selected === current ? dateIso : selected));
+          return dateIso;
+        }
+
+        return current;
+      });
+
+      if (
+        !isTestingMode &&
+        hour === "00" &&
+        minute === "01" &&
+        lastMidnightRefreshDateRef.current !== dateIso
+      ) {
+        lastMidnightRefreshDateRef.current = dateIso;
+        setDailyRefreshTick((current) => current + 1);
+      }
+    };
+
+    syncChicagoDayState();
+    const intervalId = window.setInterval(syncChicagoDayState, 30_000);
+    return () => window.clearInterval(intervalId);
+  }, [isTestingMode]);
+
+  useEffect(() => {
     if (!isFullyConnected) {
       setShowFullLinkConfetti(false);
       return;
@@ -3487,7 +3541,12 @@ export default function HomePage() {
 
     void loadHomeRecap();
     return () => controller.abort();
-  }, []);
+  }, [dailyRefreshTick]);
+
+  useEffect(() => {
+    if (!session?.user?.id || isTestingMode || dailyRefreshTick === 0) return;
+    void updateSession();
+  }, [dailyRefreshTick, isTestingMode, session?.user?.id, updateSession]);
 
   useEffect(() => {
     if (!profileOpen || !signedInUsername) return;
@@ -3782,6 +3841,7 @@ export default function HomePage() {
     void loadAllTimeLeaderboard();
     return () => controller.abort();
   }, [
+    dailyRefreshTick,
     isTestingMode,
     leaderboardOpen,
     leaderboardScope,
