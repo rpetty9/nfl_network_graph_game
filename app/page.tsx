@@ -568,6 +568,7 @@ function getBadgeGalleryTab(badgeKey: BadgeKey): BadgeGalleryTab {
     case "ten_links_submission":
       return "links";
     case "account_created":
+    case "alpha_tester":
     case "avatar_customized":
     case "creator":
     case "founder":

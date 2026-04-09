@@ -941,7 +941,7 @@ export async function respondToFriendRequest(input: {
 async function withUserBadges(user: AppUserRow | null): Promise<AppUser | null> {
   if (!user) return null;
 
-  const derivedBadgeKeys: BadgeKey[] = ["account_created"];
+  const derivedBadgeKeys: BadgeKey[] = ["account_created", "alpha_tester"];
   const hasCustomizedAvatar =
     user.avatar_style !== DEFAULT_AVATAR.style ||
     user.avatar_bg !== DEFAULT_AVATAR.bg ||
@@ -1081,7 +1081,7 @@ export async function upsertGoogleUser(input: {
 
   await grantBadgesToUser({
     userId: user.user_id,
-    badgeKeys: ["account_created"],
+    badgeKeys: ["account_created", "alpha_tester"],
   });
 
   return getUserById(user.user_id);

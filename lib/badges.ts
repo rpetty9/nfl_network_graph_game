@@ -17,6 +17,7 @@ export type BadgeIcon =
 
 export type BadgeKey =
   | "account_created"
+  | "alpha_tester"
   | "avatar_customized"
   | "first_friend"
   | "friends_10"
@@ -70,6 +71,14 @@ export const BADGE_DEFINITIONS: Record<BadgeKey, BadgeDefinition> = {
     unlockHint: "Create an account.",
     tone: "sky",
     icon: "shield",
+  },
+  alpha_tester: {
+    key: "alpha_tester",
+    title: "Alpha Tester",
+    description: "Joined Five Wide during the early alpha build.",
+    unlockHint: "Create a profile during the alpha test period.",
+    tone: "violet",
+    icon: "spark",
   },
   avatar_customized: {
     key: "avatar_customized",
@@ -257,6 +266,7 @@ export const BADGE_ORDER: BadgeKey[] = [
   "bestestest",
   "optimal_lineup_submission",
   "founder",
+  "alpha_tester",
   "first_place_finish",
   "beat_friend_daily_10",
   "beat_friend_daily",
