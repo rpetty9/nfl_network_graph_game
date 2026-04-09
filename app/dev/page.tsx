@@ -66,6 +66,8 @@ type PreviewResponse = {
   optimal_final_score: number;
   position_overlay_enabled: boolean;
   qb_exclusion_enabled: boolean;
+  rb_exclusion_enabled: boolean;
+  wr_exclusion_enabled: boolean;
 };
 
 type PuzzleListItem = {
@@ -77,6 +79,8 @@ type PuzzleListItem = {
   relationship_type: string | null;
   position_overlay_enabled: boolean;
   qb_exclusion_enabled: boolean;
+  rb_exclusion_enabled: boolean;
+  wr_exclusion_enabled: boolean;
   published_flag: boolean;
   future_editable: boolean;
 };
@@ -93,6 +97,8 @@ type PuzzleDetailResponse = {
     relationship_type: string | null;
     position_overlay_enabled: boolean;
     qb_exclusion_enabled: boolean;
+    rb_exclusion_enabled: boolean;
+    wr_exclusion_enabled: boolean;
     published_flag: boolean;
     future_editable: boolean;
     created_at: string;
@@ -137,6 +143,8 @@ type GeneratorSettings = {
   maxAttemptsPerPuzzle: number;
   forcePositionLock: boolean;
   forceNoQbs: boolean;
+  forceNoRbs: boolean;
+  forceNoWrs: boolean;
   useAnchorSearch: boolean;
   useSkeletonScoring: boolean;
   useThresholdMemory: boolean;
@@ -361,6 +369,8 @@ const DEFAULT_GENERATOR_SETTINGS: GeneratorSettings = {
   maxAttemptsPerPuzzle: 150,
   forcePositionLock: false,
   forceNoQbs: false,
+  forceNoRbs: false,
+  forceNoWrs: false,
   useAnchorSearch: true,
   useSkeletonScoring: true,
   useThresholdMemory: true,
@@ -387,6 +397,8 @@ type BuilderConfig = {
   title: string;
   positionOverlayEnabled?: boolean;
   qbExclusionEnabled?: boolean;
+  rbExclusionEnabled?: boolean;
+  wrExclusionEnabled?: boolean;
 };
 
 function LockButton({
@@ -449,6 +461,23 @@ function formatDurationEstimate(minutes: number) {
   }
   const years = days / 365;
   return `${years.toFixed(1)} years`;
+}
+
+function formatLineupRuleLabel(input: {
+  position_overlay_enabled?: boolean;
+  qb_exclusion_enabled?: boolean;
+  rb_exclusion_enabled?: boolean;
+  wr_exclusion_enabled?: boolean;
+}) {
+  if (input.position_overlay_enabled) {
+    return "One-Each Lock";
+  }
+  const exclusions = [
+    input.qb_exclusion_enabled ? "QBs" : null,
+    input.rb_exclusion_enabled ? "RBs" : null,
+    input.wr_exclusion_enabled ? "WRs" : null,
+  ].filter(Boolean);
+  return exclusions.length > 0 ? `No ${exclusions.join(" / ")}` : "Open";
 }
 
 function formatDateLabel(dateValue: string) {
@@ -634,6 +663,8 @@ export default function DevPuzzlePage() {
   const [slotRuleIds, setSlotRuleIds] = useState<string[]>(["", "", "", "", ""]);
   const [positionOverlayEnabled, setPositionOverlayEnabled] = useState(false);
   const [qbExclusionEnabled, setQbExclusionEnabled] = useState(false);
+  const [rbExclusionEnabled, setRbExclusionEnabled] = useState(false);
+  const [wrExclusionEnabled, setWrExclusionEnabled] = useState(false);
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
   const [timePeriodLocked, setTimePeriodLocked] = useState(false);
@@ -720,7 +751,6 @@ export default function DevPuzzlePage() {
     startSeason === endSeason
       ? `${startSeason} Season`
       : `${startSeason}-${endSeason} Seasons`;
-
   const groupedSlotRules = useMemo(() => {
     const groups = new Map<string, SlotRuleOption[]>();
     for (const rule of meta?.slotRules ?? []) {
@@ -1433,6 +1463,10 @@ export default function DevPuzzlePage() {
       config?.positionOverlayEnabled ?? positionOverlayEnabled;
     const previewQbExclusionEnabled =
       config?.qbExclusionEnabled ?? qbExclusionEnabled;
+    const previewRbExclusionEnabled =
+      config?.rbExclusionEnabled ?? rbExclusionEnabled;
+    const previewWrExclusionEnabled =
+      config?.wrExclusionEnabled ?? wrExclusionEnabled;
     const previewConfig = config ?? {
       title: titleTouched ? title : suggestedTitle,
       startSeason,
@@ -1441,6 +1475,8 @@ export default function DevPuzzlePage() {
       slotRuleIds,
       positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
     };
     const response = await fetch("/api/admin/dev-puzzle/preview", {
       method: "POST",
@@ -1455,6 +1491,8 @@ export default function DevPuzzlePage() {
         slotRuleIds: previewConfig.slotRuleIds,
         positionOverlayEnabled: previewPositionOverlayEnabled,
         qbExclusionEnabled: previewQbExclusionEnabled,
+        rbExclusionEnabled: previewRbExclusionEnabled,
+        wrExclusionEnabled: previewWrExclusionEnabled,
         generatorSettings: generatorSettings ?? undefined,
       }),
     });
@@ -1477,6 +1515,8 @@ export default function DevPuzzlePage() {
       maxAttemptsPerPuzzle: autoBuildMaxAttempts,
       forcePositionLock: positionOverlayEnabled,
       forceNoQbs: qbExclusionEnabled,
+      forceNoRbs: rbExclusionEnabled,
+      forceNoWrs: wrExclusionEnabled,
       useAnchorSearch: true,
       useSkeletonScoring: true,
       useThresholdMemory: true,
@@ -1490,6 +1530,8 @@ export default function DevPuzzlePage() {
     const pendingPositionOverlayEnabled =
       config.positionOverlayEnabled ?? false;
     const pendingQbExclusionEnabled = config.qbExclusionEnabled ?? false;
+    const pendingRbExclusionEnabled = config.rbExclusionEnabled ?? false;
+    const pendingWrExclusionEnabled = config.wrExclusionEnabled ?? false;
     const response = await fetch("/api/admin/dev-puzzle/save", {
       method: "POST",
       headers: {
@@ -1503,6 +1545,8 @@ export default function DevPuzzlePage() {
         slotRuleIds: config.slotRuleIds,
         positionOverlayEnabled: pendingPositionOverlayEnabled,
         qbExclusionEnabled: pendingQbExclusionEnabled,
+        rbExclusionEnabled: pendingRbExclusionEnabled,
+        wrExclusionEnabled: pendingWrExclusionEnabled,
         publishedFlag: false,
       }),
     });
@@ -1635,6 +1679,8 @@ export default function DevPuzzlePage() {
           }),
           positionOverlayEnabled: settings.forcePositionLock,
           qbExclusionEnabled: settings.forceNoQbs,
+          rbExclusionEnabled: settings.forceNoRbs,
+          wrExclusionEnabled: settings.forceNoWrs,
         };
 
         let candidatePreview: PreviewResponse;
@@ -2273,6 +2319,8 @@ export default function DevPuzzlePage() {
           slotRuleIds,
           positionOverlayEnabled,
           qbExclusionEnabled,
+          rbExclusionEnabled,
+          wrExclusionEnabled,
         }),
       });
 
@@ -3021,6 +3069,8 @@ export default function DevPuzzlePage() {
                               ...current,
                               forcePositionLock: !current.forcePositionLock,
                               forceNoQbs: !current.forcePositionLock ? false : current.forceNoQbs,
+                              forceNoRbs: !current.forcePositionLock ? false : current.forceNoRbs,
+                              forceNoWrs: !current.forcePositionLock ? false : current.forceNoWrs,
                             }))
                           }
                           className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition ${
@@ -3047,6 +3097,40 @@ export default function DevPuzzlePage() {
                           }`}
                         >
                           No QBs
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQueueForm((current) => ({
+                              ...current,
+                              forceNoRbs: !current.forceNoRbs,
+                              forcePositionLock: !current.forceNoRbs ? false : current.forcePositionLock,
+                            }))
+                          }
+                          className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition ${
+                            queueForm.forceNoRbs
+                              ? "bg-rose-300 text-slate-950"
+                              : "border border-white/10 bg-slate-900 text-slate-300"
+                          }`}
+                        >
+                          No RBs
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQueueForm((current) => ({
+                              ...current,
+                              forceNoWrs: !current.forceNoWrs,
+                              forcePositionLock: !current.forceNoWrs ? false : current.forcePositionLock,
+                            }))
+                          }
+                          className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition ${
+                            queueForm.forceNoWrs
+                              ? "bg-rose-300 text-slate-950"
+                              : "border border-white/10 bg-slate-900 text-slate-300"
+                          }`}
+                        >
+                          No WRs
                         </button>
                       </div>
                       <p className="mt-2 text-xs text-slate-300">
@@ -3671,11 +3755,7 @@ export default function DevPuzzlePage() {
                         Lineup Rules
                       </p>
                       <p className="mt-1 text-sm font-black text-white">
-                        {approvalDetail.puzzle.position_overlay_enabled
-                          ? "One-Each Lock"
-                          : approvalDetail.puzzle.qb_exclusion_enabled
-                            ? "No QBs"
-                            : "Open"}
+                        {formatLineupRuleLabel(approvalDetail.puzzle)}
                       </p>
                     </div>
                     <div className="rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-3">
@@ -3925,6 +4005,8 @@ export default function DevPuzzlePage() {
                       const nextValue = !current;
                       if (nextValue) {
                         setQbExclusionEnabled(false);
+                        setRbExclusionEnabled(false);
+                        setWrExclusionEnabled(false);
                       }
                       return nextValue;
                     })
@@ -3968,6 +4050,68 @@ export default function DevPuzzlePage() {
                   <span
                     className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${
                       qbExclusionEnabled ? "left-7" : "left-1"
+                    }`}
+                  />
+                </button>
+              </label>
+
+              <label className="flex items-center justify-between rounded-[22px] border border-white/10 bg-slate-950/40 px-4 py-4">
+                <div>
+                  <p className="text-sm font-black text-white">No RBs Allowed</p>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Remove running backs from the candidate pool for this specific puzzle.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRbExclusionEnabled((current) => {
+                      const nextValue = !current;
+                      if (nextValue) {
+                        setPositionOverlayEnabled(false);
+                      }
+                      return nextValue;
+                    })
+                  }
+                  className={`relative h-8 w-14 rounded-full transition ${
+                    rbExclusionEnabled ? "bg-emerald-400" : "bg-slate-700"
+                  }`}
+                  aria-pressed={rbExclusionEnabled}
+                >
+                  <span
+                    className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${
+                      rbExclusionEnabled ? "left-7" : "left-1"
+                    }`}
+                  />
+                </button>
+              </label>
+
+              <label className="flex items-center justify-between rounded-[22px] border border-white/10 bg-slate-950/40 px-4 py-4">
+                <div>
+                  <p className="text-sm font-black text-white">No WRs Allowed</p>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Remove wide receivers from the candidate pool for this specific puzzle.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setWrExclusionEnabled((current) => {
+                      const nextValue = !current;
+                      if (nextValue) {
+                        setPositionOverlayEnabled(false);
+                      }
+                      return nextValue;
+                    })
+                  }
+                  className={`relative h-8 w-14 rounded-full transition ${
+                    wrExclusionEnabled ? "bg-emerald-400" : "bg-slate-700"
+                  }`}
+                  aria-pressed={wrExclusionEnabled}
+                >
+                  <span
+                    className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${
+                      wrExclusionEnabled ? "left-7" : "left-1"
                     }`}
                   />
                 </button>
@@ -4173,11 +4317,7 @@ export default function DevPuzzlePage() {
                       Lineup Rules
                       </p>
                       <p className="mt-1 font-black text-white">
-                      {preview.position_overlay_enabled
-                        ? "One-Each Lock"
-                        : preview.qb_exclusion_enabled
-                          ? "No QBs"
-                          : "Open"}
+                      {formatLineupRuleLabel(preview)}
                       </p>
                     </div>
                 </div>
@@ -4668,11 +4808,7 @@ export default function DevPuzzlePage() {
                           <div className="text-right text-xs text-slate-300">
                             <p>{puzzle.relationship_display_text ?? "No Link"}</p>
                             <p className="mt-1">
-                              {puzzle.position_overlay_enabled
-                                ? "One-Each"
-                                : puzzle.qb_exclusion_enabled
-                                  ? "No QBs"
-                                  : "Open"}
+                              {formatLineupRuleLabel(puzzle)}
                             </p>
                             <p className="mt-1">
                               {puzzle.future_editable ? "Editable" : "Locked"}
@@ -4710,11 +4846,7 @@ export default function DevPuzzlePage() {
                     <div className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3 text-right text-xs text-slate-300">
                       <p>{puzzleDetail.puzzle.relationship_display_text ?? "No Link"}</p>
                       <p className="mt-1">
-                        {puzzleDetail.puzzle.position_overlay_enabled
-                          ? "One-Each Lock On"
-                          : puzzleDetail.puzzle.qb_exclusion_enabled
-                            ? "No QBs On"
-                            : "Open Slots"}
+                        {formatLineupRuleLabel(puzzleDetail.puzzle)}
                       </p>
                       <p className="mt-1">
                         {puzzleDetail.puzzle.future_editable ? "Future Editable" : "Read Only"}
@@ -5029,7 +5161,7 @@ export default function DevPuzzlePage() {
                   For each slot, the optimizer filters the theme player pool down to
                   players who match that slot rule and also respect lineup-wide toggles
                   like <span className="font-semibold text-white">One-Each Lock</span> or{" "}
-                  <span className="font-semibold text-white">No QBs</span>.
+                  <span className="font-semibold text-white">No QBs / RBs / WRs</span>.
                 </p>
                 <p>
                   <span className="font-bold text-amber-200">4. Reject Impossible Shapes Early:</span>{" "}

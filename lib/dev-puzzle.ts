@@ -62,6 +62,8 @@ export type DevPuzzleConfig = {
   slotRuleIds: Array<string | number>;
   positionOverlayEnabled: boolean;
   qbExclusionEnabled: boolean;
+  rbExclusionEnabled: boolean;
+  wrExclusionEnabled: boolean;
 };
 
 export type PreviewPayload = {
@@ -95,6 +97,8 @@ export type PreviewPayload = {
   optimal_final_score: number;
   position_overlay_enabled: boolean;
   qb_exclusion_enabled: boolean;
+  rb_exclusion_enabled: boolean;
+  wr_exclusion_enabled: boolean;
 };
 
 export type DevPuzzleListItem = {
@@ -106,6 +110,8 @@ export type DevPuzzleListItem = {
   relationship_type: string | null;
   position_overlay_enabled: boolean;
   qb_exclusion_enabled: boolean;
+  rb_exclusion_enabled: boolean;
+  wr_exclusion_enabled: boolean;
   published_flag: boolean;
   future_editable: boolean;
 };
@@ -122,6 +128,8 @@ export type DevPuzzleDetail = {
     relationship_type: string | null;
     position_overlay_enabled: boolean;
     qb_exclusion_enabled: boolean;
+    rb_exclusion_enabled: boolean;
+    wr_exclusion_enabled: boolean;
     published_flag: boolean;
     future_editable: boolean;
     created_at: string;
@@ -191,6 +199,8 @@ export type DevGeneratorSettings = {
   maxAttemptsPerPuzzle: number;
   forcePositionLock: boolean;
   forceNoQbs: boolean;
+  forceNoRbs: boolean;
+  forceNoWrs: boolean;
   useAnchorSearch: boolean;
   useSkeletonScoring: boolean;
   useThresholdMemory: boolean;
@@ -322,6 +332,8 @@ const DEFAULT_GENERATOR_SETTINGS: DevGeneratorSettings = {
   maxAttemptsPerPuzzle: 150,
   forcePositionLock: false,
   forceNoQbs: false,
+  forceNoRbs: false,
+  forceNoWrs: false,
   useAnchorSearch: true,
   useSkeletonScoring: true,
   useThresholdMemory: true,
@@ -435,8 +447,14 @@ export function sanitizeGeneratorSettings(
       ),
       1000
     ),
-    forcePositionLock: Boolean(value?.forcePositionLock) && !Boolean(value?.forceNoQbs),
+    forcePositionLock:
+      Boolean(value?.forcePositionLock) &&
+      !Boolean(value?.forceNoQbs) &&
+      !Boolean(value?.forceNoRbs) &&
+      !Boolean(value?.forceNoWrs),
     forceNoQbs: Boolean(value?.forceNoQbs),
+    forceNoRbs: Boolean(value?.forceNoRbs),
+    forceNoWrs: Boolean(value?.forceNoWrs),
     useAnchorSearch:
       typeof value?.useAnchorSearch === "boolean"
         ? value.useAnchorSearch
@@ -496,13 +514,17 @@ async function ensureDevAutomationTables(db: DbClient) {
       slot_rule_id BIGINT NOT NULL,
       position_overlay_enabled BOOLEAN NOT NULL DEFAULT false,
       qb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
+      rb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
+      wr_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
       failure_count INTEGER NOT NULL DEFAULT 1,
       last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       PRIMARY KEY (
         theme_rule_logic_key,
         slot_rule_id,
         position_overlay_enabled,
-        qb_exclusion_enabled
+        qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled
       )
     )
   `);
@@ -513,6 +535,8 @@ async function ensureDevAutomationTables(db: DbClient) {
       slot_signature TEXT NOT NULL,
       position_overlay_enabled BOOLEAN NOT NULL DEFAULT false,
       qb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
+      rb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
+      wr_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
       failure_reason TEXT NOT NULL DEFAULT 'no_candidate_pool',
       failure_count INTEGER NOT NULL DEFAULT 1,
       last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -521,6 +545,8 @@ async function ensureDevAutomationTables(db: DbClient) {
         slot_signature,
         position_overlay_enabled,
         qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled,
         failure_reason
       )
     )
@@ -532,6 +558,8 @@ async function ensureDevAutomationTables(db: DbClient) {
       slot_rule_id BIGINT NOT NULL,
       position_overlay_enabled BOOLEAN NOT NULL DEFAULT false,
       qb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
+      rb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
+      wr_exclusion_enabled BOOLEAN NOT NULL DEFAULT false,
       candidate_count INTEGER NOT NULL DEFAULT 0,
       top_fantasy_points DOUBLE PRECISION NOT NULL DEFAULT 0,
       last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -539,9 +567,36 @@ async function ensureDevAutomationTables(db: DbClient) {
         theme_rule_logic_key,
         slot_rule_id,
         position_overlay_enabled,
-        qb_exclusion_enabled
+        qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled
       )
     )
+  `);
+
+  await db.query(`
+    ALTER TABLE dev_invalid_slot_candidate_cache
+      ADD COLUMN IF NOT EXISTS rb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false
+  `);
+  await db.query(`
+    ALTER TABLE dev_invalid_slot_candidate_cache
+      ADD COLUMN IF NOT EXISTS wr_exclusion_enabled BOOLEAN NOT NULL DEFAULT false
+  `);
+  await db.query(`
+    ALTER TABLE dev_invalid_config_cache
+      ADD COLUMN IF NOT EXISTS rb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false
+  `);
+  await db.query(`
+    ALTER TABLE dev_invalid_config_cache
+      ADD COLUMN IF NOT EXISTS wr_exclusion_enabled BOOLEAN NOT NULL DEFAULT false
+  `);
+  await db.query(`
+    ALTER TABLE dev_slot_candidate_metric_cache
+      ADD COLUMN IF NOT EXISTS rb_exclusion_enabled BOOLEAN NOT NULL DEFAULT false
+  `);
+  await db.query(`
+    ALTER TABLE dev_slot_candidate_metric_cache
+      ADD COLUMN IF NOT EXISTS wr_exclusion_enabled BOOLEAN NOT NULL DEFAULT false
   `);
 
   await db.query(`
@@ -921,7 +976,9 @@ function buildConfigSignature(
   relationshipRule: { relationship_type: string; bonus_pct?: number | null },
   slotRules: SlotRule[],
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   const slotSignature = buildSlotSignature(slotRules);
 
@@ -933,6 +990,8 @@ function buildConfigSignature(
     String(relationshipRule.bonus_pct ?? 10),
     positionOverlayEnabled ? "overlay:on" : "overlay:off",
     qbExclusionEnabled ? "qb:off" : "qb:on",
+    rbExclusionEnabled ? "rb:off" : "rb:on",
+    wrExclusionEnabled ? "wr:off" : "wr:on",
     slotSignature,
   ].join("::");
 }
@@ -942,7 +1001,9 @@ function buildGenerationSignature(
   relationshipRule: { relationship_type: string; bonus_pct?: number | null },
   slotRules: SlotRule[],
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   const slotSignature = buildSlotSignature(slotRules);
 
@@ -953,6 +1014,8 @@ function buildGenerationSignature(
     String(relationshipRule.bonus_pct ?? 10),
     positionOverlayEnabled ? "overlay:on" : "overlay:off",
     qbExclusionEnabled ? "qb:off" : "qb:on",
+    rbExclusionEnabled ? "rb:off" : "rb:on",
+    wrExclusionEnabled ? "wr:off" : "wr:on",
     slotSignature,
   ].join("::");
 }
@@ -962,7 +1025,9 @@ async function getKnownInvalidSlotRuleIds(
   themeRule: string,
   slotRules: SlotRule[],
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   if (slotRules.length === 0) {
     return new Set<string>();
@@ -975,12 +1040,16 @@ async function getKnownInvalidSlotRuleIds(
     WHERE theme_rule_logic_key = $1
       AND position_overlay_enabled = $2
       AND qb_exclusion_enabled = $3
-      AND slot_rule_id = ANY($4::bigint[])
+      AND rb_exclusion_enabled = $4
+      AND wr_exclusion_enabled = $5
+      AND slot_rule_id = ANY($6::bigint[])
     `,
     [
       themeRule,
       positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
       slotRules.map((rule) => Number(rule.slot_rule_id)),
     ]
   );
@@ -994,7 +1063,9 @@ async function recordInvalidCandidatePool(
   slotRules: SlotRule[],
   failingSlotRules: SlotRule[],
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   if (failingSlotRules.length > 0) {
     await db.query(
@@ -1004,6 +1075,8 @@ async function recordInvalidCandidatePool(
         slot_rule_id,
         position_overlay_enabled,
         qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled,
         failure_count,
         last_seen_at
       )
@@ -1012,14 +1085,18 @@ async function recordInvalidCandidatePool(
         slot_rule_id,
         $2,
         $3,
+        $4,
+        $5,
         1,
         NOW()
-      FROM unnest($4::bigint[]) AS slot_rule_id
+      FROM unnest($6::bigint[]) AS slot_rule_id
       ON CONFLICT (
         theme_rule_logic_key,
         slot_rule_id,
         position_overlay_enabled,
-        qb_exclusion_enabled
+        qb_exclusion_enabled,
+        rb_exclusion_enabled,
+        wr_exclusion_enabled
       )
       DO UPDATE SET
         failure_count = dev_invalid_slot_candidate_cache.failure_count + 1,
@@ -1029,6 +1106,8 @@ async function recordInvalidCandidatePool(
         themeRule,
         positionOverlayEnabled,
         qbExclusionEnabled,
+        rbExclusionEnabled,
+        wrExclusionEnabled,
         failingSlotRules.map((rule) => Number(rule.slot_rule_id)),
       ]
     );
@@ -1041,16 +1120,20 @@ async function recordInvalidCandidatePool(
       slot_signature,
       position_overlay_enabled,
       qb_exclusion_enabled,
+      rb_exclusion_enabled,
+      wr_exclusion_enabled,
       failure_reason,
       failure_count,
       last_seen_at
     )
-    VALUES ($1, $2, $3, $4, 'no_candidate_pool', 1, NOW())
+    VALUES ($1, $2, $3, $4, $5, $6, 'no_candidate_pool', 1, NOW())
     ON CONFLICT (
       theme_rule_logic_key,
       slot_signature,
       position_overlay_enabled,
       qb_exclusion_enabled,
+      rb_exclusion_enabled,
+      wr_exclusion_enabled,
       failure_reason
     )
     DO UPDATE SET
@@ -1062,6 +1145,8 @@ async function recordInvalidCandidatePool(
       buildSlotSignature(slotRules),
       positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
     ]
   );
 }
@@ -1071,7 +1156,9 @@ async function hasKnownInvalidConfig(
   themeRule: string,
   slotRules: SlotRule[],
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   const result = await db.query(
     `
@@ -1081,6 +1168,8 @@ async function hasKnownInvalidConfig(
       AND slot_signature = $2
       AND position_overlay_enabled = $3
       AND qb_exclusion_enabled = $4
+      AND rb_exclusion_enabled = $5
+      AND wr_exclusion_enabled = $6
       AND failure_reason = 'no_candidate_pool'
     LIMIT 1
     `,
@@ -1089,6 +1178,8 @@ async function hasKnownInvalidConfig(
       buildSlotSignature(slotRules),
       positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
     ]
   );
 
@@ -1100,7 +1191,9 @@ async function getCachedSlotCandidateMetrics(
   themeRule: string,
   slotRules: SlotRule[],
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   if (slotRules.length === 0) {
     return new Map<string, SlotCandidateMetric>();
@@ -1116,12 +1209,16 @@ async function getCachedSlotCandidateMetrics(
     WHERE theme_rule_logic_key = $1
       AND position_overlay_enabled = $2
       AND qb_exclusion_enabled = $3
-      AND slot_rule_id = ANY($4::bigint[])
+      AND rb_exclusion_enabled = $4
+      AND wr_exclusion_enabled = $5
+      AND slot_rule_id = ANY($6::bigint[])
     `,
     [
       themeRule,
       positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
       slotRules.map((rule) => Number(rule.slot_rule_id)),
     ]
   );
@@ -1146,7 +1243,9 @@ async function recordSlotCandidateMetrics(
     }
   >,
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   if (slotCandidates.length === 0) {
     return;
@@ -1156,15 +1255,17 @@ async function recordSlotCandidateMetrics(
   const params: Array<string | number | boolean> = [];
 
   slotCandidates.forEach((slot, index) => {
-    const offset = index * 6;
+    const offset = index * 8;
     values.push(
-      `($${offset + 1}, $${offset + 2}::bigint, $${offset + 3}, $${offset + 4}, $${offset + 5}::int, $${offset + 6}::float8, NOW())`
+      `($${offset + 1}, $${offset + 2}::bigint, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}::int, $${offset + 8}::float8, NOW())`
     );
     params.push(
       themeRule,
       Number(slot.slot_rule_id),
       positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
       slot.candidates.length,
       Number(slot.candidates[0]?.fantasy_points ?? 0)
     );
@@ -1177,6 +1278,8 @@ async function recordSlotCandidateMetrics(
       slot_rule_id,
       position_overlay_enabled,
       qb_exclusion_enabled,
+      rb_exclusion_enabled,
+      wr_exclusion_enabled,
       candidate_count,
       top_fantasy_points,
       last_seen_at
@@ -1186,7 +1289,9 @@ async function recordSlotCandidateMetrics(
       theme_rule_logic_key,
       slot_rule_id,
       position_overlay_enabled,
-      qb_exclusion_enabled
+      qb_exclusion_enabled,
+      rb_exclusion_enabled,
+      wr_exclusion_enabled
     )
     DO UPDATE SET
       candidate_count = EXCLUDED.candidate_count,
@@ -1536,6 +1641,8 @@ export async function getDevPuzzleList(db: DbClient): Promise<DevPuzzleListItem[
       rrd.relationship_type,
       dp.position_overlay_enabled,
       COALESCE(dp.qb_exclusion_enabled, false) AS qb_exclusion_enabled,
+      COALESCE(dp.rb_exclusion_enabled, false) AS rb_exclusion_enabled,
+      COALESCE(dp.wr_exclusion_enabled, false) AS wr_exclusion_enabled,
       dp.published_flag,
       (dp.puzzle_date > (SELECT today FROM chicago_today) AND COALESCE(sc.submission_count, 0) = 0) AS future_editable
     FROM daily_puzzle dp
@@ -1578,6 +1685,8 @@ export async function getDevPuzzleDetail(
       rrd.relationship_type,
       dp.position_overlay_enabled,
       COALESCE(dp.qb_exclusion_enabled, false) AS qb_exclusion_enabled,
+      COALESCE(dp.rb_exclusion_enabled, false) AS rb_exclusion_enabled,
+      COALESCE(dp.wr_exclusion_enabled, false) AS wr_exclusion_enabled,
       dp.published_flag,
       (dp.puzzle_date > (SELECT today FROM chicago_today) AND COALESCE(sc.submission_count, 0) = 0) AS future_editable,
       dp.created_at::text AS created_at
@@ -1775,6 +1884,8 @@ export async function getDevPendingPuzzles(
       rrd.relationship_type,
       dp.position_overlay_enabled,
       COALESCE(dp.qb_exclusion_enabled, false) AS qb_exclusion_enabled,
+      COALESCE(dp.rb_exclusion_enabled, false) AS rb_exclusion_enabled,
+      COALESCE(dp.wr_exclusion_enabled, false) AS wr_exclusion_enabled,
       dp.published_flag,
       CASE
         WHEN lc.payload->>'optimal_active_links' IS NOT NULL
@@ -2091,6 +2202,8 @@ async function tryGenerateCandidatePuzzle(
       slotRuleIds,
       positionOverlayEnabled: settings.forcePositionLock,
       qbExclusionEnabled: settings.forceNoQbs,
+      rbExclusionEnabled: settings.forceNoRbs,
+      wrExclusionEnabled: settings.forceNoWrs,
     };
     try {
       const preview = await computePreviewPayload(db, config, {
@@ -2252,6 +2365,8 @@ async function refreshPuzzleOptimalCache(db: DbClient, puzzleId: string | number
       dp.title,
       dp.position_overlay_enabled,
       COALESCE(dp.qb_exclusion_enabled, false) AS qb_exclusion_enabled,
+      COALESCE(dp.rb_exclusion_enabled, false) AS rb_exclusion_enabled,
+      COALESCE(dp.wr_exclusion_enabled, false) AS wr_exclusion_enabled,
       dp.theme_filter_id::text AS theme_filter_id,
       dp.relationship_rule_id::text AS relationship_rule_id
     FROM daily_puzzle dp
@@ -2303,6 +2418,8 @@ async function refreshPuzzleOptimalCache(db: DbClient, puzzleId: string | number
     slotRuleIds,
     positionOverlayEnabled: Boolean(puzzle.position_overlay_enabled),
     qbExclusionEnabled: Boolean(puzzle.qb_exclusion_enabled),
+    rbExclusionEnabled: Boolean(puzzle.rb_exclusion_enabled),
+    wrExclusionEnabled: Boolean(puzzle.wr_exclusion_enabled),
   };
   const previewPayload = await computePreviewPayload(db, config);
   const slotRules = previewPayload.optimal_lineup.map((entry) => entry.slot_rule);
@@ -2312,7 +2429,9 @@ async function refreshPuzzleOptimalCache(db: DbClient, puzzleId: string | number
     previewPayload.relationship_rule,
     slotRules,
     config.positionOverlayEnabled,
-    config.qbExclusionEnabled
+    config.qbExclusionEnabled,
+    config.rbExclusionEnabled,
+    config.wrExclusionEnabled
   );
   await db.query(
     `
@@ -2341,6 +2460,10 @@ async function refreshPuzzleOptimalCache(db: DbClient, puzzleId: string | number
         optimal_active_links: previewPayload.optimal_active_links,
         optimal_multiplier: previewPayload.optimal_multiplier,
         optimal_final_score: previewPayload.optimal_final_score,
+        position_overlay_enabled: previewPayload.position_overlay_enabled,
+        qb_exclusion_enabled: previewPayload.qb_exclusion_enabled,
+        rb_exclusion_enabled: previewPayload.rb_exclusion_enabled,
+        wr_exclusion_enabled: previewPayload.wr_exclusion_enabled,
       }),
     ]
   );
@@ -3088,7 +3211,9 @@ export async function computePreviewPayload(
       theme.rule_logic_key,
       slotRules,
       config.positionOverlayEnabled,
-      config.qbExclusionEnabled
+      config.qbExclusionEnabled,
+      config.rbExclusionEnabled,
+      config.wrExclusionEnabled
     )
   ) {
     throw new Error("No valid candidate pool for one or more slots.");
@@ -3099,7 +3224,9 @@ export async function computePreviewPayload(
     relationshipRule,
     slotRules,
     config.positionOverlayEnabled,
-    config.qbExclusionEnabled
+    config.qbExclusionEnabled,
+    config.rbExclusionEnabled,
+    config.wrExclusionEnabled
   );
 
   const generatorSettings = options?.generatorSettings ?? null;
@@ -3119,7 +3246,9 @@ export async function computePreviewPayload(
     theme.rule_logic_key,
     slotRules,
     config.positionOverlayEnabled,
-    config.qbExclusionEnabled
+    config.qbExclusionEnabled,
+    config.rbExclusionEnabled,
+    config.wrExclusionEnabled
   );
   if (
     slotRules.some((rule) =>
@@ -3135,7 +3264,9 @@ export async function computePreviewPayload(
       theme.rule_logic_key,
       slotRules,
       config.positionOverlayEnabled,
-      config.qbExclusionEnabled
+      config.qbExclusionEnabled,
+      config.rbExclusionEnabled,
+      config.wrExclusionEnabled
     );
     if (cachedSlotMetrics.size === slotRules.length) {
       const minimumFantasyPoints =
@@ -3171,6 +3302,8 @@ export async function computePreviewPayload(
             playerAllowedByPuzzleRules(player.primary_position, {
               positionLockEnabled: config.positionOverlayEnabled,
               qbExclusionEnabled: config.qbExclusionEnabled,
+              rbExclusionEnabled: config.rbExclusionEnabled,
+              wrExclusionEnabled: config.wrExclusionEnabled,
             })
         )
         .slice(0, limit),
@@ -3182,11 +3315,16 @@ export async function computePreviewPayload(
     theme.rule_logic_key,
     slotCandidates,
     config.positionOverlayEnabled,
-    config.qbExclusionEnabled
+    config.qbExclusionEnabled,
+    config.rbExclusionEnabled,
+    config.wrExclusionEnabled
   );
 
-  if (config.positionOverlayEnabled && config.qbExclusionEnabled) {
-    throw new Error("One-of-each lock cannot be combined with No QBs.");
+  if (
+    config.positionOverlayEnabled &&
+    (config.qbExclusionEnabled || config.rbExclusionEnabled || config.wrExclusionEnabled)
+  ) {
+    throw new Error("One-of-each lock cannot be combined with position exclusions.");
   }
 
   const failingSlots = slotCandidates.filter((slot) => slot.candidates.length === 0);
@@ -3197,7 +3335,9 @@ export async function computePreviewPayload(
       slotRules,
       failingSlots,
       config.positionOverlayEnabled,
-      config.qbExclusionEnabled
+      config.qbExclusionEnabled,
+      config.rbExclusionEnabled,
+      config.wrExclusionEnabled
     );
     throw new Error("No valid candidate pool for one or more slots.");
   }
@@ -3285,6 +3425,8 @@ export async function computePreviewPayload(
         {
           positionLockEnabled: config.positionOverlayEnabled,
           qbExclusionEnabled: config.qbExclusionEnabled,
+          rbExclusionEnabled: config.rbExclusionEnabled,
+          wrExclusionEnabled: config.wrExclusionEnabled,
         }
       )
     ) {
@@ -3304,6 +3446,8 @@ export async function computePreviewPayload(
           {
             positionLockEnabled: config.positionOverlayEnabled,
             qbExclusionEnabled: config.qbExclusionEnabled,
+            rbExclusionEnabled: config.rbExclusionEnabled,
+            wrExclusionEnabled: config.wrExclusionEnabled,
           }
         )
       ) {
@@ -3388,6 +3532,8 @@ export async function computePreviewPayload(
         optimal_final_score: resolvedBest.final_score,
         position_overlay_enabled: config.positionOverlayEnabled,
         qb_exclusion_enabled: config.qbExclusionEnabled,
+        rb_exclusion_enabled: config.rbExclusionEnabled,
+        wr_exclusion_enabled: config.wrExclusionEnabled,
       },
       generatorSettings,
       config.startSeason,
@@ -3423,6 +3569,8 @@ export async function computePreviewPayload(
     optimal_final_score: resolvedBest.final_score,
     position_overlay_enabled: config.positionOverlayEnabled,
     qb_exclusion_enabled: config.qbExclusionEnabled,
+    rb_exclusion_enabled: config.rbExclusionEnabled,
+    wr_exclusion_enabled: config.wrExclusionEnabled,
   };
 }
 
@@ -3546,9 +3694,11 @@ export async function savePuzzleFromConfig(
       selection_count,
       published_flag,
       position_overlay_enabled,
-      qb_exclusion_enabled
+      qb_exclusion_enabled,
+      rb_exclusion_enabled,
+      wr_exclusion_enabled
     )
-    VALUES ($1::date, 'nfl', $2, $3::bigint, $3::bigint, $4::bigint, $5::bigint, $6::bigint, 4, 5, $7, $8, $9)
+    VALUES ($1::date, 'nfl', $2, $3::bigint, $3::bigint, $4::bigint, $5::bigint, $6::bigint, 4, 5, $7, $8, $9, $10, $11)
     RETURNING puzzle_id::text, puzzle_date::text
     `,
     [
@@ -3561,6 +3711,8 @@ export async function savePuzzleFromConfig(
       publishedFlag,
       config.positionOverlayEnabled,
       config.qbExclusionEnabled,
+      config.rbExclusionEnabled,
+      config.wrExclusionEnabled,
     ]
   );
 
@@ -3596,7 +3748,9 @@ export async function savePuzzleFromConfig(
     relationship_rule,
     slotRules,
     config.positionOverlayEnabled,
-    config.qbExclusionEnabled
+    config.qbExclusionEnabled,
+    config.rbExclusionEnabled,
+    config.wrExclusionEnabled
   );
 
   await db.query(
@@ -3627,6 +3781,8 @@ export async function savePuzzleFromConfig(
         optimal_final_score: previewPayload.optimal_final_score,
         position_overlay_enabled: previewPayload.position_overlay_enabled,
         qb_exclusion_enabled: previewPayload.qb_exclusion_enabled,
+        rb_exclusion_enabled: previewPayload.rb_exclusion_enabled,
+        wr_exclusion_enabled: previewPayload.wr_exclusion_enabled,
       }),
     ]
   );

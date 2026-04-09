@@ -4,6 +4,8 @@ export const FLEX_ELIGIBLE_POSITIONS = ["RB", "WR", "TE"] as const;
 export type PuzzleRuleOptions = {
   positionLockEnabled: boolean;
   qbExclusionEnabled: boolean;
+  rbExclusionEnabled: boolean;
+  wrExclusionEnabled: boolean;
 };
 
 export function normalizePrimaryPosition(position: string | null | undefined) {
@@ -17,6 +19,8 @@ export function playerAllowedByPuzzleRules(
   const normalized = normalizePrimaryPosition(position);
   if (!normalized) return false;
   if (options.qbExclusionEnabled && normalized === "QB") return false;
+  if (options.rbExclusionEnabled && normalized === "RB") return false;
+  if (options.wrExclusionEnabled && normalized === "WR") return false;
   return ["QB", "RB", "WR", "TE"].includes(normalized);
 }
 
@@ -36,12 +40,18 @@ export function lineupSatisfiesPuzzleRules(
   if (options.qbExclusionEnabled && positions.some((position) => normalizePrimaryPosition(position) === "QB")) {
     return false;
   }
+  if (options.rbExclusionEnabled && positions.some((position) => normalizePrimaryPosition(position) === "RB")) {
+    return false;
+  }
+  if (options.wrExclusionEnabled && positions.some((position) => normalizePrimaryPosition(position) === "WR")) {
+    return false;
+  }
 
   if (!options.positionLockEnabled) {
     return positions.every((position) => playerAllowedByPuzzleRules(position, options));
   }
 
-  if (options.qbExclusionEnabled) {
+  if (options.qbExclusionEnabled || options.rbExclusionEnabled || options.wrExclusionEnabled) {
     return false;
   }
 
@@ -77,7 +87,7 @@ export function partialLineupCanStillSatisfyPuzzleRules(
     return true;
   }
 
-  if (options.qbExclusionEnabled) {
+  if (options.qbExclusionEnabled || options.rbExclusionEnabled || options.wrExclusionEnabled) {
     return false;
   }
 

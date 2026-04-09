@@ -37,6 +37,8 @@ type PuzzleResponse = {
     published_flag: boolean;
     position_overlay_enabled?: boolean;
     qb_exclusion_enabled?: boolean;
+    rb_exclusion_enabled?: boolean;
+    wr_exclusion_enabled?: boolean;
   };
   theme: {
     filter_id: string | number;
@@ -2458,6 +2460,13 @@ export default function HomePage() {
   }, [slotRules]);
   const positionOverlayEnabled = Boolean(puzzleData?.puzzle.position_overlay_enabled);
   const qbExclusionEnabled = Boolean(puzzleData?.puzzle.qb_exclusion_enabled);
+  const rbExclusionEnabled = Boolean(puzzleData?.puzzle.rb_exclusion_enabled);
+  const wrExclusionEnabled = Boolean(puzzleData?.puzzle.wr_exclusion_enabled);
+  const exclusionLabel = [
+    qbExclusionEnabled ? "QBs" : null,
+    rbExclusionEnabled ? "RBs" : null,
+    wrExclusionEnabled ? "WRs" : null,
+  ].filter(Boolean).join(" / ");
   function getPairKey(playerId1: string, playerId2: string) {
     return [String(playerId1), String(playerId2)].sort().join("|");
   }
@@ -2466,6 +2475,8 @@ export default function HomePage() {
     return playerAllowedByPuzzleRules(player.primary_position, {
       positionLockEnabled: positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
     });
   }
 
@@ -2487,8 +2498,13 @@ export default function HomePage() {
   }
 
   function getSlotPlaceholder(rule: SlotRule) {
-    if (qbExclusionEnabled) {
-      return `Choose a non-QB ${rule.display_text} player...`;
+    if (qbExclusionEnabled || rbExclusionEnabled || wrExclusionEnabled) {
+      const blockedPositions = [
+        qbExclusionEnabled ? "QB" : null,
+        rbExclusionEnabled ? "RB" : null,
+        wrExclusionEnabled ? "WR" : null,
+      ].filter(Boolean).join("/");
+      return `Choose a non-${blockedPositions} ${rule.display_text} player...`;
     }
     if (positionOverlayEnabled && rule.parameter_type !== "position") {
       return `Choose a ${rule.display_text} player for the one-of-each lineup...`;
@@ -3235,10 +3251,10 @@ export default function HomePage() {
         title: "Lineup Constraint",
         body: "This puzzle enforces one of each fantasy position across the full lineup, so some valid slot fits may still conflict globally.",
       });
-    } else if (qbExclusionEnabled) {
+    } else if (qbExclusionEnabled || rbExclusionEnabled || wrExclusionEnabled) {
       hints.push({
         title: "Lineup Constraint",
-        body: "Quarterbacks are excluded from the entire lineup for this puzzle, even if a slot rule would normally allow one.",
+        body: `${exclusionLabel} are excluded from the entire lineup for this puzzle, even if a slot rule would normally allow them.`,
       });
     } else {
       hints.push({
@@ -3259,6 +3275,9 @@ export default function HomePage() {
     leaderboardFinalized,
     positionOverlayEnabled,
     qbExclusionEnabled,
+    rbExclusionEnabled,
+    wrExclusionEnabled,
+    exclusionLabel,
     relationshipLabel,
     relationshipType,
   ]);
@@ -5112,13 +5131,13 @@ export default function HomePage() {
                     {players.length} Available
                   </span>
                 </div>
-                {qbExclusionEnabled ? (
+                {exclusionLabel ? (
                   <div className="inline-flex min-w-0 items-center justify-center gap-1 rounded-[18px] border-[2px] border-rose-300 bg-[linear-gradient(180deg,#fff1f2_0%,#ffe4e6_100%)] px-2 py-1.5 text-center shadow-[0_6px_16px_rgba(244,63,94,0.14)]">
                     <span className="rounded-full bg-rose-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-rose-700">
                       Filter
                     </span>
                     <span className="relative min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-rose-800">
-                      No QBs
+                      No {exclusionLabel}
                       <span className="absolute left-0 top-1/2 h-[1.5px] w-full -translate-y-1/2 rotate-[-12deg] bg-rose-700" />
                     </span>
                   </div>
@@ -5180,13 +5199,13 @@ export default function HomePage() {
                       {players.length} Available
                     </span>
                   </div>
-                  {qbExclusionEnabled ? (
+                  {exclusionLabel ? (
                     <div className="inline-flex min-w-0 items-center justify-center gap-1.5 self-end rounded-full border-[2px] border-rose-300 bg-[linear-gradient(180deg,#fff1f2_0%,#ffe4e6_100%)] px-2 py-1 text-center shadow-[0_6px_16px_rgba(244,63,94,0.14)] sm:gap-2 sm:px-4 sm:py-1.5">
                       <span className="rounded-full bg-rose-100 px-1.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-rose-700 sm:px-2 sm:text-[8px] sm:tracking-[0.1em]">
                         Filter
                       </span>
                       <span className="relative min-w-0 text-[8px] font-black uppercase tracking-[0.04em] text-rose-800 sm:text-[10px] sm:tracking-[0.06em]">
-                        No QBs
+                        No {exclusionLabel}
                         <span className="absolute left-0 top-1/2 h-[1.5px] w-full -translate-y-1/2 rotate-[-12deg] bg-rose-700" />
                       </span>
                     </div>

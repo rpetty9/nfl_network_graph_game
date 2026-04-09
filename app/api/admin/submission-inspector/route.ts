@@ -129,7 +129,7 @@ function relationshipPasses(relationshipType: string, pair: PairRelationship | u
 async function loadPuzzleContext(requestedDate: string, testingMode: boolean) {
   const puzzleResult = await pool.query(
     `
-    SELECT puzzle_id, puzzle_date, title, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
+    SELECT puzzle_id, puzzle_date, title, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled, rb_exclusion_enabled, wr_exclusion_enabled
     FROM daily_puzzle
     WHERE puzzle_date = $1
       AND sport = 'nfl'
@@ -189,6 +189,8 @@ async function loadPuzzleContext(requestedDate: string, testingMode: boolean) {
     slotRules: slotRulesResult.rows as SlotRule[],
     positionOverlayEnabled: Boolean(puzzle.position_overlay_enabled),
     qbExclusionEnabled: Boolean(puzzle.qb_exclusion_enabled),
+    rbExclusionEnabled: Boolean((puzzle as { rb_exclusion_enabled?: unknown }).rb_exclusion_enabled),
+    wrExclusionEnabled: Boolean((puzzle as { wr_exclusion_enabled?: unknown }).wr_exclusion_enabled),
   };
 }
 
@@ -434,7 +436,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No exact username match found." }, { status: 404 });
     }
 
-    const { puzzle, themeRule, relationshipRule, slotRules, positionOverlayEnabled, qbExclusionEnabled } =
+    const { puzzle, themeRule, relationshipRule, slotRules, positionOverlayEnabled, qbExclusionEnabled, rbExclusionEnabled, wrExclusionEnabled } =
       await loadPuzzleContext(date, testingMode);
 
     const submissionTable = testingMode ? "testing_submission" : "puzzle_submission";
@@ -500,6 +502,8 @@ export async function GET(request: NextRequest) {
         lineup_rule_match: playerAllowedByPuzzleRules(player.primary_position, {
           positionLockEnabled: positionOverlayEnabled,
           qbExclusionEnabled,
+          rbExclusionEnabled,
+          wrExclusionEnabled,
         }),
         player,
       };
@@ -545,6 +549,8 @@ export async function GET(request: NextRequest) {
       {
         positionLockEnabled: positionOverlayEnabled,
         qbExclusionEnabled,
+        rbExclusionEnabled,
+        wrExclusionEnabled,
       }
     );
 
@@ -563,6 +569,8 @@ export async function GET(request: NextRequest) {
         relationship_rule: relationshipRule,
         position_overlay_enabled: positionOverlayEnabled,
         qb_exclusion_enabled: qbExclusionEnabled,
+        rb_exclusion_enabled: rbExclusionEnabled,
+        wr_exclusion_enabled: wrExclusionEnabled,
         slot_rules: slotRules,
       },
       submission: {

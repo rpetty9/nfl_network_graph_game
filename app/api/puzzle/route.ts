@@ -264,6 +264,8 @@ export async function GET(request: NextRequest) {
           formatDateValue(puzzle.puzzle_date) ?? String(puzzle.puzzle_date),
         position_overlay_enabled: Boolean(puzzle.position_overlay_enabled),
         qb_exclusion_enabled: Boolean(puzzle.qb_exclusion_enabled),
+        rb_exclusion_enabled: Boolean(puzzle.rb_exclusion_enabled),
+        wr_exclusion_enabled: Boolean(puzzle.wr_exclusion_enabled),
       },
       theme,
       eligibility_filter: eligibilityFilter,

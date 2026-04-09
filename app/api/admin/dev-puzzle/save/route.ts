@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
       slotRuleIds: Array.isArray(body.slotRuleIds) ? body.slotRuleIds : [],
       positionOverlayEnabled: Boolean(body.positionOverlayEnabled),
       qbExclusionEnabled: Boolean(body.qbExclusionEnabled),
+      rbExclusionEnabled: Boolean((body as { rbExclusionEnabled?: unknown }).rbExclusionEnabled),
+      wrExclusionEnabled: Boolean((body as { wrExclusionEnabled?: unknown }).wrExclusionEnabled),
     };
     const publishedFlag =
       typeof (body as { publishedFlag?: unknown }).publishedFlag === "boolean"

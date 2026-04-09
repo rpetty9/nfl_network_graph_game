@@ -1,13 +1,77 @@
 from __future__ import annotations
 
+import html
 import os
 from pathlib import Path
+import re
 
 import psycopg
 
 
 ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = ROOT / ".env.local"
+INVALID_COLLEGE_VALUES = {
+    "N/A",
+    "NA",
+    "?",
+    "-",
+    "NONE",
+    "NO COLLEGE",
+    "UNKNOWN",
+}
+TEAM_ABBR_ALIASES = {
+    "ARI": "ARI",
+    "ARZ": "ARI",
+    "ATL": "ATL",
+    "BAL": "BAL",
+    "BLT": "BAL",
+    "BUF": "BUF",
+    "CAR": "CAR",
+    "CHI": "CHI",
+    "CIN": "CIN",
+    "CLE": "CLE",
+    "CLV": "CLE",
+    "DAL": "DAL",
+    "DEN": "DEN",
+    "DET": "DET",
+    "GB": "GB",
+    "GNB": "GB",
+    "HOU": "HOU",
+    "HST": "HOU",
+    "IND": "IND",
+    "JAC": "JAX",
+    "JAX": "JAX",
+    "KC": "KC",
+    "KAN": "KC",
+    "LA": "LAR",
+    "LAR": "LAR",
+    "LV": "LV",
+    "LVR": "LV",
+    "OAK": "LV",
+    "LAC": "LAC",
+    "SD": "LAC",
+    "MIA": "MIA",
+    "MIN": "MIN",
+    "NE": "NE",
+    "NWE": "NE",
+    "NO": "NO",
+    "NOR": "NO",
+    "NYG": "NYG",
+    "NYJ": "NYJ",
+    "PHI": "PHI",
+    "PIT": "PIT",
+    "SEA": "SEA",
+    "SF": "SF",
+    "SFO": "SF",
+    "SL": "LAR",
+    "STL": "LAR",
+    "TB": "TB",
+    "TAM": "TB",
+    "TEN": "TEN",
+    "WAS": "WAS",
+    "WFT": "WAS",
+    "WSH": "WAS",
+}
 
 FILTERS = [
     {
@@ -478,6 +542,29 @@ def db_dsn() -> str:
     return dsn
 
 
+def canonical_team_abbr(value: object) -> str | None:
+    text = str(value).strip().upper() if value is not None else ""
+    if not text:
+        return None
+    return TEAM_ABBR_ALIASES.get(text, text)
+
+
+def normalize_college_name(value: object) -> str | None:
+    text = str(value).strip() if value is not None else ""
+    if not text:
+        return None
+    text = html.unescape(text)
+    normalized = re.sub(r"\s+", " ", text).strip(" ,;")
+    if not normalized:
+        return None
+    if normalized.upper() in INVALID_COLLEGE_VALUES:
+        return None
+    letter_count = len(re.sub(r"[^A-Za-z]", "", normalized))
+    if letter_count <= 1:
+        return None
+    return normalized
+
+
 def main() -> None:
     with psycopg.connect(db_dsn()) as conn:
         with conn.cursor() as cur:
@@ -602,16 +689,24 @@ def main() -> None:
                 ORDER BY team_abbr
                 """
             )
+            team_rules_by_abbr: dict[str, dict[str, str]] = {}
             for team_abbr, display_text in cur.fetchall():
-                normalized_abbr = str(team_abbr).strip().upper()
-                slot_rules.append(
-                    {
-                        "rule_name": f"team_{normalized_abbr.lower()}",
-                        "parameter_type": "team",
-                        "parameter_value": normalized_abbr,
-                        "display_text": str(display_text).strip() or normalized_abbr,
-                    }
-                )
+                normalized_abbr = canonical_team_abbr(team_abbr)
+                if not normalized_abbr:
+                    continue
+                team_rule = {
+                    "rule_name": f"team_{normalized_abbr.lower()}",
+                    "parameter_type": "team",
+                    "parameter_value": normalized_abbr,
+                    "display_text": str(display_text).strip() or normalized_abbr,
+                }
+                existing = team_rules_by_abbr.get(normalized_abbr)
+                if existing is None or str(team_abbr).strip().upper() == normalized_abbr:
+                    team_rules_by_abbr[normalized_abbr] = team_rule
+            slot_rules.extend(
+                team_rules_by_abbr[key]
+                for key in sorted(team_rules_by_abbr.keys())
+            )
 
             cur.execute(
                 """
@@ -622,8 +717,9 @@ def main() -> None:
                 ORDER BY college_name
                 """
             )
+            college_rule_names: set[str] = set()
             for (college_name,) in cur.fetchall():
-                normalized_college = str(college_name).strip()
+                normalized_college = normalize_college_name(college_name)
                 if not normalized_college:
                     continue
                 college_slug = (
@@ -635,9 +731,13 @@ def main() -> None:
                     .replace("-", "_")
                     .replace(" ", "_")
                 )
+                rule_name = f"college_{college_slug}"
+                if rule_name in college_rule_names:
+                    continue
+                college_rule_names.add(rule_name)
                 slot_rules.append(
                     {
-                        "rule_name": f"college_{college_slug}",
+                        "rule_name": rule_name,
                         "parameter_type": "college",
                         "parameter_value": normalized_college,
                         "display_text": normalized_college,
@@ -666,6 +766,21 @@ def main() -> None:
                   active_flag = true
                 """,
                 slot_rules,
+            )
+
+            generated_rule_names = [
+                rule["rule_name"]
+                for rule in slot_rules
+                if rule["parameter_type"] in {"team", "college"}
+            ]
+            cur.execute(
+                """
+                UPDATE slot_rule_definition
+                SET active_flag = false
+                WHERE parameter_type = ANY(%s::text[])
+                  AND NOT (rule_name = ANY(%s::text[]))
+                """,
+                (["team", "college"], generated_rule_names),
             )
 
         conn.commit()

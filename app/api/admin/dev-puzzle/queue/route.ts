@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
       maxAttemptsPerPuzzle?: number;
       forcePositionLock?: boolean;
       forceNoQbs?: boolean;
+      forceNoRbs?: boolean;
+      forceNoWrs?: boolean;
       useAnchorSearch?: boolean;
       useSkeletonScoring?: boolean;
       useThresholdMemory?: boolean;
@@ -68,6 +70,8 @@ export async function POST(request: NextRequest) {
         maxAttemptsPerPuzzle: body.maxAttemptsPerPuzzle,
         forcePositionLock: body.forcePositionLock,
         forceNoQbs: body.forceNoQbs,
+        forceNoRbs: body.forceNoRbs,
+        forceNoWrs: body.forceNoWrs,
         useAnchorSearch: body.useAnchorSearch,
         useSkeletonScoring: body.useSkeletonScoring,
         useThresholdMemory: body.useThresholdMemory,
@@ -97,6 +101,8 @@ export async function POST(request: NextRequest) {
       maxAttemptsPerPuzzle: body.maxAttemptsPerPuzzle,
       forcePositionLock: body.forcePositionLock,
       forceNoQbs: body.forceNoQbs,
+      forceNoRbs: body.forceNoRbs,
+      forceNoWrs: body.forceNoWrs,
       useAnchorSearch: body.useAnchorSearch,
       useSkeletonScoring: body.useSkeletonScoring,
       useThresholdMemory: body.useThresholdMemory,

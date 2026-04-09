@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import os
 import re
 from pathlib import Path
@@ -10,6 +11,15 @@ import psycopg
 ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = ROOT / ".env.local"
 COLLEGE_SPLIT_RE = re.compile(r"\s*;\s*")
+INVALID_COLLEGE_VALUES = {
+    "N/A",
+    "NA",
+    "?",
+    "-",
+    "NONE",
+    "NO COLLEGE",
+    "UNKNOWN",
+}
 
 
 def load_env_file(path: Path) -> None:
@@ -53,9 +63,14 @@ def split_colleges(raw_value: str | None) -> list[str]:
 
     colleges: list[str] = []
     seen: set[str] = set()
-    for piece in COLLEGE_SPLIT_RE.split(raw_value):
-        cleaned = piece.strip()
+    for piece in COLLEGE_SPLIT_RE.split(html.unescape(raw_value)):
+        cleaned = re.sub(r"\s+", " ", piece).strip(" ,;")
         if not cleaned:
+            continue
+        if cleaned.upper() in INVALID_COLLEGE_VALUES:
+            continue
+        letter_count = len(re.sub(r"[^A-Za-z]", "", cleaned))
+        if letter_count <= 1:
             continue
         normalized = cleaned.casefold()
         if normalized in seen:

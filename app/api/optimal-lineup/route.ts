@@ -87,7 +87,9 @@ function buildConfigSignature(
   relationshipRule: { relationship_type: string; bonus_pct?: number | null },
   slotRules: SlotRule[],
   positionOverlayEnabled: boolean,
-  qbExclusionEnabled: boolean
+  qbExclusionEnabled: boolean,
+  rbExclusionEnabled: boolean,
+  wrExclusionEnabled: boolean
 ) {
   const slotSignature = slotRules
     .map(
@@ -104,6 +106,8 @@ function buildConfigSignature(
     String(relationshipRule.bonus_pct ?? 10),
     positionOverlayEnabled ? "overlay:on" : "overlay:off",
     qbExclusionEnabled ? "qb:off" : "qb:on",
+    rbExclusionEnabled ? "rb:off" : "rb:on",
+    wrExclusionEnabled ? "wr:off" : "wr:on",
     slotSignature,
   ].join("::");
 }
@@ -197,7 +201,7 @@ export async function GET(request: NextRequest) {
     const puzzleResult = requestedDate
       ? await pool.query(
           `
-          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
+          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled, rb_exclusion_enabled, wr_exclusion_enabled
           FROM daily_puzzle
           WHERE puzzle_date = $1
             AND sport = 'nfl'
@@ -211,7 +215,7 @@ export async function GET(request: NextRequest) {
           [requestedDate]
         )
       : await pool.query(`
-          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
+          SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled, rb_exclusion_enabled, wr_exclusion_enabled
           FROM daily_puzzle
           WHERE published_flag = true
             AND sport = 'nfl'
@@ -272,6 +276,8 @@ export async function GET(request: NextRequest) {
     };
     const positionOverlayEnabled = Boolean(puzzle.position_overlay_enabled);
     const qbExclusionEnabled = Boolean(puzzle.qb_exclusion_enabled);
+    const rbExclusionEnabled = Boolean((puzzle as { rb_exclusion_enabled?: unknown }).rb_exclusion_enabled);
+    const wrExclusionEnabled = Boolean((puzzle as { wr_exclusion_enabled?: unknown }).wr_exclusion_enabled);
 
     const defaultSlotRules: SlotRule[] = [1, 2, 3, 4, 5].map((slotNumber) => ({
       slot_number: slotNumber,
@@ -290,7 +296,9 @@ export async function GET(request: NextRequest) {
       relationshipRule,
       slotRules,
       positionOverlayEnabled,
-      qbExclusionEnabled
+      qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled
     );
 
     const cacheResult = await pool.query(
@@ -438,15 +446,17 @@ export async function GET(request: NextRequest) {
               playerAllowedByPuzzleRules(player.primary_position, {
                 positionLockEnabled: positionOverlayEnabled,
                 qbExclusionEnabled,
+                rbExclusionEnabled,
+                wrExclusionEnabled,
               })
           )
           .slice(0, limit),
       };
     });
 
-    if (positionOverlayEnabled && qbExclusionEnabled) {
+    if (positionOverlayEnabled && (qbExclusionEnabled || rbExclusionEnabled || wrExclusionEnabled)) {
       return NextResponse.json(
-        { error: "One-of-each lock cannot be combined with No QBs." },
+        { error: "One-of-each lock cannot be combined with position exclusions." },
         { status: 500 }
       );
     }
@@ -683,6 +693,8 @@ export async function GET(request: NextRequest) {
           {
             positionLockEnabled: positionOverlayEnabled,
             qbExclusionEnabled,
+            rbExclusionEnabled,
+            wrExclusionEnabled,
           }
         )
       ) {
@@ -702,6 +714,8 @@ export async function GET(request: NextRequest) {
             {
               positionLockEnabled: positionOverlayEnabled,
               qbExclusionEnabled,
+              rbExclusionEnabled,
+              wrExclusionEnabled,
             }
           )
         ) {
@@ -786,6 +800,8 @@ export async function GET(request: NextRequest) {
       optimal_final_score: bestResult.final_score,
       position_overlay_enabled: positionOverlayEnabled,
       qb_exclusion_enabled: qbExclusionEnabled,
+      rb_exclusion_enabled: rbExclusionEnabled,
+      wr_exclusion_enabled: wrExclusionEnabled,
     };
 
     await pool.query(

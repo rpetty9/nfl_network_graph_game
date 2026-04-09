@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import os
 from collections import defaultdict
 from dataclasses import dataclass
@@ -23,6 +24,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "scripts" / "sql"
 ENV_FILE = ROOT / ".env.local"
 COLLEGE_SPLIT_RE = re.compile(r"\s*;\s*")
+INVALID_COLLEGE_VALUES = {
+    "N/A",
+    "NA",
+    "?",
+    "-",
+    "NONE",
+    "NO COLLEGE",
+    "UNKNOWN",
+}
 
 TEAM_METADATA: dict[str, dict[str, str | None]] = {
     "ARI": {"team_name": "Arizona Cardinals", "nickname": "Cardinals", "city": "Arizona", "conference": "NFC", "division": "West"},
@@ -242,6 +252,22 @@ def clean_str(value: Any) -> str | None:
     return text or None
 
 
+def normalize_college_name(value: Any) -> str | None:
+    text = clean_str(value)
+    if not text:
+        return None
+    text = html.unescape(text)
+    normalized = re.sub(r"\s+", " ", text).strip(" ,;")
+    if not normalized:
+        return None
+    if normalized.upper() in INVALID_COLLEGE_VALUES:
+        return None
+    letter_count = len(re.sub(r"[^A-Za-z]", "", normalized))
+    if letter_count <= 1:
+        return None
+    return normalized
+
+
 def split_colleges(raw_value: str | None) -> list[str]:
     if not raw_value:
         return []
@@ -249,7 +275,7 @@ def split_colleges(raw_value: str | None) -> list[str]:
     colleges: list[str] = []
     seen: set[str] = set()
     for piece in COLLEGE_SPLIT_RE.split(raw_value):
-        cleaned = piece.strip()
+        cleaned = normalize_college_name(piece)
         if not cleaned:
             continue
         normalized = cleaned.casefold()
@@ -276,6 +302,21 @@ def safe_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def safe_height_inches(value: Any) -> int | None:
+    direct = safe_int(value)
+    if direct is not None:
+        return direct
+    text = clean_str(value)
+    if not text:
+        return None
+    match = re.fullmatch(r"(\d+)\s*[-']\s*(\d+)", text)
+    if match:
+        feet = int(match.group(1))
+        inches = int(match.group(2))
+        return feet * 12 + inches
+    return None
 
 
 def pick(record: dict[str, Any], *keys: str) -> Any:
@@ -321,7 +362,7 @@ def canonical_team_abbr(value: Any) -> str | None:
     team = clean_str(value)
     if not team:
         return None
-    return team.upper()
+    return canonical_franchise_abbr(team.upper())
 
 
 def canonical_franchise_abbr(team_abbr: str | None) -> str | None:
@@ -449,6 +490,7 @@ def build_team_rows(
 
 
 def build_player_rows(
+    player_records: list[dict[str, Any]],
     stat_records: list[dict[str, Any]],
     roster_records: list[dict[str, Any]],
     draft_records: list[dict[str, Any]],
@@ -464,6 +506,10 @@ def build_player_rows(
         str | None,
         int | None,
         int | None,
+        int | None,
+        int | None,
+        int | None,
+        str | None,
         bool,
     ]
 ]:
@@ -487,18 +533,25 @@ def build_player_rows(
                 "college_name": None,
                 "draft_round": None,
                 "draft_year": None,
+                "draft_pick": None,
                 "birth_date": None,
+                "height_inches": None,
+                "weight_lbs": None,
+                "headshot_url": None,
             },
         )
         current["player_name"] = player_name or current["player_name"]
         current["primary_position"] = clean_str(
             pick(record, "position", "pos", "primary_position")
         ) or current["primary_position"]
-        current["college_name"] = clean_str(
-            pick(record, "college_name", "college")
-        ) or current["college_name"]
+        raw_college_name = clean_str(pick(record, "college_name", "college"))
+        if raw_college_name:
+            current["college_name"] = html.unescape(raw_college_name)
         draft_round = safe_int(pick(record, "draft_round", "round"))
         current["draft_round"] = draft_round or current["draft_round"]
+        current["draft_pick"] = safe_int(
+            pick(record, "draft_pick", "pick", "pick_overall", "overall_pick")
+        ) or current["draft_pick"]
         explicit_draft_year = safe_int(pick(record, "draft_year"))
         fallback_draft_year = (
             safe_int(pick(record, "season", "year"))
@@ -513,7 +566,18 @@ def build_player_rows(
         current["birth_date"] = clean_str(
             pick(record, "birth_date", "dob")
         ) or current["birth_date"]
+        current["height_inches"] = safe_height_inches(
+            pick(record, "height", "height_inches")
+        ) or current["height_inches"]
+        current["weight_lbs"] = safe_int(
+            pick(record, "weight", "weight_lbs")
+        ) or current["weight_lbs"]
+        current["headshot_url"] = clean_str(
+            pick(record, "headshot", "headshot_url")
+        ) or current["headshot_url"]
 
+    for record in player_records:
+        touch_player(record)
     for record in stat_records:
         touch_player(record)
     for record in roster_records:
@@ -521,7 +585,26 @@ def build_player_rows(
     for record in draft_records:
         touch_player(record)
 
-    deduped: dict[tuple[str, int | None], tuple[str, str, str | None, str | None, str | None, int | None, str | None, str | None, int | None, int | None, bool]] = {}
+    deduped: dict[
+        tuple[str, int | None],
+        tuple[
+            str,
+            str,
+            str | None,
+            str | None,
+            str | None,
+            int | None,
+            str | None,
+            str | None,
+            int | None,
+            int | None,
+            int | None,
+            int | None,
+            int | None,
+            str | None,
+            bool,
+        ],
+    ] = {}
     for player in players.values():
         player_name = player["player_name"]
         birth_year = safe_int(player["birth_date"][:4]) if player["birth_date"] else None
@@ -537,7 +620,11 @@ def build_player_rows(
             player["college_name"],
             player["draft_round"],
             player["draft_year"],
-            player["draft_round"] is None,
+            player["draft_pick"],
+            player["height_inches"],
+            player["weight_lbs"],
+            player["headshot_url"],
+            player["draft_round"] is None and player["draft_year"] is not None,
         )
     return list(deduped.values())
 
@@ -759,6 +846,10 @@ def upsert_players(
             str | None,
             int | None,
             int | None,
+            int | None,
+            int | None,
+            int | None,
+            str | None,
             bool,
         ]
     ],
@@ -776,6 +867,10 @@ def upsert_players(
                 college_name,
                 draft_round,
                 draft_year,
+                draft_pick,
+                height_inches,
+                weight_lbs,
+                headshot_url,
                 undrafted_flag,
             ) = row
 
@@ -793,6 +888,10 @@ def upsert_players(
                   college_name = COALESCE(%s, college_name),
                   draft_round = COALESCE(%s, draft_round),
                   draft_year = COALESCE(%s, draft_year),
+                  draft_pick = COALESCE(%s, draft_pick),
+                  height_inches = COALESCE(%s, height_inches),
+                  weight_lbs = COALESCE(%s, weight_lbs),
+                  headshot_url = COALESCE(%s, headshot_url),
                   undrafted_flag = %s
                 WHERE
                   (external_player_id IS NOT NULL AND external_player_id = %s)
@@ -809,6 +908,10 @@ def upsert_players(
                     college_name,
                     draft_round,
                     draft_year,
+                    draft_pick,
+                    height_inches,
+                    weight_lbs,
+                    headshot_url,
                     undrafted_flag,
                     external_player_id,
                     player_name,
@@ -830,9 +933,13 @@ def upsert_players(
                       college_name,
                       draft_round,
                       draft_year,
+                      draft_pick,
+                      height_inches,
+                      weight_lbs,
+                      headshot_url,
                       undrafted_flag
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     row,
                 )
@@ -997,6 +1104,25 @@ def sync_player_college_history(conn: psycopg.Connection[Any]) -> None:
             )
 
 
+def refresh_multi_college_flags(conn: psycopg.Connection[Any]) -> None:
+    conn.execute("UPDATE player_dim SET multi_college_flag = false")
+    conn.execute(
+        """
+        WITH college_counts AS (
+          SELECT
+            player_id,
+            COUNT(DISTINCT college_name)::integer AS college_count
+          FROM player_college_history
+          GROUP BY player_id
+        )
+        UPDATE player_dim p
+        SET multi_college_flag = (college_counts.college_count > 1)
+        FROM college_counts
+        WHERE p.player_id = college_counts.player_id
+        """
+    )
+
+
 def full_refresh_core_tables(conn: psycopg.Connection[Any]) -> None:
     conn.execute(
         """
@@ -1072,6 +1198,12 @@ def refresh_super_bowl_wins(conn: psycopg.Connection[Any]) -> None:
         SET super_bowl_win_count = counts.win_count
         FROM counts
         WHERE p.player_id = counts.player_id
+        """
+    )
+    conn.execute(
+        """
+        UPDATE player_dim
+        SET super_bowl_winner_flag = COALESCE(super_bowl_win_count, 0) > 0
         """
     )
 
@@ -1228,11 +1360,13 @@ def main() -> None:
 
     stats: LoadResult | None = None
     rosters: LoadResult | None = None
+    players: LoadResult | None = None
     draft_records: list[dict[str, Any]] = []
 
     needs_source_data = not args.schema_only and not args.pairs_only
 
     if needs_source_data:
+        players = call_first_available(["load_players"], [{}])
         stats = call_first_available(
             ["load_seasonal_player_stats", "load_seasonal_stats", "load_player_stats"],
             season_kwargs(args.start_season, args.end_season),
@@ -1267,13 +1401,23 @@ def main() -> None:
         if needs_source_data:
             assert stats is not None
             assert rosters is not None
+            assert players is not None
 
             upsert_seasons(conn, build_seasons(args.start_season, args.end_season))
             upsert_franchises(conn, build_franchise_rows())
             franchise_id_map = fetch_franchise_map(conn)
             upsert_teams(conn, build_team_rows(rosters.records, stats.records, franchise_id_map))
-            upsert_players(conn, build_player_rows(stats.records, rosters.records, draft_records))
+            upsert_players(
+                conn,
+                build_player_rows(
+                    players.records,
+                    stats.records,
+                    rosters.records,
+                    draft_records,
+                ),
+            )
             sync_player_college_history(conn)
+            refresh_multi_college_flags(conn)
 
             player_id_map = fetch_lookup_map(conn, "player_dim", "external_player_id", "player_id")
             team_id_map = fetch_lookup_map(conn, "team_dim", "team_abbr", "team_id")

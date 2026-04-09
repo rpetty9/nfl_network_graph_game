@@ -329,7 +329,7 @@ async function loadPuzzleContext(
   const puzzleResult = requestedDate
     ? await pool.query(
         `
-        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
+        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled, rb_exclusion_enabled, wr_exclusion_enabled
         FROM daily_puzzle
         WHERE puzzle_date = $1
           AND sport = 'nfl'
@@ -343,7 +343,7 @@ async function loadPuzzleContext(
         [requestedDate]
       )
     : await pool.query(`
-        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled
+        SELECT puzzle_id, puzzle_date, theme_filter_id, relationship_rule_id, position_overlay_enabled, qb_exclusion_enabled, rb_exclusion_enabled, wr_exclusion_enabled
         FROM daily_puzzle
         WHERE published_flag = true
           AND sport = 'nfl'
@@ -412,6 +412,8 @@ async function loadPuzzleContext(
           })),
     positionOverlayEnabled: Boolean(puzzle.position_overlay_enabled),
     qbExclusionEnabled: Boolean(puzzle.qb_exclusion_enabled),
+    rbExclusionEnabled: Boolean((puzzle as { rb_exclusion_enabled?: unknown }).rb_exclusion_enabled),
+    wrExclusionEnabled: Boolean((puzzle as { wr_exclusion_enabled?: unknown }).wr_exclusion_enabled),
   };
 }
 
@@ -708,6 +710,8 @@ export async function POST(request: NextRequest) {
       slotRules,
       positionOverlayEnabled,
       qbExclusionEnabled,
+      rbExclusionEnabled,
+      wrExclusionEnabled,
     } =
       await loadPuzzleContext(requestedDate, testingMode);
 
@@ -736,11 +740,17 @@ export async function POST(request: NextRequest) {
         !playerAllowedByPuzzleRules(player.primary_position, {
           positionLockEnabled: positionOverlayEnabled,
           qbExclusionEnabled,
+          rbExclusionEnabled,
+          wrExclusionEnabled,
         })
       ) {
         throw new Error(
           qbExclusionEnabled
             ? "Quarterbacks are not allowed for this puzzle."
+            : rbExclusionEnabled
+              ? "Running backs are not allowed for this puzzle."
+              : wrExclusionEnabled
+                ? "Wide receivers are not allowed for this puzzle."
             : "Player does not satisfy the puzzle lineup rule."
         );
       }
@@ -755,6 +765,8 @@ export async function POST(request: NextRequest) {
         {
           positionLockEnabled: positionOverlayEnabled,
           qbExclusionEnabled,
+          rbExclusionEnabled,
+          wrExclusionEnabled,
         }
       )
     ) {
@@ -763,6 +775,10 @@ export async function POST(request: NextRequest) {
           ? "This puzzle requires exactly one QB, RB, WR, and TE, plus one extra RB/WR/TE in any slot."
           : qbExclusionEnabled
             ? "Quarterbacks are not allowed for this puzzle."
+            : rbExclusionEnabled
+              ? "Running backs are not allowed for this puzzle."
+              : wrExclusionEnabled
+                ? "Wide receivers are not allowed for this puzzle."
             : "Lineup does not satisfy the puzzle rules."
       );
     }

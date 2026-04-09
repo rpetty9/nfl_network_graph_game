@@ -1,0 +1,14 @@
+ALTER TABLE player_dim
+  ADD COLUMN IF NOT EXISTS height_inches INTEGER;
+
+ALTER TABLE player_dim
+  ADD COLUMN IF NOT EXISTS weight_lbs INTEGER;
+
+ALTER TABLE player_dim
+  ADD COLUMN IF NOT EXISTS draft_pick INTEGER;
+
+ALTER TABLE player_dim
+  ADD COLUMN IF NOT EXISTS super_bowl_winner_flag BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE player_dim
+  ADD COLUMN IF NOT EXISTS multi_college_flag BOOLEAN NOT NULL DEFAULT false;

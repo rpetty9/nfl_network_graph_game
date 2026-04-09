@@ -135,11 +135,12 @@ def main() -> None:
                       draft_year = COALESCE(%s, draft_year),
                       undrafted_flag = CASE
                         WHEN %s IS NOT NULL THEN false
+                        WHEN COALESCE(%s, draft_year) IS NOT NULL THEN true
                         ELSE undrafted_flag
                       END
                     WHERE external_player_id = %s
                     """,
-                    (draft_round, draft_year, draft_round, external_player_id),
+                    (draft_round, draft_year, draft_round, draft_year, external_player_id),
                 )
                 updated_rows += cur.rowcount
         conn.commit()
