@@ -232,19 +232,6 @@ export async function GET(request: NextRequest) {
   }
 
   const chicagoClock = getChicagoClock();
-  const automaticRunWindow =
-    chicagoClock.hour === 0 && chicagoClock.minute >= 1 && chicagoClock.minute <= 10;
-
-  if (!requestedDate && !automaticRunWindow) {
-    return NextResponse.json({
-      skipped: true,
-      reason:
-        "Automatic awards only run during the 12:01-12:10 AM America/Chicago window unless a date is specified.",
-      chicago_now: `${chicagoClock.dateIso} ${String(chicagoClock.hour).padStart(2, "0")}:${String(
-        chicagoClock.minute
-      ).padStart(2, "0")}`,
-    });
-  }
 
   try {
     const targets = requestedDate
@@ -266,12 +253,17 @@ export async function GET(request: NextRequest) {
     if (resolvedTargets.length === 0) {
       return NextResponse.json({
         target_date: requestedDate ?? getPreviousChicagoDateIso(),
-        message: "No missing leaderboard awards found.",
+        message: requestedDate
+          ? "No missing leaderboard awards found for the requested date."
+          : "No missing leaderboard awards found.",
         processed_dates: [],
         placements_recorded: 0,
         first_place_badges_awarded: 0,
         top_10_badges_awarded: 0,
         top_10_x5_badges_awarded: 0,
+        chicago_now: `${chicagoClock.dateIso} ${String(chicagoClock.hour).padStart(2, "0")}:${String(
+          chicagoClock.minute
+        ).padStart(2, "0")}`,
       });
     }
 
